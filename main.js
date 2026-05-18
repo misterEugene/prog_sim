@@ -80,6 +80,7 @@ const STORAGE_KEYS = {
 const editor          = document.getElementById('editor');
 const tabs            = document.querySelectorAll('.tab');
 const preview         = document.getElementById('preview');
+const runBtn          = document.getElementById('run-btn');
 const resetBtn        = document.getElementById('reset-btn');
 const consoleEl       = document.getElementById('console');
 const clearConsoleBtn = document.getElementById('clear-console');
@@ -239,14 +240,14 @@ function updatePreview() {
 
 /* ---------- 9. Обработчики событий ---------- */
 
-// Любое изменение текста: сохранить, обновить предпросмотр.
+// Любое изменение текста: только сохраняем. Перезапуск — по кнопке.
 editor.addEventListener('input', () => {
   files[activeTab] = editor.value;
   saveFiles();
-  updatePreview();
 });
 
 // Поддержка Tab — вставляем два пробела вместо смены фокуса.
+// Ctrl/Cmd+Enter — запустить предпросмотр.
 editor.addEventListener('keydown', (e) => {
   if (e.key === 'Tab') {
     e.preventDefault();
@@ -255,10 +256,22 @@ editor.addEventListener('keydown', (e) => {
     const indent = '  ';
     editor.value = editor.value.slice(0, start) + indent + editor.value.slice(end);
     editor.selectionStart = editor.selectionEnd = start + indent.length;
-    // вручную триггерим input, чтобы сохранилось и обновилось
+    // вручную триггерим input, чтобы сохранилось
     editor.dispatchEvent(new Event('input'));
+  } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    runPreview();
   }
 });
+
+// Запуск предпросмотра по кнопке.
+function runPreview() {
+  // Синхронизируем редактор в файл, на случай если input ещё не успел сработать.
+  files[activeTab] = editor.value;
+  updatePreview();
+}
+
+runBtn.addEventListener('click', runPreview);
 
 // Клики по вкладкам.
 tabs.forEach(t => {

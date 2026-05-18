@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Песочница HTML / CSS / JS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Шапка с заголовком и краткой инструкцией -->
+  <header class="app-header">
+    <h1>Песочница HTML / CSS / JS</h1>
+    <p class="hint">
+      Слева редактируйте три виртуальных файла (переключайте вкладки).
+      Справа сразу видно результат. Всё сохраняется автоматически в вашем браузере.
+    </p>
+  </header>
+
+  <!-- Основная двухколоночная раскладка -->
+  <main class="layout">
+    <!-- ЛЕВАЯ ПАНЕЛЬ: редактор с вкладками -->
+    <section class="panel editor-panel">
+      <!-- Вкладки виртуальных файлов -->
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-file="index.html" role="tab">index.html</button>
+        <button class="tab"        data-file="style.css"  role="tab">style.css</button>
+        <button class="tab"        data-file="main.js"    role="tab">main.js</button>
+      </div>
+
+      <!-- Сам редактор кода -->
+      <textarea
+        id="editor"
+        spellcheck="false"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        wrap="off"
+      ></textarea>
+
+      <!-- Панель кнопок под редактором -->
+      <div class="toolbar">
+        <button id="reset-btn" type="button">Сбросить все файлы к примерам</button>
+        <span class="saved-indicator" id="saved-indicator">Сохранено</span>
+      </div>
+
+      <!-- Перехваченная консоль из iframe -->
+      <div class="console-wrap">
+        <div class="console-header">
+          <span>Консоль iframe</span>
+          <button id="clear-console" type="button">Очистить</button>
+        </div>
+        <div id="console" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ: предпросмотр в iframe -->
+    <section class="panel preview-panel">
+      <div class="preview-header">Предпросмотр</div>
+      <iframe
+        id="preview"
+        title="Предпросмотр кода"
+        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+      ></iframe>
+    </section>
+  </main>
+
+  <!-- Логика приложения -->
+  <script src="main.js"></script>
+</body>
+</html>

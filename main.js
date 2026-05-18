@@ -85,6 +85,15 @@ const resetBtn        = document.getElementById('reset-btn');
 const consoleEl       = document.getElementById('console');
 const clearConsoleBtn = document.getElementById('clear-console');
 const savedIndicator  = document.getElementById('saved-indicator');
+const highlightEl     = document.getElementById('highlight');
+const highlightPre    = document.querySelector('.highlight');
+
+// Имя виртуального файла -> идентификатор грамматики Prism.
+const LANG_BY_FILE = {
+  'index.html': 'markup',
+  'style.css':  'css',
+  'main.js':    'javascript'
+};
 
 /* ---------- 4. Состояние: содержимое виртуальных файлов ---------- */
 // files[имя] === текущее содержимое соответствующего редактора
@@ -128,7 +137,28 @@ function switchTab(name) {
   tabs.forEach(t => {
     t.classList.toggle('active', t.dataset.file === name);
   });
+  updateHighlight();
 }
+
+/* ---------- 6a. Подсветка синтаксиса ---------- */
+// Рендерит текущее значение редактора в <pre class="highlight"> с раскраской
+// Prism. textarea остаётся прозрачным сверху — выделение и каретка работают,
+// а цветной текст приходит из <pre>.
+function updateHighlight() {
+  if (!window.Prism) return;
+  const lang = LANG_BY_FILE[activeTab] || 'markup';
+  const grammar = Prism.languages[lang] || Prism.languages.markup;
+  highlightEl.className = 'language-' + lang;
+  // Добавляем '\n', чтобы последняя строка-перенос корректно отрисовалась
+  // и высота <pre> не «обрезалась» относительно textarea.
+  highlightEl.innerHTML = Prism.highlight(editor.value + '\n', grammar, lang);
+}
+
+// Скролл textarea -> скролл <pre>, чтобы текст и подсветка были выровнены.
+editor.addEventListener('scroll', () => {
+  highlightPre.scrollTop  = editor.scrollTop;
+  highlightPre.scrollLeft = editor.scrollLeft;
+});
 
 /* ---------- 7. Сборка единого HTML-документа для iframe ---------- */
 

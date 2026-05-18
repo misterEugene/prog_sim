@@ -27,15 +27,18 @@
         <button class="tab"        data-file="main.js"    role="tab">main.js</button>
       </div>
 
-      <!-- Сам редактор кода -->
-      <textarea
-        id="editor"
-        spellcheck="false"
-        autocomplete="off"
-        autocorrect="off"
-        autocapitalize="off"
-        wrap="off"
-      ></textarea>
+      <!-- Сам редактор кода: textarea поверх <pre> с подсветкой Prism -->
+      <div class="editor-wrap">
+        <pre class="highlight" aria-hidden="true"><code id="highlight" class="language-markup"></code></pre>
+        <textarea
+          id="editor"
+          spellcheck="false"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          wrap="off"
+        ></textarea>
+      </div>
 
       <!-- Панель кнопок под редактором -->
       <div class="toolbar">
@@ -64,6 +67,13 @@
       ></iframe>
     </section>
   </main>
+
+  <!-- Подсветка синтаксиса (Prism, CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
 
   <!-- Логика приложения -->
   <script src="main.js"></script>

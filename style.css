@@ -98,26 +98,106 @@ body {
 }
 
 /* ---------- Редактор ---------- */
-#editor {
+/* Контейнер, в котором textarea лежит ПОВЕРХ <pre class="highlight">.
+   Текст в textarea прозрачный, виден только каретка и выделение. */
+.editor-wrap {
   flex: 1;
+  position: relative;
   background: #1e1e2e;
-  color: #cdd6f4;
-  border: none;
-  outline: none;
-  resize: none;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Общие метрики для textarea и pre — должны совпадать ПИКСЕЛЬ В ПИКСЕЛЬ,
+   иначе подсветка «съедет» относительно текста. */
+#editor,
+.highlight,
+.highlight code {
+  margin: 0;
+  border: 0;
   padding: 12px;
   font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo,
                Consolas, "Liberation Mono", monospace;
   font-size: 13px;
   line-height: 1.5;
   tab-size: 2;
-  min-height: 0;
   white-space: pre;
+  word-spacing: 0;
+  letter-spacing: 0;
+}
+
+.highlight {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  pointer-events: none;
+  background: transparent;
+  color: #cdd6f4;
+  scrollbar-width: none;
+}
+.highlight::-webkit-scrollbar { display: none; }
+
+.highlight code {
+  display: block;
+  padding: 0;            /* отступ задаём на .highlight, не на code */
+  background: transparent;
+  font: inherit;
+}
+
+#editor {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  color: #cdd6f4;        /* fallback, если Prism не загрузился */
+  caret-color: #cdd6f4;
+  outline: none;
+  resize: none;
+  overflow: auto;
+}
+
+/* Когда подсветка активна — прячем настоящий цвет текста textarea. */
+.has-highlight #editor {
+  color: transparent;
 }
 
 #editor::selection {
   background: #45475a;
 }
+
+/* ---------- Цвета токенов Prism (Catppuccin Mocha) ---------- */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata        { color: #6c7086; font-style: italic; }
+.token.punctuation  { color: #a6adc8; }
+.token.tag,
+.token.namespace,
+.token.deleted,
+.token.selector     { color: #f38ba8; }
+.token.attr-name,
+.token.property,
+.token.constant,
+.token.symbol       { color: #fab387; }
+.token.boolean,
+.token.number       { color: #fab387; }
+.token.string,
+.token.char,
+.token.attr-value,
+.token.builtin,
+.token.inserted     { color: #a6e3a1; }
+.token.operator,
+.token.entity,
+.token.url,
+.token.variable     { color: #94e2d5; }
+.token.atrule,
+.token.keyword      { color: #cba6f7; }
+.token.function,
+.token.class-name   { color: #89b4fa; }
+.token.regex,
+.token.important    { color: #f9e2af; }
+.token.important,
+.token.bold         { font-weight: bold; }
+.token.italic       { font-style: italic; }
 
 /* ---------- Панель действий ---------- */
 .toolbar {

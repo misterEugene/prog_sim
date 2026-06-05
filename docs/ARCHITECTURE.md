@@ -52,7 +52,9 @@
 - `saveToLocalStorage(html,css,js)` — пишет один ключ `savedLessonCode` (JSON).
 - `updateIframe()` — собирает полный HTML-документ и кладёт в `iframe.srcdoc`.
 - `resetToTemplate()` — заполняет редакторы `initial*`, чистит localStorage, зовёт `updateIframe()`.
-- `downloadFile(content, filename, mime)` — Blob + `<a download>` + клик + revokeObjectURL.
+- `crc32(bytes)` / `buildZip(files)` — ручная сборка ZIP-архива (метод store, без библиотек).
+- `downloadBlob(blob, filename)` — `<a download>` + клик + revokeObjectURL.
+- `downloadProject()` — собирает три файла в ZIP и скачивает `project.zip`.
 - `showHint()` — показывает тост `lesson.hint`, прячет через 5 с.
 - `switchTab(tabId)` — переключает активную вкладку и видимый блок.
 

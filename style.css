@@ -55,17 +55,11 @@ body {
   color: var(--text);
 }
 
-.control-buttons,
-.save-buttons {
+.control-buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-}
-
-.save-label {
-  color: var(--text-muted);
-  font-size: 0.85rem;
 }
 
 /* ===== Кнопки ===== */

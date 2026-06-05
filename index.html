@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Урок программирования</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="layout">
+    <!-- ЛЕВАЯ ПАНЕЛЬ: заголовок, кнопки, вкладки, редактор/описание -->
+    <section class="panel left-panel">
+      <!-- Панель управления -->
+      <header class="controls">
+        <h1 id="lesson-title" class="lesson-title">Урок</h1>
+        <div class="control-buttons">
+          <button id="run-btn" type="button" class="btn btn-primary">▶ Запустить</button>
+          <button id="reset-btn" type="button" class="btn">↺ Сбросить урок к шаблону</button>
+          <button id="hint-btn" type="button" class="btn">💡 Подсказка</button>
+        </div>
+      </header>
+
+      <!-- Блок сохранения файлов -->
+      <div class="save-buttons">
+        <span class="save-label">Скачать файл:</span>
+        <button id="save-html-btn" type="button" class="btn btn-small">Сохранить HTML</button>
+        <button id="save-css-btn"  type="button" class="btn btn-small">Сохранить CSS</button>
+        <button id="save-js-btn"   type="button" class="btn btn-small">Сохранить JS</button>
+      </div>
+
+      <!-- Вкладки -->
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="task.md"    role="tab">task.md</button>
+        <button class="tab"        data-tab="index.html" role="tab">index.html</button>
+        <button class="tab"        data-tab="style.css"  role="tab">style.css</button>
+        <button class="tab"        data-tab="main.js"    role="tab">main.js</button>
+      </div>
+
+      <!-- Область содержимого: либо описание (Markdown), либо один из textarea -->
+      <div class="content">
+        <div id="task.md" class="tab-pane markdown-body" data-pane="task.md"></div>
+        <textarea id="index.html" class="tab-pane editor" data-pane="index.html" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" hidden></textarea>
+        <textarea id="style.css"  class="tab-pane editor" data-pane="style.css"  spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" hidden></textarea>
+        <textarea id="main.js"    class="tab-pane editor" data-pane="main.js"    spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" hidden></textarea>
+      </div>
+    </section>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ: предпросмотр -->
+    <section class="panel right-panel">
+      <div class="preview-header">Результат</div>
+      <iframe
+        id="preview"
+        title="Результат выполнения кода"
+        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+    </section>
+  </main>
+
+  <!-- Контейнер для тостов (подсказка) -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script src="main.js" defer></script>
+</body>
+</html>

@@ -92,6 +92,40 @@ input в textarea ──> saveToLocalStorage()         (iframe НЕ трогае
 `` `код` ``, абзацы (разделение пустыми строками). Порядок обработки важен —
 см. PITFALLS (экранирование HTML, code → bold → italic, списки построчно).
 
+### Редактор кода: подсветка синтаксиса + перехват Tab
+
+Подсветка в `<textarea>` напрямую невозможна, поэтому используется классический
+приём **«оверлей»**: внутри обёртки `.editor-wrap` (position: relative) лежат два
+слоя с идентичными метриками шрифта/отступов:
+
+```
+.editor-wrap (relative, overflow:hidden)
+├─ <pre class="highlight"><code>…</code></pre>   ← z-index 1, раскрашенный код
+└─ <textarea class="editor">                     ← z-index 2, color:transparent,
+                                                     caret-color виден, ввод сюда
+```
+
+- Textarea сверху, текст прозрачный (`color: transparent`), виден только курсор
+  (`caret-color`) и выделение (`::selection` с полупрозрачным фоном — цветной код
+  под ним просвечивает).
+- При `input` пересобираем `<code>.innerHTML` через `highlight(value, lang)`.
+- При `scroll` синхронизируем `pre.scrollTop/scrollLeft = textarea.scrollTop/Left`
+  (`syncScroll`). У `pre` `overflow:hidden`, прокрутка только программная.
+
+Подсветка — собственный токенайзер `tokenize(code, patterns)` (без библиотек):
+бежим по строке, на каждой позиции пробуем **липкие** регэкспы (флаг `/y`) по
+порядку; совпало — оборачиваем в `<span class="tok-…">` с `escapeHtml`, иначе
+экранируем один символ. Наборы правил: `HTML_PATTERNS`, `CSS_PATTERNS`,
+`JS_PATTERNS` (язык берётся из `data-lang` у textarea). Цвета — классы `.tok-*`
+в `style.css`. Подсветка контекстно-свободная (упрощённая), для учебного кода
+достаточно.
+
+**Tab вставляет символ табуляции** (`\t`), а не уводит фокус: `keydown` →
+`preventDefault()` → `insertTab()`. Внутри — `document.execCommand('insertText',
+false, '\t')`: сохраняет нативную историю отмены (Ctrl+Z) и сам диспатчит `input`
+(→ подсветка + автосохранение). Фолбэк на ручную вставку с эмуляцией `input`,
+если `execCommand` недоступен. Размер таба — `tab-size: 2` (одинаково у обоих слоёв).
+
 ## Отклонения от исходного ТЗ (deepseek) и обоснования
 
 1. **`srcdoc` вместо `document.write`.** document.write в iframe требует доступа к

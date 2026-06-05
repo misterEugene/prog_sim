@@ -33,6 +33,14 @@ function cacheDom() {
   els.toastContainer = document.getElementById("toast-container");
   els.tabs = Array.from(document.querySelectorAll(".tab"));
   els.panes = Array.from(document.querySelectorAll(".tab-pane"));
+
+  // Редакторы кода + связь со слоем подсветки внутри той же обёртки
+  els.editors = [els.htmlEditor, els.cssEditor, els.jsEditor];
+  els.editors.forEach((ta) => {
+    const wrap = ta.closest(".editor-wrap");
+    ta._preEl = wrap.querySelector(".highlight");
+    ta._codeEl = wrap.querySelector(".highlight code");
+  });
   // Кнопки
   els.runBtn = document.getElementById("run-btn");
   els.resetBtn = document.getElementById("reset-btn");
@@ -123,6 +131,116 @@ function renderDescription() {
 }
 
 // ============================================================
+// Подсветка синтаксиса (без библиотек)
+//
+// Приём «оверлей»: раскрашенный <pre> лежит ПОД прозрачным <textarea>.
+// Здесь — токенайзер: бежим по строке, на каждой позиции пробуем
+// «липкие» (sticky, флаг /y) регэкспы по порядку. Совпал — оборачиваем
+// в <span class="tok-…">, иначе экранируем один символ и идём дальше.
+// Экранирование (escapeHtml) обязательно: код вставляется через innerHTML.
+// ============================================================
+function tokenize(code, patterns) {
+  let out = "";
+  let i = 0;
+  const n = code.length;
+  while (i < n) {
+    let matched = false;
+    for (const p of patterns) {
+      p.re.lastIndex = i; // sticky: ищем строго с позиции i
+      const m = p.re.exec(code);
+      if (m && m[0].length > 0) {
+        out += `<span class="tok-${p.cls}">${escapeHtml(m[0])}</span>`;
+        i += m[0].length;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      out += escapeHtml(code[i]);
+      i++;
+    }
+  }
+  return out;
+}
+
+const HTML_PATTERNS = [
+  { cls: "comment", re: /<!--[\s\S]*?-->/y },
+  { cls: "keyword", re: /<!doctype[^>]*>/iy },
+  { cls: "tag", re: /<\/?[a-zA-Z][\w-]*|\/?>/y }, // < / имя тега и закрывающая >
+  { cls: "attr", re: /\s[a-zA-Z_:][\w:.-]*(?=\s*=)/y }, // имя атрибута перед =
+  { cls: "string", re: /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/y },
+];
+
+const CSS_PATTERNS = [
+  { cls: "comment", re: /\/\*[\s\S]*?\*\//y },
+  { cls: "string", re: /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/y },
+  { cls: "keyword", re: /@[\w-]+/y }, // @media, @import …
+  { cls: "number", re: /#[0-9a-fA-F]{3,8}\b/y }, // hex-цвет
+  { cls: "number", re: /-?\b\d*\.?\d+(?:[a-z%]+)?\b/y }, // число с единицей
+  { cls: "property", re: /[a-zA-Z-]+(?=\s*:)/y }, // свойство перед двоеточием
+  { cls: "punct", re: /[{}:;,]/y },
+];
+
+const JS_PATTERNS = [
+  { cls: "comment", re: /\/\/[^\n]*/y },
+  { cls: "comment", re: /\/\*[\s\S]*?\*\//y },
+  {
+    cls: "string",
+    re: /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`/y,
+  },
+  {
+    cls: "keyword",
+    re: /\b(?:const|let|var|function|return|if|else|for|while|do|switch|case|default|break|continue|new|class|extends|super|this|typeof|instanceof|in|of|null|undefined|true|false|try|catch|finally|throw|async|await|yield|delete|void)\b/y,
+  },
+  { cls: "number", re: /\b0x[0-9a-fA-F]+\b|\b\d*\.?\d+\b/y },
+  { cls: "func", re: /[a-zA-Z_$][\w$]*(?=\s*\()/y }, // имя перед "("
+  { cls: "punct", re: /[{}()[\];,.]/y },
+];
+
+const PATTERNS_BY_LANG = {
+  html: HTML_PATTERNS,
+  css: CSS_PATTERNS,
+  js: JS_PATTERNS,
+};
+
+function highlight(code, lang) {
+  return tokenize(code, PATTERNS_BY_LANG[lang] || []);
+}
+
+// Перерисовать слой подсветки под textarea и синхронизировать прокрутку.
+function updateHighlight(editor) {
+  const codeEl = editor._codeEl;
+  if (!codeEl) return;
+  codeEl.innerHTML = highlight(editor.value, editor.dataset.lang);
+  syncScroll(editor);
+}
+
+function syncScroll(editor) {
+  const pre = editor._preEl;
+  if (!pre) return;
+  pre.scrollTop = editor.scrollTop;
+  pre.scrollLeft = editor.scrollLeft;
+}
+
+// Вставка символа табуляции в позицию курсора (заменяя выделение, если есть).
+// execCommand('insertText') сохраняет нативную историю отмены (Ctrl+Z) и сам
+// диспатчит событие 'input' (→ подсветка + автосохранение). Если он недоступен —
+// откатываемся на ручную вставку с эмуляцией 'input'.
+function insertTab(editor) {
+  const ok =
+    typeof document.execCommand === "function" &&
+    document.execCommand("insertText", false, "\t");
+  if (!ok) {
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const v = editor.value;
+    editor.value = v.slice(0, start) + "\t" + v.slice(end);
+    editor.selectionStart = editor.selectionEnd = start + 1;
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+}
+
+// ============================================================
 // localStorage: загрузка / сохранение прогресса
 // ============================================================
 function loadFromLocalStorage() {
@@ -188,6 +306,7 @@ function resetToTemplate() {
   } catch (e) {
     /* недоступный storage — не критично */
   }
+  els.editors.forEach(updateHighlight);
   updateIframe();
 }
 
@@ -370,6 +489,7 @@ function init() {
 
   renderDescription();
   switchTab("task.md");
+  els.editors.forEach(updateHighlight); // первичная отрисовка подсветки
   updateIframe();
 
   // ---- Обработчики ----
@@ -385,9 +505,23 @@ function init() {
       els.cssEditor.value,
       els.jsEditor.value
     );
-  els.htmlEditor.addEventListener("input", autosave);
-  els.cssEditor.addEventListener("input", autosave);
-  els.jsEditor.addEventListener("input", autosave);
+
+  els.editors.forEach((ta) => {
+    // Ввод → пересобрать подсветку и сохранить прогресс
+    ta.addEventListener("input", () => {
+      updateHighlight(ta);
+      autosave();
+    });
+    // Прокрутка textarea → двигаем слой подсветки вместе с ней
+    ta.addEventListener("scroll", () => syncScroll(ta));
+    // Tab вставляет символ табуляции, а не уводит фокус
+    ta.addEventListener("keydown", (e) => {
+      if (e.key === "Tab" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        insertTab(ta);
+      }
+    });
+  });
 
   // Клики по вкладкам
   els.tabs.forEach((tab) => {

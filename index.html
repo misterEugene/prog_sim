@@ -29,12 +29,25 @@
         <button class="tab"        data-tab="main.js"    role="tab">main.js</button>
       </div>
 
-      <!-- Область содержимого: либо описание (Markdown), либо один из textarea -->
+      <!-- Область содержимого: либо описание (Markdown), либо редактор кода.
+           Редактор = подсветка (<pre>) под прозрачным <textarea> (приём «оверлей»). -->
       <div class="content">
         <div id="task.md" class="tab-pane markdown-body" data-pane="task.md"></div>
-        <textarea id="index.html" class="tab-pane editor" data-pane="index.html" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" hidden></textarea>
-        <textarea id="style.css"  class="tab-pane editor" data-pane="style.css"  spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" hidden></textarea>
-        <textarea id="main.js"    class="tab-pane editor" data-pane="main.js"    spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" hidden></textarea>
+
+        <div class="tab-pane editor-wrap" data-pane="index.html" hidden>
+          <pre class="highlight" aria-hidden="true"><code></code></pre>
+          <textarea id="index.html" class="editor" data-lang="html" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" wrap="off"></textarea>
+        </div>
+
+        <div class="tab-pane editor-wrap" data-pane="style.css" hidden>
+          <pre class="highlight" aria-hidden="true"><code></code></pre>
+          <textarea id="style.css" class="editor" data-lang="css" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" wrap="off"></textarea>
+        </div>
+
+        <div class="tab-pane editor-wrap" data-pane="main.js" hidden>
+          <pre class="highlight" aria-hidden="true"><code></code></pre>
+          <textarea id="main.js" class="editor" data-lang="js" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" wrap="off"></textarea>
+        </div>
       </div>
     </section>
 

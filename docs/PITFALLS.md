@@ -28,7 +28,15 @@
 
 ### Скрипт пользователя не выполняется в iframe
 - **Причина:** в `sandbox` нет `allow-scripts`.
-- **Решение:** атрибут iframe — `sandbox="allow-same-origin allow-scripts allow-popups allow-forms"` (как в ТЗ).
+- **Решение:** атрибут iframe должен содержать `allow-scripts`.
+
+### `alert()` / `confirm()` / `prompt()` не срабатывают (скрипт «как будто не работает»)
+- **Причина:** модальные диалоги в песочнице блокируются без флага `allow-modals`.
+  Скрипт выполняется, но вызов молча игнорируется (в консоли браузера — предупреждение
+  «Ignored call to 'alert()'. ...the 'allow-modals' keyword is not set.»). В исходном
+  ТЗ этот флаг забыли.
+- **Решение:** добавить `allow-modals` в `sandbox`. Итоговый набор:
+  `sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"`.
 
 ### `</script>` в пользовательском JS рвёт документ iframe
 - **Причина:** строка `</script>` внутри инлайнового `<script>` закрывает тег раньше времени.

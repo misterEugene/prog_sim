@@ -46,6 +46,9 @@ function cacheDom() {
   els.resetBtn = document.getElementById("reset-btn");
   els.hintBtn = document.getElementById("hint-btn");
   els.downloadBtn = document.getElementById("download-btn");
+  // Консоль
+  els.consoleOutput = document.getElementById("console-output");
+  els.consoleClearBtn = document.getElementById("console-clear");
 }
 
 // ============================================================
@@ -241,6 +244,75 @@ function insertTab(editor) {
 }
 
 // ============================================================
+// Emmet: раскрытие HTML-аббревиатур по Tab (движок — в emmet.js)
+// ============================================================
+
+// Извлечь аббревиатуру слева от курсора. Скользим влево, учитывая скобки
+// [] {} () (внутри них пробелы — часть аббревиатуры). Останавливаемся на
+// пробеле/начале строки. Если упёрлись в '<' — значит задели готовую
+// разметку, аббревиатуры нет (вернём пустую).
+function extractAbbreviation(text, caret) {
+  let i = caret;
+  let start = caret;
+  let depth = 0;
+  while (i > 0) {
+    const c = text[i - 1];
+    if (c === "\n") break;
+    if (c === "]" || c === "}" || c === ")") { depth++; i--; start = i; continue; }
+    if (c === "[" || c === "{" || c === "(") {
+      if (depth > 0) { depth--; i--; start = i; continue; }
+      break; // незакрытая открывающая скобка на верхнем уровне
+    }
+    if (depth > 0) { i--; start = i; continue; }
+    if (c === " " || c === "\t") break;
+    if (c === "<") return { start: caret, abbr: "" }; // задели разметку
+    i--; start = i;
+  }
+  return { start, abbr: text.slice(start, caret) };
+}
+
+// Попытка раскрыть аббревиатуру в позиции курсора. true — раскрыли.
+function tryExpandEmmet(ta) {
+  if (ta.dataset.lang !== "html") return false; // Emmet — только для HTML
+  if (!global_Emmet()) return false;
+  if (ta.selectionStart !== ta.selectionEnd) return false; // есть выделение → обычный Tab
+
+  const caret = ta.selectionStart;
+  const { start, abbr } = extractAbbreviation(ta.value, caret);
+  if (!abbr || !window.Emmet.isExpandable(abbr)) return false;
+
+  const res = window.Emmet.expand(abbr);
+  if (!res || !res.text) return false;
+
+  // Отступ текущей строки — добавляем его к каждой новой строке раскрытия
+  const lineStart = ta.value.lastIndexOf("\n", start - 1) + 1;
+  const pad = (/^[\t ]*/.exec(ta.value.slice(lineStart, start)) || [""])[0];
+  const text = res.text.replace(/\n/g, "\n" + pad);
+
+  // Курсор: смещаем на величину добавленных отступов до позиции метки
+  const newlinesBefore = res.text.slice(0, res.caret).split("\n").length - 1;
+  const caretOffset = res.caret + newlinesBefore * pad.length;
+
+  // Заменяем аббревиатуру на раскрытие (через execCommand — с историей отмены)
+  ta.selectionStart = start;
+  ta.selectionEnd = caret;
+  const ok =
+    typeof document.execCommand === "function" &&
+    document.execCommand("insertText", false, text);
+  if (!ok) {
+    const v = ta.value;
+    ta.value = v.slice(0, start) + text + v.slice(caret);
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  ta.selectionStart = ta.selectionEnd = start + caretOffset;
+  return true;
+}
+
+function global_Emmet() {
+  return typeof window.Emmet === "object" && window.Emmet;
+}
+
+// ============================================================
 // localStorage: загрузка / сохранение прогресса
 // ============================================================
 function loadFromLocalStorage() {
@@ -273,11 +345,40 @@ function saveToLocalStorage(html, css, js) {
 // ============================================================
 // Сборка и обновление iframe
 // ============================================================
+// Скрипт-перехватчик: подменяет console.* и ловит ошибки внутри iframe,
+// пересылая всё родителю через postMessage (→ встроенная консоль платформы).
+const CONSOLE_HOOK = `(function(){
+  function fmt(a){
+    if(typeof a==='string') return a;
+    if(a instanceof Error) return a.name+': '+a.message;
+    if(typeof a==='function') return String(a);
+    try{ return JSON.stringify(a); }catch(e){ return String(a); }
+  }
+  function send(level,args){
+    try{
+      var t=Array.prototype.map.call(args,fmt).join(' ');
+      parent.postMessage({__console:true,level:level,text:t},'*');
+    }catch(e){}
+  }
+  ['log','info','warn','error','debug'].forEach(function(m){
+    var orig=console[m]?console[m].bind(console):null;
+    console[m]=function(){ send(m,arguments); if(orig) orig.apply(null,arguments); };
+  });
+  window.addEventListener('error',function(e){
+    send('error',[e.message+(e.lineno?' (строка '+e.lineno+')':'')]);
+  });
+  window.addEventListener('unhandledrejection',function(e){
+    send('error',['Необработанная ошибка промиса: '+fmt(e.reason)]);
+  });
+})();`;
+
 function updateIframe() {
   const html = els.htmlEditor.value;
   const css = els.cssEditor.value;
   // Экранируем закрывающий тег, чтобы он не оборвал инлайновый <script>
   const js = els.jsEditor.value.replace(/<\/script>/gi, "<\\/script>");
+
+  clearConsole(); // новый запуск — чистим вывод прошлого
 
   const doc = `<!DOCTYPE html>
 <html>
@@ -287,11 +388,52 @@ function updateIframe() {
   </head>
   <body>
 ${html}
+    <script>${CONSOLE_HOOK}<\/script>
     <script>${js}<\/script>
   </body>
 </html>`;
 
   els.preview.srcdoc = doc;
+}
+
+// ============================================================
+// Встроенная консоль: приём сообщений из iframe и вывод на платформе
+// ============================================================
+const MAX_CONSOLE_LINES = 500;
+
+function clearConsole() {
+  if (!els.consoleOutput) return;
+  els.consoleOutput.innerHTML =
+    '<div class="console-empty">Здесь появится вывод console.log и ошибки.</div>';
+}
+
+function appendConsoleLine(level, text) {
+  const out = els.consoleOutput;
+  if (!out) return;
+  // Убираем плейсхолдер «пусто» при первом сообщении
+  const empty = out.querySelector(".console-empty");
+  if (empty) empty.remove();
+
+  const line = document.createElement("div");
+  line.className = "console-line console-" + level;
+  line.textContent = text;
+  out.appendChild(line);
+
+  // Ограничиваем число строк, чтобы не разрасталось
+  while (out.childElementCount > MAX_CONSOLE_LINES) out.firstElementChild.remove();
+
+  out.scrollTop = out.scrollHeight; // автопрокрутка вниз
+}
+
+function handleConsoleMessage(e) {
+  // Принимаем только сообщения от нашего превью-iframe
+  if (els.preview && e.source !== els.preview.contentWindow) return;
+  const data = e.data;
+  if (!data || data.__console !== true) return;
+  const level = ["log", "info", "warn", "error", "debug"].includes(data.level)
+    ? data.level
+    : "log";
+  appendConsoleLine(level, typeof data.text === "string" ? data.text : String(data.text));
 }
 
 // ============================================================
@@ -490,6 +632,7 @@ function init() {
   renderDescription();
   switchTab("task.md");
   els.editors.forEach(updateHighlight); // первичная отрисовка подсветки
+  clearConsole(); // плейсхолдер в консоли
   updateIframe();
 
   // ---- Обработчики ----
@@ -497,6 +640,10 @@ function init() {
   els.resetBtn.addEventListener("click", resetToTemplate);
   els.hintBtn.addEventListener("click", showHint);
   els.downloadBtn.addEventListener("click", downloadProject);
+  els.consoleClearBtn.addEventListener("click", clearConsole);
+
+  // Сообщения из iframe (console.* и ошибки) → встроенная консоль
+  window.addEventListener("message", handleConsoleMessage);
 
   // Автосохранение всех трёх редакторов при любом вводе
   const autosave = () =>
@@ -514,10 +661,12 @@ function init() {
     });
     // Прокрутка textarea → двигаем слой подсветки вместе с ней
     ta.addEventListener("scroll", () => syncScroll(ta));
-    // Tab вставляет символ табуляции, а не уводит фокус
+    // Tab: сначала пробуем раскрыть Emmet-аббревиатуру (только HTML),
+    // иначе вставляем символ табуляции. Shift+Tab — всегда таб.
     ta.addEventListener("keydown", (e) => {
       if (e.key === "Tab" && !e.altKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
+        if (!e.shiftKey && tryExpandEmmet(ta)) return;
         insertTab(ta);
       }
     });

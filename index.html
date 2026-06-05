@@ -51,19 +51,29 @@
       </div>
     </section>
 
-    <!-- ПРАВАЯ ПАНЕЛЬ: предпросмотр -->
+    <!-- ПРАВАЯ ПАНЕЛЬ: предпросмотр + консоль -->
     <section class="panel right-panel">
       <div class="preview-header">Результат</div>
       <iframe
         id="preview"
         title="Результат выполнения кода"
         sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe>
+
+      <!-- Встроенная консоль: вывод console.log/ошибок без DevTools -->
+      <div class="console-panel">
+        <div class="console-header">
+          <span>🖥 Консоль</span>
+          <button id="console-clear" type="button" class="btn btn-small">Очистить</button>
+        </div>
+        <div id="console-output" class="console-output" aria-live="polite"></div>
+      </div>
     </section>
   </main>
 
   <!-- Контейнер для тостов (подсказка) -->
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
+  <script src="emmet.js" defer></script>
   <script src="main.js" defer></script>
 </body>
 </html>

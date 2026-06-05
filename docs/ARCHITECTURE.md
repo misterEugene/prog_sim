@@ -124,7 +124,7 @@ input в textarea ──> saveToLocalStorage()         (iframe НЕ трогае
 `preventDefault()` → `insertTab()`. Внутри — `document.execCommand('insertText',
 false, '\t')`: сохраняет нативную историю отмены (Ctrl+Z) и сам диспатчит `input`
 (→ подсветка + автосохранение). Фолбэк на ручную вставку с эмуляцией `input`,
-если `execCommand` недоступен. Размер таба — `tab-size: 2` (одинаково у обоих слоёв).
+если `execCommand` недоступен. Размер таба — `tab-size: 4` (одинаково у обоих слоёв).
 
 ## Отклонения от исходного ТЗ (deepseek) и обоснования
 

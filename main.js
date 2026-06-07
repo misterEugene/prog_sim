@@ -267,6 +267,7 @@ function cacheDom() {
   });
   // Кнопки
   els.runBtn = document.getElementById("run-btn");
+  els.openTabBtn = document.getElementById("open-tab-btn");
   els.resetBtn = document.getElementById("reset-btn");
   els.hintBtn = document.getElementById("hint-btn");
   els.downloadBtn = document.getElementById("download-btn");
@@ -937,13 +938,13 @@ const LINK_GUARD = `(function(){
   },true);
 })();`;
 
-function updateIframe() {
+// Собрать полный HTML-документ из текущих редакторов (для превью и для открытия
+// в новой вкладке). Внедряет стили и служебные скрипты (консоль + страж ссылок).
+function buildDocument() {
   const html = els.htmlEditor.value;
   const css = els.cssEditor.value;
   // Экранируем закрывающий тег, чтобы он не оборвал инлайновый <script>
   const js = els.jsEditor.value.replace(/<\/script>/gi, "<\\/script>");
-
-  clearConsole(); // новый запуск — чистим вывод прошлого
 
   const styleTag = `<style>${css}</style>`;
   const scripts = `<script>${CONSOLE_HOOK}\n${LINK_GUARD}<\/script>\n    <script>${js}<\/script>`;
@@ -974,8 +975,29 @@ ${html}
   </body>
 </html>`;
   }
+  return doc;
+}
 
-  els.preview.srcdoc = doc;
+function updateIframe() {
+  clearConsole(); // новый запуск — чистим вывод прошлого
+  els.preview.srcdoc = buildDocument();
+}
+
+// Открыть собранный сайт ученика в отдельной вкладке (через Blob-URL).
+function openInNewTab() {
+  const blob = new Blob([buildDocument()], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, "_blank");
+  if (!win) {
+    URL.revokeObjectURL(url);
+    showToast(
+      "Не удалось открыть вкладку",
+      "Разреши всплывающие окна (popups) для этой страницы и нажми кнопку снова."
+    );
+    return;
+  }
+  // Освобождаем URL позже — чтобы новая вкладка успела загрузить документ.
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
 // ============================================================
@@ -1235,6 +1257,7 @@ function init() {
 
   // ---- Обработчики ----
   els.runBtn.addEventListener("click", updateIframe);
+  els.openTabBtn.addEventListener("click", openInNewTab);
   els.resetBtn.addEventListener("click", resetToTemplate);
   els.hintBtn.addEventListener("click", showHint);
   els.downloadBtn.addEventListener("click", downloadProject);

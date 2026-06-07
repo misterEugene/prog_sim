@@ -50,7 +50,12 @@
 - `renderDescription()` — кладёт `markdownToHtml(lesson.descriptionMd)` в `.markdown-body`.
 - `loadFromLocalStorage()` → `{html,css,js}` | `null`.
 - `saveToLocalStorage(html,css,js)` — пишет один ключ `savedLessonCode` (JSON).
-- `updateIframe()` — собирает полный HTML-документ и кладёт в `iframe.srcdoc`.
+- `buildDocument()` — собирает полный HTML-документ из текущих редакторов (стили +
+  служебные скрипты). Общий для превью и «новой вкладки».
+- `updateIframe()` — `clearConsole()` + кладёт `buildDocument()` в `iframe.srcdoc`.
+- `openInNewTab()` — `buildDocument()` → `Blob('text/html')` → `URL.createObjectURL`
+  → `window.open(url, '_blank')`; URL освобождается через 30 с (чтобы вкладка
+  успела загрузиться). Если popup заблокирован — тост с подсказкой.
 - `resetToTemplate()` — заполняет редакторы `initial*`, чистит localStorage, зовёт `updateIframe()`.
 - `crc32(bytes)` / `buildZip(files)` — ручная сборка ZIP-архива (метод store, без библиотек).
 - `downloadBlob(blob, filename)` — `<a download>` + клик + revokeObjectURL.

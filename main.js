@@ -4,18 +4,238 @@
 // ============================================================
 
 // ---- Данные урока (источник истины) ----
+// Многошаговый урок: расширяем объект `lesson` массивом `steps[]`. Каждый шаг —
+// учебная цель + готовые сниппеты, которые кнопка «Вставить блок» дописывает в
+// нужные редакторы. Картинки товаров — эмодзи (полностью локально, без CDN).
 const lesson = {
-  title: "Урок 1: Измени цвет текста",
-  descriptionMd: `# Измени цвет текста
+  title: "Урок: Собери свой интернет-магазин",
 
-У тебя есть абзац с текстом.
-**Задача:** сделать его цвет **синим**.
+  introMd: `# 🛍️ Собери свой интернет-магазин
 
-Подсказка: используй CSS-свойство \`color\`.`,
-  initialHTML: `<p>Привет, я учусь программировать!</p>`,
+Сегодня ты — **веб-разработчик**! Шаг за шагом ты соберёшь настоящий
+интернет-магазин: с шапкой, баннером, товарами и работающей корзиной.
+
+**Как это работает:**
+
+- Нажми кнопку **«Вставить блок»** — готовый код добавится в твои файлы.
+- Нажми **▶ Запустить** (вверху) — и увидишь, как сайт растёт!
+- Потом измени детали сам: текст, цвета, цены, эмодзи.
+
+Готов? Поехали! 👇`,
+
+  outroMd: `# 🎉 Поздравляем, ты справился!
+
+Ты собрал настоящий интернет-магазин и побывал в роли **веб-разработчика**.
+Ты научился:
+
+- добавлять разметку **HTML** (шапка, баннер, карточки, подвал);
+- украшать сайт через **CSS** (цвета, отступы, сетка);
+- оживлять страницу на **JavaScript** (рабочая кнопка «В корзину»).
+
+Нажми **⬇ Скачать проект** вверху — и твой магазин сохранится в файл!`,
+
+  hint: "Каждый шаг одинаковый: нажми «Вставить блок» → нажми ▶ Запустить → посмотри результат → измени деталь сам.",
+
+  initialHTML: ``, // пусто — сайт «вырастает» из вставляемых блоков
   initialCSS: ``,
   initialJS: ``,
-  hint: "Напиши в CSS: p { color: blue; }",
+
+  steps: [
+    {
+      // ----- Шаг 1: Шапка -----
+      title: "Шапка магазина",
+      time: "10 мин",
+      goalMd:
+        "**Цель:** добавить верхнюю часть сайта — *шапку*.\n\n**Новый термин:** `<header>` — это HTML-тег для «шапки» страницы, где обычно живут логотип и меню.",
+      actionMd:
+        "Кнопка добавит разметку шапки в **index.html** и её стили в **style.css**.",
+      snippets: {
+        html: `<!-- Шапка магазина: логотип, меню и корзина -->
+<header class="site-header">
+  <div class="logo">🛍️ МегаМаркет</div>
+  <nav class="menu">
+    <a href="#">Главная</a>
+    <a href="#">Товары</a>
+    <a href="#">Контакты</a>
+  </nav>
+  <div class="cart">🛒 Корзина: <span id="cart-count">0</span></div>
+</header>`,
+        css: `/* Стили шапки */
+.site-header {
+  display: flex;                 /* всё в одну строку */
+  align-items: center;
+  justify-content: space-between;
+  background: #5b3df5;           /* цвет фона шапки */
+  color: #fff;
+  padding: 16px 24px;
+}
+.logo { font-size: 22px; font-weight: bold; }
+.menu a { color: #fff; margin-left: 16px; text-decoration: none; }
+.menu a:hover { text-decoration: underline; }
+.cart { font-weight: bold; }`,
+      },
+      taskMd:
+        "🔧 **Сделай сам:** в **index.html** замени название `МегаМаркет` на имя своего магазина. А в **style.css** поменяй цвет шапки `background: #5b3df5` на свой любимый.\n\n**Ожидаемый результат:** после ▶ Запустить шапка поменяет название и цвет.",
+      hintMd:
+        "Цвет можно написать словом (`red`, `green`, `teal`) или кодом вида `#ff8a5b`.",
+      doneMd:
+        "✅ **Готово, когда** вверху сайта видны твой логотип, меню и «🛒 Корзина: 0».",
+    },
+    {
+      // ----- Шаг 2: Баннер -----
+      title: "Баннер со скидкой",
+      time: "10 мин",
+      goalMd:
+        "**Цель:** добавить большой яркий баннер с заголовком и кнопкой.\n\n**Новый термин:** `<button>` — это кнопка, на которую можно нажимать.",
+      actionMd:
+        "Кнопка добавит баннер в **index.html** и его стили в **style.css**.",
+      snippets: {
+        html: `<!-- Баннер: главный заголовок и кнопка -->
+<section class="banner">
+  <h1>Скидки до 50%!</h1>
+  <p>Самые крутые товары по лучшим ценам</p>
+  <button class="banner-btn">Купить сейчас</button>
+</section>`,
+        css: `/* Стили баннера */
+.banner {
+  text-align: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #ffd86b, #ff8a5b);
+  color: #3a2a00;
+}
+.banner h1 { font-size: 40px; margin: 0 0 10px; }
+.banner-btn {
+  background: #5b3df5; color: #fff; border: none;
+  padding: 14px 28px; font-size: 18px; border-radius: 8px; cursor: pointer;
+}
+.banner-btn:hover { background: #4a2fd0; }`,
+      },
+      taskMd:
+        "🔧 **Сделай сам:** поменяй заголовок `Скидки до 50%!` на свой и придумай новый текст для кнопки вместо `Купить сейчас`.\n\n**Ожидаемый результат:** после ▶ Запустить баннер покажет твой текст.",
+      hintMd:
+        "Заголовок — это текст между `<h1>` и `</h1>`, а текст кнопки — между `<button …>` и `</button>`.",
+      doneMd: "✅ **Готово, когда** на сайте виден яркий баннер с заголовком и кнопкой.",
+    },
+    {
+      // ----- Шаг 3: Карточки товаров -----
+      title: "Карточки товаров",
+      time: "20 мин",
+      goalMd:
+        "**Цель:** показать товары красивой сеткой — *каждый товар в своей карточке*.\n\n**Новый термин:** `class` — это «ярлык» элемента, по которому CSS понимает, как его украсить. У всех карточек класс `card`.",
+      actionMd:
+        "Кнопка добавит сетку из трёх товаров в **index.html** и её стили в **style.css**.",
+      snippets: {
+        html: `<!-- Сетка товаров: три карточки -->
+<section class="products">
+  <div class="card">
+    <div class="card-img">👟</div>
+    <h3 class="card-title">Кроссовки</h3>
+    <p class="card-price">3 990 ₽</p>
+    <button class="add-to-cart">В корзину</button>
+  </div>
+  <div class="card">
+    <div class="card-img">🎧</div>
+    <h3 class="card-title">Наушники</h3>
+    <p class="card-price">2 490 ₽</p>
+    <button class="add-to-cart">В корзину</button>
+  </div>
+  <div class="card">
+    <div class="card-img">⌚</div>
+    <h3 class="card-title">Часы</h3>
+    <p class="card-price">5 990 ₽</p>
+    <button class="add-to-cart">В корзину</button>
+  </div>
+</section>`,
+        css: `/* Сетка карточек товаров */
+.products {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  padding: 24px;
+}
+.card {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+  background: #fff;
+}
+.card-img { font-size: 64px; }
+.card-title { margin: 10px 0 4px; font-size: 18px; }
+.card-price { color: #5b3df5; font-weight: bold; font-size: 18px; margin: 0 0 12px; }
+.add-to-cart {
+  background: #5b3df5; color: #fff; border: none;
+  padding: 10px 16px; border-radius: 6px; cursor: pointer; width: 100%;
+}
+.add-to-cart:hover { background: #4a2fd0; }`,
+      },
+      taskMd:
+        "🔧 **Сделай сам:** поменяй у любого товара эмодзи (например, `👟` на `🎒`), название или цену.\n\n⭐ **Со звёздочкой:** скопируй один блок `<div class=\"card\">…</div>` целиком и вставь рядом — получится четвёртый товар!",
+      hintMd:
+        "Эмодзи можно скопировать прямо из этого задания, а название и цену — просто перепечатать между тегами.",
+      doneMd:
+        "✅ **Готово, когда** видно три (или больше) карточки товаров с кнопками «В корзину».",
+    },
+    {
+      // ----- Шаг 4: Подвал -----
+      title: "Подвал с контактами",
+      time: "10 мин",
+      goalMd:
+        "**Цель:** добавить нижнюю часть сайта — *подвал* с контактами.\n\n**Новый термин:** `<footer>` — это «подвал» страницы, где пишут контакты и копирайт.",
+      actionMd:
+        "Кнопка добавит подвал в **index.html** и его стили в **style.css**.",
+      snippets: {
+        html: `<!-- Подвал сайта: контакты и копирайт -->
+<footer class="site-footer">
+  <p>📞 Телефон: 8-800-555-35-35</p>
+  <p>✉️ Почта: shop@example.com</p>
+  <p>© 2026 МегаМаркет. Все права защищены.</p>
+</footer>`,
+        css: `/* Стили подвала */
+.site-footer {
+  background: #2b2b3a;
+  color: #cfcfe0;
+  text-align: center;
+  padding: 24px;
+  margin-top: 20px;
+}
+.site-footer p { margin: 4px 0; }`,
+      },
+      taskMd:
+        "🔧 **Сделай сам:** замени телефон и почту на свои выдуманные.\n\n**Ожидаемый результат:** после ▶ Запустить в подвале появятся твои контакты.",
+      hintMd: "Меняй только текст внутри `<p>…</p>`, сами теги трогать не нужно.",
+      doneMd:
+        "✅ **Готово, когда** внизу сайта виден подвал с телефоном, почтой и копирайтом.",
+    },
+    {
+      // ----- Шаг 5: Интерактив на JS -----
+      title: "Оживляем кнопку «В корзину»",
+      time: "15 мин",
+      goalMd:
+        "**Цель:** сделать так, чтобы кнопка «В корзину» работала и считала товары.\n\n**Новый термин:** `addEventListener('click', …)` — это «слушатель»: он говорит кнопке, что делать по нажатию.",
+      actionMd: "Кнопка добавит код в **main.js** — он оживит все кнопки «В корзину».",
+      snippets: {
+        js: `// Заставляем кнопки "В корзину" работать
+let count = 0;
+const counter = document.getElementById("cart-count");
+const buttons = document.querySelectorAll(".add-to-cart");
+
+buttons.forEach(function (button) {
+  button.addEventListener("click", function () {
+    count = count + 1;            // увеличиваем счётчик
+    counter.textContent = count;  // показываем число в корзине
+    console.log("Товар добавлен! Всего в корзине: " + count);
+  });
+});`,
+      },
+      taskMd:
+        "🔧 **Сделай сам:** поменяй сообщение в `console.log(...)` на своё (например, «Ура, покупка!»). Нажми ▶ Запустить и понажимай «В корзину» — смотри, как растёт счётчик и появляются строки в консоли 🖥.",
+      hintMd:
+        "Счётчик в шапке — это `<span id=\"cart-count\">`. JavaScript находит его по `id` и меняет число.",
+      doneMd:
+        "✅ **Готово, когда** при клике на «В корзину» число у «🛒 Корзина» растёт, а в консоли видны сообщения.",
+    },
+  ],
 };
 
 const STORAGE_KEY = "savedLessonCode";
@@ -130,10 +350,167 @@ function markdownToHtml(md) {
 }
 
 // ============================================================
-// Рендер описания урока
+// Рендер урока: вступление + карточки шагов + финал
 // ============================================================
-function renderDescription() {
-  els.markdown.innerHTML = markdownToHtml(lesson.descriptionMd);
+// Какие шаги уже выполнены (вставлены). Индексы шагов lesson.steps.
+const doneSteps = new Set();
+
+// Построить DOM-карточку одного шага. Кнопка «Вставить блок» сразу получает
+// обработчик; её состояние (активна/выполнена/заблокирована) задаёт updateProgress.
+function buildStepCard(step, index) {
+  const card = document.createElement("section");
+  card.className = "step";
+  card.dataset.stepIndex = String(index);
+
+  const head = document.createElement("div");
+  head.className = "step-head";
+  head.innerHTML =
+    `<span class="step-num">Шаг ${index + 1}</span>` +
+    `<span class="step-title"></span>` +
+    `<span class="step-time">⏱ ${step.time}</span>`;
+  head.querySelector(".step-title").textContent = step.title;
+  card.appendChild(head);
+
+  const goal = document.createElement("div");
+  goal.className = "step-goal";
+  goal.innerHTML = markdownToHtml(step.goalMd);
+  card.appendChild(goal);
+
+  const action = document.createElement("div");
+  action.className = "step-action";
+  action.innerHTML = markdownToHtml(step.actionMd);
+  card.appendChild(action);
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "btn-insert";
+  btn.dataset.insert = String(index);
+  btn.addEventListener("click", () => insertBlock(index));
+  card.appendChild(btn);
+
+  const task = document.createElement("div");
+  task.className = "step-task";
+  task.innerHTML = markdownToHtml(step.taskMd);
+  card.appendChild(task);
+
+  const hint = document.createElement("details");
+  hint.className = "step-hint";
+  const summary = document.createElement("summary");
+  summary.textContent = "💡 Подсказка";
+  hint.appendChild(summary);
+  const hintBody = document.createElement("div");
+  hintBody.innerHTML = markdownToHtml(step.hintMd);
+  hint.appendChild(hintBody);
+  card.appendChild(hint);
+
+  const done = document.createElement("div");
+  done.className = "step-done";
+  done.innerHTML = markdownToHtml(step.doneMd);
+  card.appendChild(done);
+
+  return card;
+}
+
+function renderLesson() {
+  const root = els.markdown;
+  root.innerHTML = "";
+
+  const intro = document.createElement("div");
+  intro.className = "lesson-intro";
+  intro.innerHTML = markdownToHtml(lesson.introMd);
+  root.appendChild(intro);
+
+  const progress = document.createElement("div");
+  progress.className = "lesson-progress";
+  progress.innerHTML =
+    '<div class="progress-text"></div>' +
+    '<div class="progress-bar"><div class="progress-fill"></div></div>';
+  root.appendChild(progress);
+  els.progressText = progress.querySelector(".progress-text");
+  els.progressFill = progress.querySelector(".progress-fill");
+
+  lesson.steps.forEach((step, i) => root.appendChild(buildStepCard(step, i)));
+
+  const outro = document.createElement("div");
+  outro.className = "lesson-outro";
+  outro.hidden = true;
+  outro.innerHTML = markdownToHtml(lesson.outroMd);
+  root.appendChild(outro);
+  els.outro = outro;
+
+  updateProgress();
+}
+
+// Обновить состояние кнопок, прогресс-бар и показ финала.
+// Линейная разблокировка: активна кнопка только следующего невыполненного шага.
+function updateProgress() {
+  const total = lesson.steps.length;
+  const doneCount = doneSteps.size;
+  const next = firstUndoneStep();
+
+  els.markdown.querySelectorAll(".btn-insert").forEach((btn) => {
+    const i = Number(btn.dataset.insert);
+    btn.classList.remove("done", "locked");
+    if (doneSteps.has(i)) {
+      btn.disabled = true;
+      btn.classList.add("done");
+      btn.textContent = `✓ Блок ${i + 1} добавлен`;
+    } else if (i === next) {
+      btn.disabled = false;
+      btn.textContent = `➕ Вставить блок ${i + 1}`;
+    } else {
+      btn.disabled = true;
+      btn.classList.add("locked");
+      btn.textContent = `🔒 Сначала добавь блок ${i}`;
+    }
+  });
+
+  if (els.progressText) {
+    els.progressText.textContent = `Готово блоков: ${doneCount} из ${total}`;
+  }
+  if (els.progressFill) {
+    els.progressFill.style.width = Math.round((doneCount / total) * 100) + "%";
+  }
+  if (els.outro) els.outro.hidden = doneCount < total;
+}
+
+// Индекс первого невыполненного шага (или -1, если всё готово).
+function firstUndoneStep() {
+  for (let i = 0; i < lesson.steps.length; i++) {
+    if (!doneSteps.has(i)) return i;
+  }
+  return -1;
+}
+
+// Дописать строку в конец редактора (с отбивкой пустой строкой, если он не пуст),
+// затем перерисовать подсветку. Подсветка/автосейв — тот же путь, что при вводе.
+function appendToEditor(editor, snippet) {
+  const cur = editor.value;
+  editor.value = cur.trim() ? cur.replace(/\s*$/, "") + "\n\n" + snippet : snippet;
+  updateHighlight(editor);
+}
+
+// Вставить блок шага: дописать сниппеты в нужные редакторы, отметить шаг готовым,
+// сохранить прогресс и подсказать нажать «Запустить».
+function insertBlock(index) {
+  if (doneSteps.has(index)) return;       // уже вставлен
+  if (index !== firstUndoneStep()) return; // не по порядку — игнорируем
+
+  const snip = lesson.steps[index].snippets || {};
+  const where = [];
+  if (snip.html) { appendToEditor(els.htmlEditor, snip.html); where.push("index.html"); }
+  if (snip.css)  { appendToEditor(els.cssEditor, snip.css);   where.push("style.css"); }
+  if (snip.js)   { appendToEditor(els.jsEditor, snip.js);     where.push("main.js"); }
+
+  doneSteps.add(index);
+  autosave();
+  updateProgress();
+
+  const lastDone = doneSteps.size === lesson.steps.length;
+  showToast(
+    lastDone ? "🎉 Все блоки добавлены!" : "Блок добавлен",
+    `Код добавлен в ${where.join(" и ")}. Нажми ▶ Запустить, чтобы увидеть результат!`
+  );
 }
 
 // ============================================================
@@ -417,6 +794,8 @@ function loadFromLocalStorage() {
         html: typeof data.html === "string" ? data.html : lesson.initialHTML,
         css: typeof data.css === "string" ? data.css : lesson.initialCSS,
         js: typeof data.js === "string" ? data.js : lesson.initialJS,
+        // Прогресс шагов; нет/битое поле → пустой список (обратная совместимость)
+        done: Array.isArray(data.done) ? data.done : [],
       };
     }
     return null;
@@ -426,12 +805,22 @@ function loadFromLocalStorage() {
   }
 }
 
-function saveToLocalStorage(html, css, js) {
+function saveToLocalStorage(html, css, js, done) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ html, css, js }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ html, css, js, done }));
   } catch (e) {
     // Запись недоступна (приватный режим и т.п.) — молча игнорируем
   }
+}
+
+// Сохранить текущее состояние всех редакторов и прогресс шагов.
+function autosave() {
+  saveToLocalStorage(
+    els.htmlEditor.value,
+    els.cssEditor.value,
+    els.jsEditor.value,
+    Array.from(doneSteps)
+  );
 }
 
 // ============================================================
@@ -535,12 +924,14 @@ function resetToTemplate() {
   els.htmlEditor.value = lesson.initialHTML;
   els.cssEditor.value = lesson.initialCSS;
   els.jsEditor.value = lesson.initialJS;
+  doneSteps.clear(); // сбрасываем прогресс шагов
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (e) {
     /* недоступный storage — не критично */
   }
   els.editors.forEach(updateHighlight);
+  renderLesson(); // перерисовать карточки шагов (кнопки снова активны)
   updateIframe();
 }
 
@@ -673,15 +1064,15 @@ function downloadProject() {
 }
 
 // ============================================================
-// Подсказка (тост, исчезает через 5 секунд)
+// Тост (всплывающее уведомление, исчезает через 5 секунд)
 // ============================================================
-function showHint() {
+function showToast(title, text) {
   const toast = document.createElement("div");
   toast.className = "toast";
   toast.innerHTML =
-    '<div class="toast-title">💡 Подсказка</div>' +
-    '<div class="toast-text"></div>';
-  toast.querySelector(".toast-text").textContent = lesson.hint;
+    '<div class="toast-title"></div>' + '<div class="toast-text"></div>';
+  toast.querySelector(".toast-title").textContent = title;
+  toast.querySelector(".toast-text").textContent = text;
   els.toastContainer.appendChild(toast);
 
   // Запускаем появление в следующем кадре, чтобы сработал transition
@@ -692,6 +1083,11 @@ function showHint() {
     // Удаляем из DOM после завершения анимации исчезновения
     setTimeout(() => toast.remove(), 300);
   }, 5000);
+}
+
+// Общая подсказка по уроку (кнопка «Подсказка» вверху).
+function showHint() {
+  showToast("💡 Подсказка", lesson.hint);
 }
 
 // ============================================================
@@ -722,7 +1118,15 @@ function init() {
   els.cssEditor.value = saved ? saved.css : lesson.initialCSS;
   els.jsEditor.value = saved ? saved.js : lesson.initialJS;
 
-  renderDescription();
+  // Восстанавливаем прогресс шагов (какие блоки уже вставлены)
+  doneSteps.clear();
+  if (saved && Array.isArray(saved.done)) {
+    saved.done.forEach((i) => {
+      if (i >= 0 && i < lesson.steps.length) doneSteps.add(i);
+    });
+  }
+
+  renderLesson();
   switchTab("task.md");
   els.editors.forEach(updateHighlight); // первичная отрисовка подсветки
   clearConsole(); // плейсхолдер в консоли
@@ -737,14 +1141,6 @@ function init() {
 
   // Сообщения из iframe (console.* и ошибки) → встроенная консоль
   window.addEventListener("message", handleConsoleMessage);
-
-  // Автосохранение всех трёх редакторов при любом вводе
-  const autosave = () =>
-    saveToLocalStorage(
-      els.htmlEditor.value,
-      els.cssEditor.value,
-      els.jsEditor.value
-    );
 
   els.editors.forEach((ta) => {
     // Ввод → пересобрать подсветку, сохранить прогресс, обновить Emmet-превью

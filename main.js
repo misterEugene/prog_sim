@@ -918,6 +918,19 @@ const CONSOLE_HOOK = `(function(){
   });
 })();`;
 
+// Страж ссылок в превью. В iframe c srcdoc якорные/пустые ссылки (href="#")
+// разрешаются ОТНОСИТЕЛЬНО адреса родителя (платформы), поэтому клик по такой
+// ссылке грузил бы платформу внутрь превью. Гасим переход по ссылкам-заглушкам.
+const LINK_GUARD = `(function(){
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    var a=t&&t.closest?t.closest('a'):null;
+    if(!a) return;
+    var href=a.getAttribute('href')||'';
+    if(href===''||href.charAt(0)==='#') e.preventDefault();
+  },true);
+})();`;
+
 function updateIframe() {
   const html = els.htmlEditor.value;
   const css = els.cssEditor.value;
@@ -927,7 +940,7 @@ function updateIframe() {
   clearConsole(); // новый запуск — чистим вывод прошлого
 
   const styleTag = `<style>${css}</style>`;
-  const scripts = `<script>${CONSOLE_HOOK}<\/script>\n    <script>${js}<\/script>`;
+  const scripts = `<script>${CONSOLE_HOOK}\n${LINK_GUARD}<\/script>\n    <script>${js}<\/script>`;
 
   let doc;
   if (/<\/body>/i.test(html)) {

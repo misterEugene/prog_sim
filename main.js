@@ -49,6 +49,9 @@ function cacheDom() {
   // Консоль
   els.consoleOutput = document.getElementById("console-output");
   els.consoleClearBtn = document.getElementById("console-clear");
+  // Emmet-превью (всплывающая подсказка у курсора)
+  els.emmetPreview = document.getElementById("emmet-preview");
+  els.emmetPreviewCode = els.emmetPreview.querySelector("code");
 }
 
 // ============================================================
@@ -310,6 +313,95 @@ function tryExpandEmmet(ta) {
 
 function global_Emmet() {
   return typeof window.Emmet === "object" && window.Emmet;
+}
+
+// ============================================================
+// Emmet-превью: всплывающая подсказка со структурой, которую вставит Tab
+// ============================================================
+
+// Свойства, влияющие на раскладку текста — копируем в «зеркало», чтобы
+// вычислить пиксельные координаты курсора внутри textarea.
+const MIRROR_PROPS = [
+  "boxSizing", "width", "paddingTop", "paddingRight", "paddingBottom",
+  "paddingLeft", "borderTopWidth", "borderRightWidth", "borderBottomWidth",
+  "borderLeftWidth", "fontFamily", "fontSize", "fontWeight", "fontStyle",
+  "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "MozTabSize",
+  "textIndent",
+];
+
+let mirrorEl = null; // переиспользуемый невидимый div для измерений
+
+// Координаты курсора (позиция pos) ОТНОСИТЕЛЬНО области текста textarea, без
+// учёта прокрутки. Приём «зеркало»: невидимый div с теми же метриками, в нём
+// текст до курсора + span-маркер; берём offset маркера.
+function caretCoords(ta, pos) {
+  if (!mirrorEl) {
+    mirrorEl = document.createElement("div");
+    mirrorEl.setAttribute("aria-hidden", "true");
+    document.body.appendChild(mirrorEl);
+  }
+  const div = mirrorEl;
+  const cs = getComputedStyle(ta);
+  MIRROR_PROPS.forEach((p) => { div.style[p] = cs[p]; });
+  div.style.position = "absolute";
+  div.style.visibility = "hidden";
+  div.style.whiteSpace = "pre"; // wrap="off" → строки не переносятся
+  div.style.overflow = "hidden";
+  div.style.top = "-9999px";
+  div.style.left = "0";
+
+  div.textContent = ta.value.slice(0, pos);
+  const marker = document.createElement("span");
+  marker.textContent = "​"; // нулевой пробел — место курсора
+  div.appendChild(marker);
+
+  const left = marker.offsetLeft;
+  const top = marker.offsetTop;
+  const lineHeight = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4;
+  return { left, top, lineHeight };
+}
+
+function hideEmmetPreview() {
+  if (els.emmetPreview) els.emmetPreview.hidden = true;
+}
+
+// Показать (или обновить/скрыть) подсказку для текущей позиции в редакторе.
+// Использует те же extractAbbreviation/isExpandable/expand, что и Tab —
+// поэтому превью точно совпадает с тем, что реально вставится.
+function updateEmmetPreview(ta) {
+  if (ta.dataset.lang !== "html") return hideEmmetPreview();
+  if (!global_Emmet()) return hideEmmetPreview();
+  if (ta.selectionStart !== ta.selectionEnd) return hideEmmetPreview();
+
+  const caret = ta.selectionStart;
+  const { abbr } = extractAbbreviation(ta.value, caret);
+  if (!abbr || !window.Emmet.isExpandable(abbr)) return hideEmmetPreview();
+
+  const res = window.Emmet.expand(abbr);
+  if (!res || !res.text) return hideEmmetPreview();
+
+  const box = els.emmetPreview;
+  els.emmetPreviewCode.innerHTML = highlight(res.text, "html");
+  box.hidden = false; // снимаем hidden до замеров offsetWidth/Height
+
+  // Позиция: под строкой курсора. Координаты курсора → экранные (textarea
+  // bounding rect + смещение в тексте − прокрутка).
+  const c = caretCoords(ta, caret);
+  const taRect = ta.getBoundingClientRect();
+  let x = taRect.left + c.left - ta.scrollLeft;
+  let y = taRect.top + c.top - ta.scrollTop + c.lineHeight + 4;
+
+  // Клампим в пределах окна; если не влезает вниз — показываем над строкой.
+  const bw = box.offsetWidth;
+  const bh = box.offsetHeight;
+  if (x + bw > window.innerWidth - 8) x = window.innerWidth - 8 - bw;
+  if (x < 8) x = 8;
+  if (y + bh > window.innerHeight - 8) {
+    y = taRect.top + c.top - ta.scrollTop - bh - 4;
+  }
+  if (y < 8) y = 8;
+  box.style.left = x + "px";
+  box.style.top = y + "px";
 }
 
 // ============================================================
@@ -612,6 +704,7 @@ function switchTab(tabId) {
   els.panes.forEach((pane) => {
     pane.hidden = pane.dataset.pane !== tabId;
   });
+  hideEmmetPreview(); // при смене вкладки подсказка неактуальна
 }
 
 // ============================================================
@@ -654,18 +747,32 @@ function init() {
     );
 
   els.editors.forEach((ta) => {
-    // Ввод → пересобрать подсветку и сохранить прогресс
+    // Ввод → пересобрать подсветку, сохранить прогресс, обновить Emmet-превью
     ta.addEventListener("input", () => {
       updateHighlight(ta);
       autosave();
+      updateEmmetPreview(ta);
     });
-    // Прокрутка textarea → двигаем слой подсветки вместе с ней
-    ta.addEventListener("scroll", () => syncScroll(ta));
+    // Прокрутка textarea → двигаем слой подсветки и переставляем превью
+    ta.addEventListener("scroll", () => {
+      syncScroll(ta);
+      if (!els.emmetPreview.hidden) updateEmmetPreview(ta);
+    });
+    // Курсор сместился (клик/стрелки) → пересчитать превью
+    ta.addEventListener("keyup", (e) => {
+      if (e.key.startsWith("Arrow") || e.key === "Home" || e.key === "End") {
+        updateEmmetPreview(ta);
+      }
+    });
+    ta.addEventListener("click", () => updateEmmetPreview(ta));
+    ta.addEventListener("blur", hideEmmetPreview);
     // Tab: сначала пробуем раскрыть Emmet-аббревиатуру (только HTML),
     // иначе вставляем символ табуляции. Shift+Tab — всегда таб.
     ta.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") return hideEmmetPreview();
       if (e.key === "Tab" && !e.altKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
+        hideEmmetPreview();
         if (!e.shiftKey && tryExpandEmmet(ta)) return;
         insertTab(ta);
       }

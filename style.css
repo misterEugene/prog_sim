@@ -358,6 +358,38 @@ body {
   font-size: 0.85rem;
 }
 
+/* ===== Emmet-превью: всплывающая подсказка у курсора ===== */
+.emmet-preview {
+  position: fixed;
+  z-index: 1000;
+  max-width: 60ch;
+  max-height: 50vh;
+  overflow: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  padding: 6px 8px;
+  pointer-events: none;          /* не перехватывает клики/набор */
+}
+.emmet-preview[hidden] { display: none; }
+.emmet-preview-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.emmet-preview-code {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.45;
+  tab-size: 4;
+  -moz-tab-size: 4;
+  white-space: pre;
+  color: var(--text);
+}
+
 /* ===== Адаптивность: узкий экран — в столбец ===== */
 @media (max-width: 800px) {
   .layout {

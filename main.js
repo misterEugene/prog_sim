@@ -55,12 +55,12 @@ const lesson = {
         "Кнопка добавит разметку шапки в **index.html** и её стили в **style.css**.",
       snippets: {
         html: `<!-- Шапка магазина: логотип, меню и корзина -->
-<header class="site-header">
+<header class="site-header" id="home">
   <div class="logo">🛍️ МегаМаркет</div>
   <nav class="menu">
-    <a href="#">Главная</a>
-    <a href="#">Товары</a>
-    <a href="#">Контакты</a>
+    <a href="#home">Главная</a>
+    <a href="#products">Товары</a>
+    <a href="#contacts">Контакты</a>
   </nav>
   <div class="cart">🛒 Корзина: <span id="cart-count">0</span></div>
 </header>`,
@@ -130,7 +130,7 @@ const lesson = {
         "Кнопка добавит сетку из трёх товаров в **index.html** и её стили в **style.css**.",
       snippets: {
         html: `<!-- Сетка товаров: три карточки -->
-<section class="products">
+<section class="products" id="products">
   <div class="card">
     <div class="card-img">👟</div>
     <h3 class="card-title">Кроссовки</h3>
@@ -190,7 +190,7 @@ const lesson = {
         "Кнопка добавит подвал в **index.html** и его стили в **style.css**.",
       snippets: {
         html: `<!-- Подвал сайта: контакты и копирайт -->
-<footer class="site-footer">
+<footer class="site-footer" id="contacts">
   <p>📞 Телефон: 8-800-555-35-35</p>
   <p>✉️ Почта: shop@example.com</p>
   <p>© 2026 МегаМаркет. Все права защищены.</p>
@@ -918,16 +918,22 @@ const CONSOLE_HOOK = `(function(){
   });
 })();`;
 
-// Страж ссылок в превью. В iframe c srcdoc якорные/пустые ссылки (href="#")
-// разрешаются ОТНОСИТЕЛЬНО адреса родителя (платформы), поэтому клик по такой
-// ссылке грузил бы платформу внутрь превью. Гасим переход по ссылкам-заглушкам.
+// Страж якорных ссылок в превью. В iframe c srcdoc якорные ссылки (#section)
+// разрешаются ОТНОСИТЕЛЬНО адреса родителя (платформы), поэтому клик уводил бы
+// превью на платформу. Перехватываем клики по #-ссылкам: гасим переход и сами
+// плавно прокручиваем к секции с нужным id (если она уже есть на странице).
 const LINK_GUARD = `(function(){
   document.addEventListener('click',function(e){
     var t=e.target;
     var a=t&&t.closest?t.closest('a'):null;
     if(!a) return;
     var href=a.getAttribute('href')||'';
-    if(href===''||href.charAt(0)==='#') e.preventDefault();
+    if(href===''||href.charAt(0)==='#'){
+      e.preventDefault();
+      var id=href.slice(1);
+      var el=id?document.getElementById(id):null;
+      if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+    }
   },true);
 })();`;
 

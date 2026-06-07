@@ -15,7 +15,11 @@ const lesson = {
 Сегодня ты — **веб-разработчик**! Шаг за шагом ты соберёшь настоящий
 интернет-магазин: с шапкой, баннером, товарами и работающей корзиной.
 
-**Как это работает:**
+**Шаг 0 — создай каркас сайта (один раз):** открой вкладку **index.html**,
+напечатай **!** и нажми **Tab** — появится основа страницы (теги \`html\`,
+\`head\`, \`body\`). Все блоки будут аккуратно вставляться **внутрь** неё.
+
+**Дальше для каждого блока:**
 
 - Нажми кнопку **«Вставить блок»** — готовый код добавится в твои файлы.
 - Нажми **▶ Запустить** (вверху) — и увидишь, как сайт растёт!
@@ -483,12 +487,42 @@ function firstUndoneStep() {
   return -1;
 }
 
-// Дописать строку в конец редактора (с отбивкой пустой строкой, если он не пуст),
+// Обернуть код блока комментариями-границами (свои для каждого языка),
+// чтобы в файле было видно, где блок начинается и заканчивается.
+function wrapBlock(lang, title, code) {
+  const bar = "=======";
+  if (lang === "html") {
+    return `<!-- ${bar} НАЧАЛО: ${title} ${bar} -->\n${code}\n<!-- ${bar} КОНЕЦ: ${title} ${bar} -->`;
+  }
+  if (lang === "css") {
+    return `/* ${bar} НАЧАЛО: ${title} ${bar} */\n${code}\n/* ${bar} КОНЕЦ: ${title} ${bar} */`;
+  }
+  return `// ${bar} НАЧАЛО: ${title} ${bar}\n${code}\n// ${bar} КОНЕЦ: ${title} ${bar}`;
+}
+
+// Дописать блок в конец редактора (с отбивкой пустой строкой, если он не пуст),
 // затем перерисовать подсветку. Подсветка/автосейв — тот же путь, что при вводе.
-function appendToEditor(editor, snippet) {
+// Используется для CSS и JS (у них нет тега </body>).
+function appendToEditor(editor, block) {
   const cur = editor.value;
-  editor.value = cur.trim() ? cur.replace(/\s*$/, "") + "\n\n" + snippet : snippet;
+  editor.value = cur.trim() ? cur.replace(/\s*$/, "") + "\n\n" + block : block;
   updateHighlight(editor);
+}
+
+// Вставить HTML-блок ПЕРЕД закрывающим </body> (с отступом на уровень глубже).
+// Возвращает false, если </body> нет (ученик ещё не создал каркас через Emmet «!»).
+function insertHtmlBeforeBody(editor, block) {
+  const v = editor.value;
+  const m = /([ \t]*)<\/body>/i.exec(v);
+  if (!m) return false;
+  const indent = (m[1] || "") + "\t"; // содержимое body — на уровень глубже </body>
+  const indented = block
+    .split("\n")
+    .map((line) => (line ? indent + line : line))
+    .join("\n");
+  editor.value = v.slice(0, m.index) + indented + "\n" + v.slice(m.index);
+  updateHighlight(editor);
+  return true;
 }
 
 // Вставить блок шага: дописать сниппеты в нужные редакторы, отметить шаг готовым,
@@ -498,11 +532,35 @@ function insertBlock(index) {
   // Новый блок вставляем только по порядку; уже добавленный — повторно в любой момент
   if (!isReinsert && index !== firstUndoneStep()) return;
 
-  const snip = lesson.steps[index].snippets || {};
+  const step = lesson.steps[index];
+  const snip = step.snippets || {};
   const where = [];
-  if (snip.html) { appendToEditor(els.htmlEditor, snip.html); where.push("index.html"); }
-  if (snip.css)  { appendToEditor(els.cssEditor, snip.css);   where.push("style.css"); }
-  if (snip.js)   { appendToEditor(els.jsEditor, snip.js);     where.push("main.js"); }
+
+  // HTML вставляем перед </body>. Если каркаса нет — ошибка, ничего не вставляем
+  // (иначе блоки попали бы после </body></html> — структура была бы сломана).
+  if (snip.html) {
+    const ok = insertHtmlBeforeBody(
+      els.htmlEditor,
+      wrapBlock("html", step.title, snip.html)
+    );
+    if (!ok) {
+      showToast(
+        "⚠ Сначала создай каркас сайта",
+        "Открой вкладку index.html, напечатай ! и нажми Tab — появится основа страницы. Потом снова нажми «Вставить блок»."
+      );
+      return;
+    }
+    where.push("index.html");
+  }
+  // CSS и JS — отдельные файлы, дописываем в конец (тоже с комментариями-границами)
+  if (snip.css) {
+    appendToEditor(els.cssEditor, wrapBlock("css", step.title, snip.css));
+    where.push("style.css");
+  }
+  if (snip.js) {
+    appendToEditor(els.jsEditor, wrapBlock("js", step.title, snip.js));
+    where.push("main.js");
+  }
 
   doneSteps.add(index);
   autosave();
@@ -868,18 +926,35 @@ function updateIframe() {
 
   clearConsole(); // новый запуск — чистим вывод прошлого
 
-  const doc = `<!DOCTYPE html>
+  const styleTag = `<style>${css}</style>`;
+  const scripts = `<script>${CONSOLE_HOOK}<\/script>\n    <script>${js}<\/script>`;
+
+  let doc;
+  if (/<\/body>/i.test(html)) {
+    // Ученик создал полный каркас (Emmet «!»). Используем его как документ:
+    // стили вставляем перед </head>, скрипты — перед </body>. Замены через
+    // функцию-replacer, чтобы символы $ в коде ребёнка не толковались как $&/$1.
+    doc = html;
+    if (/<\/head>/i.test(doc)) {
+      doc = doc.replace(/<\/head>/i, () => `  ${styleTag}\n</head>`);
+    } else {
+      doc = styleTag + "\n" + doc;
+    }
+    doc = doc.replace(/<\/body>/i, () => `  ${scripts}\n</body>`);
+  } else {
+    // Каркаса нет (фрагмент) — оборачиваем сами, как раньше.
+    doc = `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8">
-    <style>${css}</style>
+    ${styleTag}
   </head>
   <body>
 ${html}
-    <script>${CONSOLE_HOOK}<\/script>
-    <script>${js}<\/script>
+    ${scripts}
   </body>
 </html>`;
+  }
 
   els.preview.srcdoc = doc;
 }

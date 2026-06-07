@@ -321,8 +321,8 @@ body {
   background: #e8f5e9;
   color: #2e7d32;
   border: 1px solid #a5d6a7;
-  cursor: default;
 }
+.btn-insert.done:hover { background: #d3ecd5; }
 .btn-insert.locked {
   background: #ececf3;
   color: #9a9ab0;

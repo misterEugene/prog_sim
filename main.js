@@ -452,9 +452,10 @@ function updateProgress() {
     const i = Number(btn.dataset.insert);
     btn.classList.remove("done", "locked");
     if (doneSteps.has(i)) {
-      btn.disabled = true;
+      // Уже добавленный блок можно вставить повторно (если ребёнок удалил код)
+      btn.disabled = false;
       btn.classList.add("done");
-      btn.textContent = `✓ Блок ${i + 1} добавлен`;
+      btn.textContent = `↻ Вставить блок ${i + 1} снова`;
     } else if (i === next) {
       btn.disabled = false;
       btn.textContent = `➕ Вставить блок ${i + 1}`;
@@ -493,8 +494,9 @@ function appendToEditor(editor, snippet) {
 // Вставить блок шага: дописать сниппеты в нужные редакторы, отметить шаг готовым,
 // сохранить прогресс и подсказать нажать «Запустить».
 function insertBlock(index) {
-  if (doneSteps.has(index)) return;       // уже вставлен
-  if (index !== firstUndoneStep()) return; // не по порядку — игнорируем
+  const isReinsert = doneSteps.has(index);
+  // Новый блок вставляем только по порядку; уже добавленный — повторно в любой момент
+  if (!isReinsert && index !== firstUndoneStep()) return;
 
   const snip = lesson.steps[index].snippets || {};
   const where = [];
@@ -506,9 +508,14 @@ function insertBlock(index) {
   autosave();
   updateProgress();
 
-  const lastDone = doneSteps.size === lesson.steps.length;
+  const allDone = doneSteps.size === lesson.steps.length;
+  const title = isReinsert
+    ? "Блок добавлен снова"
+    : allDone
+      ? "🎉 Все блоки добавлены!"
+      : "Блок добавлен";
   showToast(
-    lastDone ? "🎉 Все блоки добавлены!" : "Блок добавлен",
+    title,
     `Код добавлен в ${where.join(" и ")}. Нажми ▶ Запустить, чтобы увидеть результат!`
   );
 }

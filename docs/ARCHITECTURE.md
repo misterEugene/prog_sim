@@ -51,11 +51,28 @@
 - `loadFromLocalStorage()` → `{html,css,js}` | `null`.
 - `saveToLocalStorage(html,css,js)` — пишет один ключ `savedLessonCode` (JSON).
 - `buildDocument()` — собирает полный HTML-документ из текущих редакторов (стили +
-  служебные скрипты). Общий для превью и «новой вкладки».
-- `updateIframe()` — `clearConsole()` + кладёт `buildDocument()` в `iframe.srcdoc`.
-- `openInNewTab()` — `buildDocument()` → `Blob('text/html')` → `URL.createObjectURL`
-  → `window.open(url, '_blank')`; URL освобождается через 30 с (чтобы вкладка
-  успела загрузиться). Если popup заблокирован — тост с подсказкой.
+  служебные скрипты). Общий для превью и вкладки просмотра.
+- `updateIframe()` — `clearConsole()` + кладёт `buildDocument()` в `iframe.srcdoc`
+  и зеркалит документ в localStorage (`savePreviewDoc`, ключ `previewDoc`).
+- `savePreviewDoc(doc)` — пишет готовый документ в localStorage (try/catch).
+- `openInNewTab()` — сохраняет свежий снимок и открывает `preview.html` в
+  именованной вкладке (`window.open(..., 'shopPreview')`). Если popup заблокирован —
+  тост с подсказкой.
+
+### Отдельная вкладка просмотра — `preview.html` (живое зеркало через localStorage)
+
+Кнопка «🔗 Открыть в новой вкладке» открывает **отдельный файл `preview.html`**, а
+НЕ Blob-снимок. Почему: Blob-URL — статичен (не отражает правки) и при отзыве
+(`revokeObjectURL`) вкладка «ломалась» после перезагрузки.
+
+Механизм: на каждый «Запустить» платформа кладёт готовый документ в localStorage
+(`previewDoc`). `preview.html` содержит полноэкранный `<iframe>`, читает `previewDoc`
+в свой `srcdoc` и подписан на событие **`storage`** (приходит из другой вкладки того
+же origin) → переотображается синхронно с «Запустить». Плюсы: отражает изменения
+(по Run, как и встроенное превью), переживает перезагрузку вкладки, ничего не
+«отзывается». Нет дублирования логики сборки — `preview.html` лишь показывает уже
+собранный платформой документ. (Событие `storage` стабильно по HTTP; на `file://`
+зависит от браузера, но первичная загрузка/перезагрузка работают.)
 - `resetToTemplate()` — заполняет редакторы `initial*`, чистит localStorage, зовёт `updateIframe()`.
 - `crc32(bytes)` / `buildZip(files)` — ручная сборка ZIP-архива (метод store, без библиотек).
 - `downloadBlob(blob, filename)` — `<a download>` + клик + revokeObjectURL.

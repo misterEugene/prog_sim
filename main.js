@@ -243,6 +243,9 @@ buttons.forEach(function (button) {
 };
 
 const STORAGE_KEY = "savedLessonCode";
+// Готовый документ для отдельной вкладки просмотра (preview.html). Пишется на
+// каждый «Запустить»; preview.html читает его и обновляется по событию storage.
+const PREVIEW_DOC_KEY = "previewDoc";
 
 // ---- Ссылки на DOM-элементы ----
 const els = {};
@@ -978,26 +981,38 @@ ${html}
   return doc;
 }
 
-function updateIframe() {
-  clearConsole(); // новый запуск — чистим вывод прошлого
-  els.preview.srcdoc = buildDocument();
+// Сохранить готовый документ для вкладки просмотра (preview.html подхватит его
+// по событию storage). Ошибки storage (приватный режим) — молча игнорируем.
+function savePreviewDoc(doc) {
+  try {
+    localStorage.setItem(PREVIEW_DOC_KEY, doc);
+  } catch (e) {
+    /* storage недоступен — вкладка просмотра просто не обновится */
+  }
 }
 
-// Открыть собранный сайт ученика в отдельной вкладке (через Blob-URL).
+function updateIframe() {
+  clearConsole(); // новый запуск — чистим вывод прошлого
+  const doc = buildDocument();
+  els.preview.srcdoc = doc;
+  savePreviewDoc(doc); // зеркалим в отдельную вкладку (если открыта)
+}
+
+// Открыть сайт ученика в отдельной вкладке. Вкладка (preview.html) — живое
+// зеркало превью: читает документ из localStorage и обновляется на каждый
+// «Запустить» (через событие storage). Именованная цель — повторный клик
+// переиспользует ту же вкладку.
 function openInNewTab() {
-  const blob = new Blob([buildDocument()], { type: "text/html;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const win = window.open(url, "_blank");
+  savePreviewDoc(buildDocument()); // свежий снимок к моменту открытия
+  const win = window.open("preview.html", "shopPreview");
   if (!win) {
-    URL.revokeObjectURL(url);
     showToast(
       "Не удалось открыть вкладку",
       "Разреши всплывающие окна (popups) для этой страницы и нажми кнопку снова."
     );
     return;
   }
-  // Освобождаем URL позже — чтобы новая вкладка успела загрузить документ.
-  setTimeout(() => URL.revokeObjectURL(url), 30000);
+  win.focus();
 }
 
 // ============================================================

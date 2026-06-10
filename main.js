@@ -21,8 +21,9 @@ const lesson = {
 
 **Дальше для каждого блока:**
 
-- Нажми кнопку **«Вставить блок»** — готовый код добавится в твои файлы.
-- Нажми **▶ Запустить** (вверху) — и увидишь, как сайт растёт!
+- У блока есть отдельная кнопка на каждый кусочек кода: **HTML** → index.html, **CSS** → style.css, **JS** → main.js. Нажимай их по очереди — платформа откроет нужный файл, и код появится прямо в редакторе.
+- Вставка работает как обычный ввод: передумал — нажми **Ctrl+Z**, и кусочек исчезнет.
+- Когда все кусочки блока на месте, нажми **▶ Запустить** (вверху) — и увидишь, как сайт растёт!
 - Потом измени детали сам: текст, цвета, цены, эмодзи.
 
 Готов? Поехали! 👇`,
@@ -38,7 +39,7 @@ const lesson = {
 
 Нажми **⬇ Скачать проект** вверху — и твой магазин сохранится в файл!`,
 
-  hint: "Каждый шаг одинаковый: нажми «Вставить блок» → нажми ▶ Запустить → посмотри результат → измени деталь сам.",
+  hint: "Каждый шаг одинаковый: вставь кнопками все кусочки блока (HTML, CSS…) → нажми ▶ Запустить → посмотри результат → измени деталь сам.",
 
   initialHTML: ``, // пусто — сайт «вырастает» из вставляемых блоков
   initialCSS: ``,
@@ -52,7 +53,7 @@ const lesson = {
       goalMd:
         "**Цель:** добавить верхнюю часть сайта — *шапку*.\n\n**Новый термин:** `<header>` — это HTML-тег для «шапки» страницы, где обычно живут логотип и меню.",
       actionMd:
-        "Кнопка добавит разметку шапки в **index.html** и её стили в **style.css**.",
+        "Кнопки ниже добавят разметку шапки в **index.html** и её стили в **style.css** — вставь оба кусочка.",
       snippets: {
         html: `<!-- Шапка магазина: логотип, меню и корзина -->
 <header class="site-header" id="home">
@@ -92,7 +93,7 @@ const lesson = {
       goalMd:
         "**Цель:** добавить большой яркий баннер с заголовком и кнопкой.\n\n**Новый термин:** `<button>` — это кнопка, на которую можно нажимать.",
       actionMd:
-        "Кнопка добавит баннер в **index.html** и его стили в **style.css**.",
+        "Кнопки добавят баннер в **index.html** и его стили в **style.css**.",
       snippets: {
         html: `<!-- Баннер: главный заголовок и кнопка -->
 <section class="banner">
@@ -127,7 +128,7 @@ const lesson = {
       goalMd:
         "**Цель:** показать товары красивой сеткой — *каждый товар в своей карточке*.\n\n**Новый термин:** `class` — это «ярлык» элемента, по которому CSS понимает, как его украсить. У всех карточек класс `card`.",
       actionMd:
-        "Кнопка добавит сетку из трёх товаров в **index.html** и её стили в **style.css**.",
+        "Кнопки добавят сетку из трёх товаров в **index.html** и её стили в **style.css**.",
       snippets: {
         html: `<!-- Сетка товаров: три карточки -->
 <section class="products" id="products">
@@ -187,7 +188,7 @@ const lesson = {
       goalMd:
         "**Цель:** добавить нижнюю часть сайта — *подвал* с контактами.\n\n**Новый термин:** `<footer>` — это «подвал» страницы, где пишут контакты и копирайт.",
       actionMd:
-        "Кнопка добавит подвал в **index.html** и его стили в **style.css**.",
+        "Кнопки добавят подвал в **index.html** и его стили в **style.css**.",
       snippets: {
         html: `<!-- Подвал сайта: контакты и копирайт -->
 <footer class="site-footer" id="contacts">
@@ -360,11 +361,43 @@ function markdownToHtml(md) {
 // ============================================================
 // Рендер урока: вступление + карточки шагов + финал
 // ============================================================
-// Какие шаги уже выполнены (вставлены). Индексы шагов lesson.steps.
-const doneSteps = new Set();
+// Части блока (сниппеты) вставляются ОТДЕЛЬНЫМИ кнопками — по одной на язык.
+// Куда вставляется каждая часть и как она называется в UI:
+const PART_INFO = {
+  html: { file: "index.html", label: "HTML", editor: () => els.htmlEditor },
+  css: { file: "style.css", label: "CSS", editor: () => els.cssEditor },
+  js: { file: "main.js", label: "JS", editor: () => els.jsEditor },
+};
+const PART_ORDER = ["html", "css", "js"];
 
-// Построить DOM-карточку одного шага. Кнопка «Вставить блок» сразу получает
-// обработчик; её состояние (активна/выполнена/заблокирована) задаёт updateProgress.
+// Какие части блоков уже вставлены. Ключ — "индексШага:язык" (см. partKey).
+const doneParts = new Set();
+
+function partKey(index, lang) {
+  return index + ":" + lang;
+}
+
+// Языки частей шага в порядке вставки (html → css → js).
+function stepLangs(step) {
+  return PART_ORDER.filter((lang) => step.snippets && step.snippets[lang]);
+}
+
+// Шаг выполнен, когда вставлены ВСЕ его части.
+function isStepDone(index) {
+  return stepLangs(lesson.steps[index]).every((lang) =>
+    doneParts.has(partKey(index, lang))
+  );
+}
+
+function doneStepCount() {
+  let n = 0;
+  for (let i = 0; i < lesson.steps.length; i++) if (isStepDone(i)) n++;
+  return n;
+}
+
+// Построить DOM-карточку одного шага. Каждая часть блока (HTML/CSS/JS) получает
+// свою кнопку вставки; их состояние (активна/выполнена/заблокирована) задаёт
+// updateProgress.
 function buildStepCard(step, index) {
   const card = document.createElement("section");
   card.className = "step";
@@ -389,12 +422,18 @@ function buildStepCard(step, index) {
   action.innerHTML = markdownToHtml(step.actionMd);
   card.appendChild(action);
 
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "btn-insert";
-  btn.dataset.insert = String(index);
-  btn.addEventListener("click", () => insertBlock(index));
-  card.appendChild(btn);
+  const buttons = document.createElement("div");
+  buttons.className = "step-buttons";
+  stepLangs(step).forEach((lang) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn-insert";
+    btn.dataset.insert = String(index);
+    btn.dataset.lang = lang;
+    btn.addEventListener("click", () => insertPart(index, lang));
+    buttons.appendChild(btn);
+  });
+  card.appendChild(buttons);
 
   const task = document.createElement("div");
   task.className = "step-task";
@@ -450,27 +489,30 @@ function renderLesson() {
 }
 
 // Обновить состояние кнопок, прогресс-бар и показ финала.
-// Линейная разблокировка: активна кнопка только следующего невыполненного шага.
+// Линейная разблокировка: активны кнопки только следующего невыполненного шага.
 function updateProgress() {
   const total = lesson.steps.length;
-  const doneCount = doneSteps.size;
+  const doneCount = doneStepCount();
   const next = firstUndoneStep();
 
   els.markdown.querySelectorAll(".btn-insert").forEach((btn) => {
     const i = Number(btn.dataset.insert);
+    const info = PART_INFO[btn.dataset.lang];
     btn.classList.remove("done", "locked");
-    if (doneSteps.has(i)) {
-      // Уже добавленный блок можно вставить повторно (если ребёнок удалил код)
+    btn.title = "";
+    if (doneParts.has(partKey(i, btn.dataset.lang))) {
+      // Уже добавленную часть можно вставить повторно (если ребёнок удалил код)
       btn.disabled = false;
       btn.classList.add("done");
-      btn.textContent = `↻ Вставить блок ${i + 1} снова`;
+      btn.textContent = `↻ Вставить ${info.label} снова`;
     } else if (i === next) {
       btn.disabled = false;
-      btn.textContent = `➕ Вставить блок ${i + 1}`;
+      btn.textContent = `➕ Вставить ${info.label} → ${info.file}`;
     } else {
       btn.disabled = true;
       btn.classList.add("locked");
-      btn.textContent = `🔒 Сначала добавь блок ${i}`;
+      btn.textContent = `🔒 Вставить ${info.label}`;
+      btn.title = `Сначала собери блок ${next + 1}`;
     }
   });
 
@@ -483,10 +525,10 @@ function updateProgress() {
   if (els.outro) els.outro.hidden = doneCount < total;
 }
 
-// Индекс первого невыполненного шага (или -1, если всё готово).
+// Индекс первого шага с невставленными частями (или -1, если всё готово).
 function firstUndoneStep() {
   for (let i = 0; i < lesson.steps.length; i++) {
-    if (!doneSteps.has(i)) return i;
+    if (!isStepDone(i)) return i;
   }
   return -1;
 }
@@ -504,82 +546,109 @@ function wrapBlock(lang, title, code) {
   return `// ${bar} НАЧАЛО: ${title} ${bar}\n${code}\n// ${bar} КОНЕЦ: ${title} ${bar}`;
 }
 
-// Дописать блок в конец редактора (с отбивкой пустой строкой, если он не пуст),
-// затем перерисовать подсветку. Подсветка/автосейв — тот же путь, что при вводе.
-// Используется для CSS и JS (у них нет тега </body>).
-function appendToEditor(editor, block) {
-  const cur = editor.value;
-  editor.value = cur.trim() ? cur.replace(/\s*$/, "") + "\n\n" + block : block;
-  updateHighlight(editor);
+// Вставить текст в редактор КАК ПОЛЬЗОВАТЕЛЬСКИЙ ВВОД: фокус + выделение
+// диапазона [start, end) + execCommand('insertText'). Это кладёт вставку в
+// нативную историю отмены (Ctrl+Z убирает её одним шагом, как свой ввод) и
+// само диспатчит 'input' (→ подсветка + автосохранение). Редактор должен быть
+// видим (см. switchTab перед вызовом) — скрытый textarea не фокусируется.
+function insertAsUserInput(editor, start, end, text) {
+  editor.focus();
+  editor.setSelectionRange(start, end);
+  const ok =
+    typeof document.execCommand === "function" &&
+    document.execCommand("insertText", false, text);
+  if (!ok) {
+    // Фолбэк без нативного Undo, но с тем же событием input
+    const v = editor.value;
+    editor.value = v.slice(0, start) + text + v.slice(end);
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  const caret = start + text.length;
+  editor.setSelectionRange(caret, caret);
+  // Прокручиваем так, чтобы вставленный код оказался на виду
+  const c = caretCoords(editor, caret);
+  editor.scrollTop = Math.max(0, c.top - editor.clientHeight / 2);
+  syncScroll(editor);
 }
 
-// Вставить HTML-блок ПЕРЕД закрывающим </body> (с отступом на уровень глубже).
-// Возвращает false, если </body> нет (ученик ещё не создал каркас через Emmet «!»).
-function insertHtmlBeforeBody(editor, block) {
-  const v = editor.value;
-  const m = /([ \t]*)<\/body>/i.exec(v);
-  if (!m) return false;
-  const indent = (m[1] || "") + "\t"; // содержимое body — на уровень глубже </body>
-  const indented = block
-    .split("\n")
-    .map((line) => (line ? indent + line : line))
-    .join("\n");
-  editor.value = v.slice(0, m.index) + indented + "\n" + v.slice(m.index);
-  updateHighlight(editor);
-  return true;
-}
-
-// Вставить блок шага: дописать сниппеты в нужные редакторы, отметить шаг готовым,
-// сохранить прогресс и подсказать нажать «Запустить».
-function insertBlock(index) {
-  const isReinsert = doneSteps.has(index);
-  // Новый блок вставляем только по порядку; уже добавленный — повторно в любой момент
+// Вставить ОДНУ часть блока (html/css/js) в её файл: открыть нужную вкладку,
+// вставить код как пользовательский ввод (Ctrl+Z работает), отметить часть
+// готовой, сохранить прогресс и подсказать следующий шаг.
+function insertPart(index, lang) {
+  const key = partKey(index, lang);
+  const isReinsert = doneParts.has(key);
+  // Новые части вставляем только в текущем блоке; добавленную — повторно в любой момент
   if (!isReinsert && index !== firstUndoneStep()) return;
 
   const step = lesson.steps[index];
-  const snip = step.snippets || {};
-  const where = [];
+  const code = step.snippets && step.snippets[lang];
+  if (!code) return;
 
-  // HTML вставляем перед </body>. Если каркаса нет — ошибка, ничего не вставляем
-  // (иначе блоки попали бы после </body></html> — структура была бы сломана).
-  if (snip.html) {
-    const ok = insertHtmlBeforeBody(
-      els.htmlEditor,
-      wrapBlock("html", step.title, snip.html)
-    );
-    if (!ok) {
+  const info = PART_INFO[lang];
+  const editor = info.editor();
+  const block = wrapBlock(lang, step.title, code);
+  const v = editor.value;
+
+  let start, end, text;
+  if (lang === "html") {
+    // HTML — внутрь каркаса, перед </body> (с отступом на уровень глубже).
+    // Каркаса нет — ничего не вставляем (иначе блок попал бы после </body></html>).
+    const m = /([ \t]*)<\/body>/i.exec(v);
+    if (!m) {
       showToast(
         "⚠ Сначала создай каркас сайта",
-        "Открой вкладку index.html, напечатай ! и нажми Tab — появится основа страницы. Потом снова нажми «Вставить блок»."
+        "Открой вкладку index.html, напечатай ! и нажми Tab — появится основа страницы. Потом снова нажми кнопку вставки."
       );
       return;
     }
-    where.push("index.html");
-  }
-  // CSS и JS — отдельные файлы, дописываем в конец (тоже с комментариями-границами)
-  if (snip.css) {
-    appendToEditor(els.cssEditor, wrapBlock("css", step.title, snip.css));
-    where.push("style.css");
-  }
-  if (snip.js) {
-    appendToEditor(els.jsEditor, wrapBlock("js", step.title, snip.js));
-    where.push("main.js");
+    const indent = (m[1] || "") + "\t"; // содержимое body — на уровень глубже </body>
+    start = end = m.index;
+    text =
+      block
+        .split("\n")
+        .map((line) => (line ? indent + line : line))
+        .join("\n") + "\n";
+  } else {
+    // CSS/JS — отдельные файлы, дописываем в конец: выделяем хвостовые пустые
+    // строки и заменяем их отбивкой \n\n + блок (одним шагом отмены).
+    start = v.search(/\s*$/);
+    end = v.length;
+    text = start > 0 ? "\n\n" + block : block;
   }
 
-  doneSteps.add(index);
+  switchTab(info.file); // показать файл: ребёнок видит вставку, а фокус — возможен
+  insertAsUserInput(editor, start, end, text);
+
+  doneParts.add(key);
   autosave();
   updateProgress();
 
-  const allDone = doneSteps.size === lesson.steps.length;
-  const title = isReinsert
-    ? "Блок добавлен снова"
-    : allDone
-      ? "🎉 Все блоки добавлены!"
-      : "Блок добавлен";
-  showToast(
-    title,
-    `Код добавлен в ${where.join(" и ")}. Нажми ▶ Запустить, чтобы увидеть результат!`
+  const remaining = stepLangs(step).filter(
+    (l) => !doneParts.has(partKey(index, l))
   );
+  if (isReinsert) {
+    showToast(
+      "Кусочек добавлен снова",
+      `${info.label} снова вставлен в ${info.file}. Нажми ▶ Запустить, чтобы увидеть результат!`
+    );
+  } else if (remaining.length) {
+    showToast(
+      "Кусочек добавлен",
+      `${info.label} вставлен в ${info.file}. Вернись на вкладку 📖 Урок и вставь ещё: ${remaining
+        .map((l) => PART_INFO[l].label)
+        .join(", ")}.`
+    );
+  } else if (doneStepCount() === lesson.steps.length) {
+    showToast(
+      "🎉 Все блоки добавлены!",
+      `${info.label} вставлен в ${info.file}. Нажми ▶ Запустить, чтобы увидеть результат!`
+    );
+  } else {
+    showToast(
+      `Блок «${step.title}» собран!`,
+      `${info.label} вставлен в ${info.file}. Нажми ▶ Запустить, чтобы увидеть результат!`
+    );
+  }
 }
 
 // ============================================================
@@ -863,7 +932,7 @@ function loadFromLocalStorage() {
         html: typeof data.html === "string" ? data.html : lesson.initialHTML,
         css: typeof data.css === "string" ? data.css : lesson.initialCSS,
         js: typeof data.js === "string" ? data.js : lesson.initialJS,
-        // Прогресс шагов; нет/битое поле → пустой список (обратная совместимость)
+        // Прогресс вставки; нет/битое поле → пустой список (обратная совместимость)
         done: Array.isArray(data.done) ? data.done : [],
       };
     }
@@ -882,13 +951,13 @@ function saveToLocalStorage(html, css, js, done) {
   }
 }
 
-// Сохранить текущее состояние всех редакторов и прогресс шагов.
+// Сохранить текущее состояние всех редакторов и прогресс вставки частей.
 function autosave() {
   saveToLocalStorage(
     els.htmlEditor.value,
     els.cssEditor.value,
     els.jsEditor.value,
-    Array.from(doneSteps)
+    Array.from(doneParts)
   );
 }
 
@@ -1062,7 +1131,7 @@ function resetToTemplate() {
   els.htmlEditor.value = lesson.initialHTML;
   els.cssEditor.value = lesson.initialCSS;
   els.jsEditor.value = lesson.initialJS;
-  doneSteps.clear(); // сбрасываем прогресс шагов
+  doneParts.clear(); // сбрасываем прогресс вставки частей
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (e) {
@@ -1256,11 +1325,29 @@ function init() {
   els.cssEditor.value = saved ? saved.css : lesson.initialCSS;
   els.jsEditor.value = saved ? saved.js : lesson.initialJS;
 
-  // Восстанавливаем прогресс шагов (какие блоки уже вставлены)
-  doneSteps.clear();
+  // Восстанавливаем прогресс вставки (какие части блоков уже вставлены)
+  doneParts.clear();
   if (saved && Array.isArray(saved.done)) {
-    saved.done.forEach((i) => {
-      if (i >= 0 && i < lesson.steps.length) doneSteps.add(i);
+    saved.done.forEach((entry) => {
+      // Старый формат — номер шага: считаем вставленными все его части
+      if (typeof entry === "number") {
+        if (entry >= 0 && entry < lesson.steps.length) {
+          stepLangs(lesson.steps[entry]).forEach((lang) =>
+            doneParts.add(partKey(entry, lang))
+          );
+        }
+        return;
+      }
+      if (typeof entry !== "string") return;
+      const [i, lang] = entry.split(":");
+      const idx = Number(i);
+      if (
+        idx >= 0 &&
+        idx < lesson.steps.length &&
+        stepLangs(lesson.steps[idx]).includes(lang)
+      ) {
+        doneParts.add(entry);
+      }
     });
   }
 

@@ -212,6 +212,11 @@ body {
 .tok-tag      { color: #f07178; }
 .tok-attr     { color: #ffcb6b; }
 .tok-punct    { color: #89ddff; }
+/* Метка-пропуск [ВПИШИ …] — ярко-жёлтый фон, чтобы ученик сразу её находил.
+   ВАЖНО: меняем только color/background (и border-radius) — никаких padding,
+   border или font-weight: они изменили бы ширину текста и «разъехали» бы слой
+   подсветки с textarea (см. PITFALLS про метрики слоёв). */
+.tok-todo     { color: #1a1300; background: #ffe066; border-radius: 3px; }
 
 /* ===== Markdown-описание ===== */
 .markdown-body {

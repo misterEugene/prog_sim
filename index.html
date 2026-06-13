@@ -7,35 +7,42 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="layout">
-    <!-- ЛЕВАЯ ПАНЕЛЬ: заголовок, кнопки, вкладки, редактор/описание -->
-    <section class="panel left-panel">
-      <!-- Панель управления -->
-      <header class="controls">
-        <h1 id="lesson-title" class="lesson-title">Урок</h1>
-        <div class="control-buttons">
-          <button id="run-btn" type="button" class="btn btn-primary">▶ Запустить</button>
-          <button id="open-tab-btn" type="button" class="btn">🔗 Открыть в новой вкладке</button>
-          <button id="reset-btn" type="button" class="btn">↺ Начать заново</button>
-          <button id="hint-btn" type="button" class="btn">💡 Подсказка</button>
-          <button id="download-btn" type="button" class="btn">⬇ Скачать проект</button>
-        </div>
-      </header>
+  <!-- Верхняя панель: заголовок урока и общие кнопки управления -->
+  <header class="topbar">
+    <h1 id="lesson-title" class="lesson-title">Урок</h1>
+    <div class="control-buttons">
+      <button id="toggle-task-btn" type="button" class="btn">◀ Свернуть задание</button>
+      <button id="run-btn" type="button" class="btn btn-primary">▶ Запустить</button>
+      <button id="open-tab-btn" type="button" class="btn">🔗 Открыть в новой вкладке</button>
+      <button id="reset-btn" type="button" class="btn">↺ Начать заново</button>
+      <button id="hint-btn" type="button" class="btn">💡 Подсказка</button>
+      <button id="download-btn" type="button" class="btn">⬇ Скачать проект</button>
+    </div>
+  </header>
 
-      <!-- Вкладки -->
+  <!-- Три колонки: задание | редакторы кода | результат.
+       Между колонками — перетаскиваемые разделители (.splitter), как в VS Code.
+       Ширина колонок задаётся через flex-grow (доля от свободного места). -->
+  <main class="layout" id="layout">
+    <!-- КОЛОНКА 1: Задание (Markdown урока) -->
+    <section class="col col-task" id="col-task">
+      <div class="col-header">📖 Урок</div>
+      <div id="task.md" class="markdown-body"></div>
+    </section>
+
+    <div class="splitter" id="split-1" role="separator" aria-orientation="vertical"
+         title="Потяни, чтобы изменить ширину"></div>
+
+    <!-- КОЛОНКА 2: Редакторы кода.
+         Редактор = подсветка (<pre>) под прозрачным <textarea> (приём «оверлей»). -->
+    <section class="col col-editors" id="col-editors">
       <div class="tabs" role="tablist">
-        <button class="tab active" data-tab="task.md"    role="tab">📖 Урок</button>
-        <button class="tab"        data-tab="index.html" role="tab">index.html</button>
+        <button class="tab active" data-tab="index.html" role="tab">index.html</button>
         <button class="tab"        data-tab="style.css"  role="tab">style.css</button>
         <button class="tab"        data-tab="main.js"    role="tab">main.js</button>
       </div>
-
-      <!-- Область содержимого: либо описание (Markdown), либо редактор кода.
-           Редактор = подсветка (<pre>) под прозрачным <textarea> (приём «оверлей»). -->
       <div class="content">
-        <div id="task.md" class="tab-pane markdown-body" data-pane="task.md"></div>
-
-        <div class="tab-pane editor-wrap" data-pane="index.html" hidden>
+        <div class="tab-pane editor-wrap" data-pane="index.html">
           <div class="gutter" aria-hidden="true"></div>
           <pre class="highlight" aria-hidden="true"><code></code></pre>
           <textarea id="index.html" class="editor" data-lang="html" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" wrap="off"></textarea>
@@ -55,9 +62,12 @@
       </div>
     </section>
 
-    <!-- ПРАВАЯ ПАНЕЛЬ: предпросмотр + консоль -->
-    <section class="panel right-panel">
-      <div class="preview-header">Результат</div>
+    <div class="splitter" id="split-2" role="separator" aria-orientation="vertical"
+         title="Потяни, чтобы изменить ширину"></div>
+
+    <!-- КОЛОНКА 3: Результат (предпросмотр + консоль) -->
+    <section class="col col-preview" id="col-preview">
+      <div class="col-header preview-header">Результат</div>
       <iframe
         id="preview"
         title="Результат выполнения кода"

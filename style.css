@@ -26,34 +26,28 @@ body {
   color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: 15px;
-}
-
-/* ===== Раскладка: две колонки ===== */
-.layout {
-  display: flex;
-  height: 100vh;
-  gap: 1px;
-  background: var(--border); /* виден как разделитель между панелями */
-}
-
-.panel {
-  width: 50%;
-  display: flex;
+  display: flex;            /* верхняя панель + раскладка колонок */
   flex-direction: column;
-  min-width: 0;
-  background: var(--bg-page);
+  overflow: hidden;         /* прокрутка — внутри колонок */
 }
 
-.left-panel {
-  padding: 12px;
-  gap: 10px;
+/* ===== Верхняя панель управления ===== */
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
-/* ===== Панель управления ===== */
 .lesson-title {
-  margin: 0 0 8px 0;
-  font-size: 1.25rem;
+  margin: 0;
+  font-size: 1.1rem;
   color: var(--text);
+  white-space: nowrap;
 }
 
 .control-buttons {
@@ -61,6 +55,82 @@ body {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+
+/* ===== Раскладка: три колонки с перетаскиваемыми разделителями ===== */
+.layout {
+  display: flex;
+  flex: 1;                  /* занимает всё под верхней панелью */
+  min-height: 0;
+  background: var(--bg-page);
+}
+
+/* Колонка. Ширина = доля flex-grow от свободного места (перетаскиванием
+   разделителя мы меняем flex-grow соседних колонок через inline-стиль). */
+.col {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;             /* по умолчанию все три равны (≈ по трети) */
+  flex-basis: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--bg-page);
+}
+
+.col-preview {
+  background: var(--bg-panel);
+}
+
+/* Шапка колонки (название/«Результат») */
+.col-header {
+  padding: 9px 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: var(--bg-page);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* Задание: белая «карточка» учебника, прокручивается внутри колонки */
+.col-task #task.md {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 8px;
+}
+
+/* Разделитель между колонками — тянется мышью (как в VS Code) */
+.splitter {
+  flex: 0 0 6px;
+  background: var(--border);
+  cursor: col-resize;
+  position: relative;
+  touch-action: none;       /* для pointer-перетаскивания на тач-экранах */
+}
+.splitter::after {           /* расширенная зона захвата */
+  content: "";
+  position: absolute;
+  inset: 0 -4px;
+}
+.splitter:hover,
+.splitter.dragging {
+  background: var(--accent);
+}
+
+/* Свёрнутое задание: колонка и её разделитель скрыты,
+   редактор и результат делят место (по умолчанию 50/50). */
+.layout.task-collapsed #col-task,
+.layout.task-collapsed #split-1 {
+  display: none;
+}
+
+/* Во время перетаскивания: не выделять текст и не «ловить» мышь в iframe */
+body.resizing {
+  user-select: none;
+  cursor: col-resize;
+}
+body.resizing #preview {
+  pointer-events: none;
 }
 
 /* ===== Кнопки ===== */
@@ -403,19 +473,7 @@ body {
 }
 .lesson-outro[hidden] { display: none; }
 
-/* ===== Правая панель: превью ===== */
-.right-panel {
-  background: var(--bg-panel);
-}
-
-.preview-header {
-  padding: 10px 14px;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-page);
-}
-
+/* ===== Колонка результата: превью ===== */
 #preview {
   flex: 1;
   width: 100%;
@@ -553,15 +611,27 @@ body {
   color: var(--text);
 }
 
-/* ===== Адаптивность: узкий экран — в столбец ===== */
+/* ===== Адаптивность: узкий экран — колонки в столбец ===== */
 @media (max-width: 800px) {
+  html, body {
+    height: auto;
+  }
+  body {
+    overflow: auto;          /* на мобильном прокручиваем всю страницу */
+  }
   .layout {
     flex-direction: column;
-    height: auto;
-    min-height: 100vh;
+    min-height: 0;
   }
-  .panel {
+  .splitter {
+    display: none;           /* по вертикали тянуть нечего */
+  }
+  .col {
+    flex: none !important;   /* перекрываем inline flex-grow */
     width: 100%;
+  }
+  .col-task #task.md {
+    min-height: 220px;
   }
   .content {
     min-height: 300px;

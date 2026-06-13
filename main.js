@@ -372,6 +372,14 @@ function cacheDom() {
   els.resetBtn = document.getElementById("reset-btn");
   els.hintBtn = document.getElementById("hint-btn");
   els.downloadBtn = document.getElementById("download-btn");
+  els.toggleTaskBtn = document.getElementById("toggle-task-btn");
+  // Раскладка: колонки и разделители (перетаскивание ширины, сворачивание)
+  els.layout = document.getElementById("layout");
+  els.colTask = document.getElementById("col-task");
+  els.colEditors = document.getElementById("col-editors");
+  els.colPreview = document.getElementById("col-preview");
+  els.split1 = document.getElementById("split-1");
+  els.split2 = document.getElementById("split-2");
   // Консоль
   els.consoleOutput = document.getElementById("console-output");
   els.consoleClearBtn = document.getElementById("console-clear");
@@ -1430,6 +1438,131 @@ function switchTab(tabId) {
 }
 
 // ============================================================
+// Раскладка: перетаскивание ширины колонок и сворачивание задания
+// ============================================================
+const LAYOUT_KEY = "layoutPrefs";
+const COL_MIN_PX = 140;        // минимальная ширина колонки при перетаскивании
+let savedGrows = null;         // запомненные доли до сворачивания задания
+
+// Делает разделитель `splitter` перетаскиваемым: перенос ширины между
+// соседними колонками `left`/`right`. Доля каждой колонки — её flex-grow при
+// flex-basis:0, поэтому grow ≡ ширина; перетаскивание перераспределяет grow
+// только между двумя соседями (как в VS Code), остальные колонки не трогаем.
+function makeResizable(splitter, left, right) {
+  let startX = 0, startLeft = 0, total = 0, combinedGrow = 0, active = false;
+
+  splitter.addEventListener("pointerdown", (e) => {
+    startLeft = left.getBoundingClientRect().width;
+    total = startLeft + right.getBoundingClientRect().width;
+    combinedGrow =
+      parseFloat(getComputedStyle(left).flexGrow) +
+      parseFloat(getComputedStyle(right).flexGrow);
+    startX = e.clientX;
+    active = true;
+    splitter.setPointerCapture(e.pointerId);
+    splitter.classList.add("dragging");
+    document.body.classList.add("resizing"); // гасим выделение и мышь в iframe
+    e.preventDefault();
+  });
+
+  splitter.addEventListener("pointermove", (e) => {
+    if (!active) return;
+    // новая ширина левой колонки = исходная + смещение мыши, в пределах [min, total-min]
+    let leftPx = startLeft + (e.clientX - startX);
+    leftPx = Math.max(COL_MIN_PX, Math.min(total - COL_MIN_PX, leftPx));
+    const lg = (combinedGrow * leftPx) / total;
+    left.style.flexGrow = lg.toFixed(4);
+    right.style.flexGrow = (combinedGrow - lg).toFixed(4);
+  });
+
+  const end = (e) => {
+    if (!active) return;
+    active = false;
+    if (splitter.hasPointerCapture(e.pointerId))
+      splitter.releasePointerCapture(e.pointerId);
+    splitter.classList.remove("dragging");
+    document.body.classList.remove("resizing");
+    saveLayout();
+  };
+  splitter.addEventListener("pointerup", end);
+  splitter.addEventListener("pointercancel", end);
+}
+
+// Свернуть/развернуть колонку задания. В свёрнутом виде редактор и результат
+// делят место поровну (50/50), запомненные доли восстанавливаются при развороте.
+function toggleTask() {
+  const collapsed = els.layout.classList.toggle("task-collapsed");
+  if (collapsed) {
+    savedGrows = {
+      task: els.colTask.style.flexGrow,
+      editors: els.colEditors.style.flexGrow,
+      preview: els.colPreview.style.flexGrow,
+    };
+    els.colEditors.style.flexGrow = "1";
+    els.colPreview.style.flexGrow = "1";
+    els.toggleTaskBtn.textContent = "▶ Показать задание";
+  } else {
+    if (savedGrows) {
+      els.colTask.style.flexGrow = savedGrows.task || "1";
+      els.colEditors.style.flexGrow = savedGrows.editors || "1";
+      els.colPreview.style.flexGrow = savedGrows.preview || "1";
+    } else {
+      // нет запомненного состояния (восстановлено свёрнутым) → равные трети
+      els.colTask.style.flexGrow = "1";
+      els.colEditors.style.flexGrow = "1";
+      els.colPreview.style.flexGrow = "1";
+    }
+    els.toggleTaskBtn.textContent = "◀ Свернуть задание";
+  }
+  saveLayout();
+}
+
+function saveLayout() {
+  try {
+    localStorage.setItem(
+      LAYOUT_KEY,
+      JSON.stringify({
+        grows: [
+          els.colTask.style.flexGrow || "",
+          els.colEditors.style.flexGrow || "",
+          els.colPreview.style.flexGrow || "",
+        ],
+        collapsed: els.layout.classList.contains("task-collapsed"),
+      })
+    );
+  } catch (e) {
+    /* приватный режим / storage недоступен — раскладка просто не сохранится */
+  }
+}
+
+function loadLayout() {
+  let p = null;
+  try {
+    p = JSON.parse(localStorage.getItem(LAYOUT_KEY) || "null");
+  } catch (e) {
+    p = null;
+  }
+  if (!p) return;
+  if (Array.isArray(p.grows)) {
+    if (p.grows[0]) els.colTask.style.flexGrow = p.grows[0];
+    if (p.grows[1]) els.colEditors.style.flexGrow = p.grows[1];
+    if (p.grows[2]) els.colPreview.style.flexGrow = p.grows[2];
+  }
+  if (p.collapsed) {
+    els.layout.classList.add("task-collapsed");
+    els.toggleTaskBtn.textContent = "▶ Показать задание";
+    savedGrows = null; // доли до сворачивания не сохранены — разворот даст трети
+  }
+}
+
+function initLayout() {
+  loadLayout();
+  makeResizable(els.split1, els.colTask, els.colEditors);
+  makeResizable(els.split2, els.colEditors, els.colPreview);
+  els.toggleTaskBtn.addEventListener("click", toggleTask);
+}
+
+// ============================================================
 // Инициализация
 // ============================================================
 function init() {
@@ -1471,7 +1604,8 @@ function init() {
   }
 
   renderLesson();
-  switchTab("task.md");
+  initLayout();                  // ширины колонок, разделители, сворачивание задания
+  switchTab("index.html");       // активная вкладка редактора (задание — отдельная колонка)
   els.editors.forEach(updateHighlight); // первичная отрисовка подсветки
   clearConsole(); // плейсхолдер в консоли
   updateIframe();

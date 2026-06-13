@@ -866,13 +866,14 @@ function normalizeHex(hex) {
   return "#" + s.toLowerCase();
 }
 
-// Пересобрать чипы у всех hex-цветов видимой области редактора.
-// Чип ставим в КОНЕЦ строки (после всего кода), чтобы он ничего не закрывал.
-// Несколько цветов в одной строке → чипы выстраиваются в ряд.
+// Пересобрать чипы у hex-цветов (только в CSS-редакторе). Чип ставим СЛЕВА от
+// «#», на пробелы перед ним — `ensureColorSpacing` гарантирует там ≥2 пробела,
+// поэтому квадратик ложится на пробелы и не закрывает «:» и текст.
 function refreshSwatches(editor) {
   const layer = editor._swatchLayer;
   if (!layer) return;
   layer.textContent = "";
+  if (editor.dataset.lang !== "css") return; // цвета меняем только в CSS
   // Скрытый/несфокусированный редактор имеет нулевые метрики — координаты
   // посчитаем при показе вкладки (switchTab вызывает refreshSwatches снова).
   if (editor.offsetParent === null) return;
@@ -880,26 +881,16 @@ function refreshSwatches(editor) {
   const val = editor.value;
   const viewH = editor.clientHeight;
   const viewW = editor.clientWidth;
-  const perLine = {}; // сколько чипов уже стоит в строке (для сдвига вправо)
   HEX_RE.lastIndex = 0;
   let m;
   while ((m = HEX_RE.exec(val))) {
     const start = m.index;
     const hex = m[0];
-    // Конец строки с этим цветом (до перевода строки или конца файла)
-    let lineEnd = val.indexOf("\n", start);
-    if (lineEnd === -1) lineEnd = val.length;
-
-    const cHex = caretCoords(editor, start);   // вертикаль — по строке цвета
-    const cEnd = caretCoords(editor, lineEnd); // горизонталь — по концу строки
-    const order = perLine[lineEnd] || 0;
-    perLine[lineEnd] = order + 1;
-
-    const top = cHex.top - editor.scrollTop + (cHex.lineHeight - SWATCH_SIZE) / 2;
-    const left =
-      cEnd.left - editor.scrollLeft + 8 + order * (SWATCH_SIZE + 4); // после кода
+    const c = caretCoords(editor, start);
+    const top = c.top - editor.scrollTop + (c.lineHeight - SWATCH_SIZE) / 2;
+    const left = c.left - editor.scrollLeft - SWATCH_SIZE - 2; // на пробелах слева от «#»
     // За пределами видимой области (overflow:hidden обрежет, но не рисуем зря)
-    if (top < -SWATCH_SIZE || top > viewH || left > viewW) continue;
+    if (top < -SWATCH_SIZE || top > viewH || left < -SWATCH_SIZE || left > viewW) continue;
 
     const sw = document.createElement("button");
     sw.type = "button";
@@ -912,6 +903,53 @@ function refreshSwatches(editor) {
     sw.addEventListener("click", () => openColorPicker(editor, start, hex, sw));
     layer.appendChild(sw);
   }
+}
+
+// Гарантировать ≥2 пробела перед каждым «#hex» в CSS, чтобы цветной чип лёг на
+// пробелы. Вставка — через execCommand (сохраняет Undo, как обычный ввод);
+// повторный вход через событие input гасим флагом `adjustingSpacing`.
+const COLOR_SPACES = 2;
+let adjustingSpacing = false;
+
+function ensureColorSpacing(editor) {
+  if (adjustingSpacing) return;
+  if (editor.dataset.lang !== "css") return;
+
+  const val = editor.value;
+  HEX_RE.lastIndex = 0;
+  let m, fix = null;
+  while ((m = HEX_RE.exec(val))) {
+    const hashPos = m.index;
+    let spaces = 0;
+    while (hashPos - 1 - spaces >= 0 && val[hashPos - 1 - spaces] === " ") spaces++;
+    const before = hashPos - spaces - 1;
+    // hex в начале строки/файла не «утапливаем» пробелами
+    if (before < 0 || val[before] === "\n") continue;
+    if (spaces < COLOR_SPACES) {
+      fix = { pos: hashPos, add: COLOR_SPACES - spaces };
+      break;
+    }
+  }
+  if (!fix) return;
+
+  const caret = editor.selectionStart;
+  const caretEnd = editor.selectionEnd;
+  const text = " ".repeat(fix.add);
+  adjustingSpacing = true;
+  editor.focus();
+  editor.setSelectionRange(fix.pos, fix.pos);
+  const ok =
+    typeof document.execCommand === "function" &&
+    document.execCommand("insertText", false, text);
+  if (!ok) {
+    editor.value = val.slice(0, fix.pos) + text + val.slice(fix.pos);
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  // Каретка сдвигается на длину вставки, если была правее места вставки
+  const shift = (p) => (p >= fix.pos ? p + fix.add : p);
+  editor.setSelectionRange(shift(caret), shift(caretEnd));
+  adjustingSpacing = false;
+  ensureColorSpacing(editor); // остальные цвета в этом же файле
 }
 
 // Открыть нативную палитру у чипа и запомнить, какой фрагмент кода заменить.
@@ -1698,6 +1736,7 @@ function init() {
   els.htmlEditor.value = saved ? saved.html : lesson.initialHTML;
   els.cssEditor.value = saved ? saved.css : lesson.initialCSS;
   els.jsEditor.value = saved ? saved.js : lesson.initialJS;
+  ensureColorSpacing(els.cssEditor); // ≥2 пробела перед #hex для цветных чипов
 
   // Восстанавливаем прогресс вставки (какие части блоков уже вставлены)
   doneParts.clear();
@@ -1748,6 +1787,7 @@ function init() {
   els.editors.forEach((ta) => {
     // Ввод → пересобрать подсветку, сохранить прогресс, обновить Emmet-превью
     ta.addEventListener("input", () => {
+      ensureColorSpacing(ta); // ≥2 пробела перед #hex (для цветных чипов в CSS)
       updateHighlight(ta);
       autosave();
       updateEmmetPreview(ta);

@@ -882,6 +882,143 @@ function setWordWrap(on) {
   }
 }
 
+// ============================================================
+// Своя история отмены/повтора (переживает перезагрузку страницы)
+// ============================================================
+// Нативная история textarea стирается при перезагрузке (контент грузится через
+// value=). Поэтому ведём свой стек снимков на каждый редактор и храним его в
+// localStorage; Ctrl+Z/Ctrl+Shift+Z (Ctrl+Y) работают и после перезагрузки.
+const HISTORY_KEY = "undoHistory";
+const HIST_MAX = 80;        // максимум шагов на редактор
+const COALESCE_MS = 400;    // быстрый набор внутри строки = один шаг отмены
+let restoring = false;      // идёт восстановление снимка → не записываем в историю
+let saveHistTimer = null;
+
+function countNL(s) {
+  let n = 0;
+  for (let i = 0; i < s.length; i++) if (s[i] === "\n") n++;
+  return n;
+}
+
+// Завести историю редактору с текущим значением как базой.
+function histInit(ta) {
+  ta._hist = [{ v: ta.value, s: ta.value.length, e: ta.value.length }];
+  ta._histIdx = 0;
+  ta._histTime = 0;
+}
+
+// Записать текущее состояние редактора как шаг истории (с коалесингом набора).
+function histRecord(ta) {
+  if (restoring || !ta._hist) return;
+  const h = ta._hist;
+  const prev = h[ta._histIdx];
+  if (ta.value === prev.v) return; // без изменений
+  // Срезаем «redo»-ветку при новой правке после отмены
+  if (ta._histIdx < h.length - 1) h.splice(ta._histIdx + 1);
+  const snap = { v: ta.value, s: ta.selectionStart, e: ta.selectionEnd };
+  const now = Date.now();
+  const sameLines = countNL(ta.value) === countNL(prev.v);
+  if (now - ta._histTime < COALESCE_MS && sameLines && ta._histIdx >= 1) {
+    h[ta._histIdx] = snap; // сливаем быстрый набор в текущий шаг
+  } else {
+    h.push(snap);
+    if (h.length > HIST_MAX) h.shift();
+    ta._histIdx = h.length - 1;
+  }
+  ta._histTime = now;
+  saveHistorySoon();
+}
+
+function histApply(ta, snap) {
+  restoring = true;
+  ta.value = snap.v;
+  ta.setSelectionRange(snap.s, snap.e);
+  restoring = false;
+  ta._histTime = 0; // следующая правка — отдельный шаг (без коалесинга)
+  updateHighlight(ta);
+  autosave();
+  // Прокрутить к курсору, чтобы было видно, что откатилось
+  if (ta.offsetParent !== null) {
+    const c = caretCoords(ta, snap.e);
+    ta.scrollTop = Math.max(0, c.top - ta.clientHeight / 2);
+    syncScroll(ta);
+  }
+  saveHistorySoon();
+}
+
+function histUndo(ta) {
+  if (!ta._hist || ta._histIdx <= 0) return;
+  ta._histIdx--;
+  histApply(ta, ta._hist[ta._histIdx]);
+}
+
+function histRedo(ta) {
+  if (!ta._hist || ta._histIdx >= ta._hist.length - 1) return;
+  ta._histIdx++;
+  histApply(ta, ta._hist[ta._histIdx]);
+}
+
+// Сохранение истории в localStorage (с дебаунсом и обрезкой при переполнении).
+function saveHistorySoon() {
+  clearTimeout(saveHistTimer);
+  saveHistTimer = setTimeout(saveHistoryNow, 250);
+}
+
+function saveHistoryNow() {
+  clearTimeout(saveHistTimer);
+  const data = {};
+  els.editors.forEach((ta) => {
+    if (ta._hist) data[ta.id] = { stack: ta._hist, idx: ta._histIdx };
+  });
+  let json = JSON.stringify(data);
+  try {
+    localStorage.setItem(HISTORY_KEY, json);
+  } catch (e) {
+    // Переполнение квоты → ужимаем стеки вдвое и пробуем ещё раз
+    els.editors.forEach((ta) => {
+      if (ta._hist && ta._hist.length > 8) {
+        const drop = ta._hist.length >> 1;
+        ta._hist.splice(0, drop);
+        ta._histIdx = Math.max(0, ta._histIdx - drop);
+      }
+    });
+    try {
+      const d2 = {};
+      els.editors.forEach((ta) => {
+        if (ta._hist) d2[ta.id] = { stack: ta._hist, idx: ta._histIdx };
+      });
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(d2));
+    } catch (e2) {
+      /* всё равно не влезает — оставляем только в памяти */
+    }
+  }
+}
+
+// Загрузить историю из localStorage (после reload). Возвращает true, если для
+// редактора нашёлся валидный стек (тогда значение берём из него).
+function histLoad(ta) {
+  let data = null;
+  try {
+    data = JSON.parse(localStorage.getItem(HISTORY_KEY) || "null");
+  } catch (e) {
+    data = null;
+  }
+  const rec = data && data[ta.id];
+  if (
+    !rec ||
+    !Array.isArray(rec.stack) ||
+    rec.stack.length === 0 ||
+    typeof rec.idx !== "number"
+  ) {
+    return false;
+  }
+  ta._hist = rec.stack;
+  ta._histIdx = Math.min(Math.max(0, rec.idx), rec.stack.length - 1);
+  ta._histTime = 0;
+  ta.value = ta._hist[ta._histIdx].v; // показываем состояние на указателе истории
+  return true;
+}
+
 // Любой hex (3/4/5/6 цифр) → валидный #rrggbb для нативного input и фона чипа.
 function normalizeHex(hex) {
   const s = hex.slice(1).toLowerCase();
@@ -1457,6 +1594,8 @@ function resetToTemplate() {
     /* недоступный storage — не критично */
   }
   els.editors.forEach(updateHighlight);
+  els.editors.forEach(histInit); // история начинается заново с чистого шаблона
+  saveHistoryNow();
   renderLesson(); // перерисовать карточки шагов (кнопки снова активны)
   updateIframe();
 }
@@ -1804,6 +1943,11 @@ function init() {
   els.cssEditor.value = saved ? saved.css : lesson.initialCSS;
   els.jsEditor.value = saved ? saved.js : lesson.initialJS;
   ensureColorSpacing(els.cssEditor); // ≥2 пробела перед #hex для цветных чипов
+  // История отмены: восстановить из localStorage (переживает перезагрузку),
+  // иначе завести с текущим значением как базой.
+  els.editors.forEach((ta) => {
+    if (!histLoad(ta)) histInit(ta);
+  });
 
   // Восстанавливаем прогресс вставки (какие части блоков уже вставлены)
   doneParts.clear();
@@ -1851,6 +1995,9 @@ function init() {
   // Сообщения из iframe (console.* и ошибки) → встроенная консоль
   window.addEventListener("message", handleConsoleMessage);
 
+  // Перед закрытием/перезагрузкой — дописать историю отмены (вдруг дебаунс не успел)
+  window.addEventListener("beforeunload", saveHistoryNow);
+
   els.editors.forEach((ta) => {
     // Ввод → пересобрать подсветку, сохранить прогресс, обновить Emmet-превью
     ta.addEventListener("input", () => {
@@ -1858,6 +2005,7 @@ function init() {
       updateHighlight(ta);
       autosave();
       updateEmmetPreview(ta);
+      histRecord(ta); // запомнить шаг для своей отмены (переживает перезагрузку)
     });
     // Прокрутка textarea → двигаем слой подсветки, чипы цветов и превью
     ta.addEventListener("scroll", () => {
@@ -1881,6 +2029,20 @@ function init() {
       if (e.altKey && e.code === "KeyZ" && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         setWordWrap(!wordWrap);
+        return;
+      }
+      // Своя отмена/повтор (работает и после перезагрузки): Ctrl+Z / Ctrl+Shift+Z,
+      // Ctrl+Y. Перехватываем до нативной, чтобы источник истины — наш стек.
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && !e.altKey && e.code === "KeyZ") {
+        e.preventDefault();
+        if (e.shiftKey) histRedo(ta);
+        else histUndo(ta);
+        return;
+      }
+      if (mod && !e.altKey && !e.shiftKey && e.code === "KeyY") {
+        e.preventDefault();
+        histRedo(ta);
         return;
       }
       if (e.key === "Tab" && !e.altKey && !e.ctrlKey && !e.metaKey) {

@@ -867,6 +867,8 @@ function normalizeHex(hex) {
 }
 
 // Пересобрать чипы у всех hex-цветов видимой области редактора.
+// Чип ставим в КОНЕЦ строки (после всего кода), чтобы он ничего не закрывал.
+// Несколько цветов в одной строке → чипы выстраиваются в ряд.
 function refreshSwatches(editor) {
   const layer = editor._swatchLayer;
   if (!layer) return;
@@ -878,16 +880,26 @@ function refreshSwatches(editor) {
   const val = editor.value;
   const viewH = editor.clientHeight;
   const viewW = editor.clientWidth;
+  const perLine = {}; // сколько чипов уже стоит в строке (для сдвига вправо)
   HEX_RE.lastIndex = 0;
   let m;
   while ((m = HEX_RE.exec(val))) {
     const start = m.index;
     const hex = m[0];
-    const c = caretCoords(editor, start);
-    const top = c.top - editor.scrollTop + (c.lineHeight - SWATCH_SIZE) / 2;
-    const left = c.left - editor.scrollLeft - SWATCH_SIZE - 2; // чип слева от «#»
+    // Конец строки с этим цветом (до перевода строки или конца файла)
+    let lineEnd = val.indexOf("\n", start);
+    if (lineEnd === -1) lineEnd = val.length;
+
+    const cHex = caretCoords(editor, start);   // вертикаль — по строке цвета
+    const cEnd = caretCoords(editor, lineEnd); // горизонталь — по концу строки
+    const order = perLine[lineEnd] || 0;
+    perLine[lineEnd] = order + 1;
+
+    const top = cHex.top - editor.scrollTop + (cHex.lineHeight - SWATCH_SIZE) / 2;
+    const left =
+      cEnd.left - editor.scrollLeft + 8 + order * (SWATCH_SIZE + 4); // после кода
     // За пределами видимой области (overflow:hidden обрежет, но не рисуем зря)
-    if (top < -SWATCH_SIZE || top > viewH || left < -SWATCH_SIZE || left > viewW) continue;
+    if (top < -SWATCH_SIZE || top > viewH || left > viewW) continue;
 
     const sw = document.createElement("button");
     sw.type = "button";

@@ -678,6 +678,60 @@ function insertAsUserInput(editor, start, end, text) {
   syncScroll(editor);
 }
 
+// Умный Enter (как в VS Code): сохраняет отступ строки, углубляет его после
+// открывающего тега/скобки, а если курсор стоит МЕЖДУ открытым и закрытым
+// (`<p>|</p>`, `{|}`, `(|)`, `[|]`) — раскрывает на три строки: открытие на
+// месте, курсор на средней строке с отступом на уровень глубже, закрытие на
+// своей строке на исходном уровне. Возвращает true, если Enter обработан сам.
+function smartEnter(editor) {
+  const v = editor.value;
+  const s = editor.selectionStart;
+  if (s !== editor.selectionEnd) return false; // есть выделение → обычный Enter
+
+  const lineStart = v.lastIndexOf("\n", s - 1) + 1;
+  const indent = v.slice(lineStart, s).match(/^[ \t]*/)[0]; // отступ текущей строки
+  const unit = "\t"; // один уровень (редактор отбивает табами)
+  const before = v[s - 1];
+  const isHtml = editor.dataset.lang === "html";
+
+  // Курсор между парой «открыли — сразу закрыли»?
+  const tagPair = isHtml && before === ">" && v.slice(s, s + 2) === "</";
+  const bracePair =
+    (before === "{" && v[s] === "}") ||
+    (before === "(" && v[s] === ")") ||
+    (before === "[" && v[s] === "]");
+
+  if (tagPair || bracePair) {
+    const mid = "\n" + indent + unit;     // средняя строка (курсор тут)
+    insertAsUserInput(editor, s, s, mid + "\n" + indent);
+    const caret = s + mid.length;
+    editor.setSelectionRange(caret, caret);
+    return true;
+  }
+
+  // Иначе — перенос с сохранением отступа (+уровень после открывающего)
+  const opensBlock =
+    before === "{" ||
+    before === "(" ||
+    before === "[" ||
+    (isHtml && before === ">" && endsWithOpenTag(v, s));
+  const newIndent = opensBlock ? indent + unit : indent;
+  insertAsUserInput(editor, s, s, "\n" + newIndent);
+  return true;
+}
+
+// Перед позицией `s` стоит «>» — это конец ОТКРЫВАЮЩЕГО тега (не закрывающего,
+// не самозакрывающегося, не комментария/доктайпа)?
+function endsWithOpenTag(v, s) {
+  const open = v.lastIndexOf("<", s - 1);
+  if (open < 0) return false;
+  const tag = v.slice(open, s); // например "<p>", "</p>", "<br/>", "<!-- ... >"
+  if (tag.length < 2) return false;
+  if (tag[1] === "/" || tag[1] === "!") return false; // закрывающий / коммент-доктайп
+  if (tag[tag.length - 2] === "/") return false;      // самозакрывающийся <br/>
+  return true;
+}
+
 // Вставить ОДНУ часть блока (html/css/js) в её файл: открыть нужную вкладку,
 // вставить код как пользовательский ввод (Ctrl+Z работает), отметить часть
 // готовой, сохранить прогресс и подсказать следующий шаг.
@@ -2132,6 +2186,12 @@ function init() {
         hideEmmetPreview();
         if (!e.shiftKey && tryExpandEmmet(ta)) return;
         insertTab(ta);
+        return;
+      }
+      // Enter — умный отступ (как в VS Code): сохраняет уровень, раскрывает пары
+      if (e.key === "Enter" && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        hideEmmetPreview();
+        if (smartEnter(ta)) e.preventDefault();
       }
     });
   });

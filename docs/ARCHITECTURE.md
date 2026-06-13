@@ -202,6 +202,18 @@ input в textarea ──> saveToLocalStorage()         (iframe НЕ трогае
 (`scrollTop`), по горизонтали он стоит на месте (как в настоящих редакторах);
 `paddingLeft` уже учтён в `MIRROR_PROPS`, поэтому Emmet-превью не смещается.
 
+**Перенос строк (Alt+Z, как в VS Code).** Глобальный флаг `wordWrap` +
+`setWordWrap(on)` переключаются по Alt+Z (обработчик `keydown` редактора,
+`e.code === "KeyZ"`). Включает класс `body.word-wrap`: оба слоя кода получают
+`white-space:pre-wrap; overflow-wrap:anywhere`, у textarea `wrap="soft"`,
+горизонтальный скролл скрыт. Номера строк (`.gutter`) **прячутся** — одна
+строка-номер не соответствует нескольким визуальным строкам после переноса,
+поэтому при переносе их не показываем (и левый отступ слоёв возвращаем к 12px).
+`caretCoords` в режиме переноса ставит зеркалу `white-space:pre-wrap` +
+`overflow-wrap:anywhere` (ширину оно и так копирует), чтобы координаты курсора,
+цветных чипов и Emmet-превью совпадали с реальной раскладкой. Настройка хранится
+в localStorage (`wordWrap`) и восстанавливается в `init`.
+
 **Цветовые чипы у hex-цветов (только в CSS-редакторе).** Четвёртый слой
 `.swatch-layer` (`position:absolute; inset:0; overflow:hidden;
 pointer-events:none; z-index:3`) — над textarea. `refreshSwatches(editor)`

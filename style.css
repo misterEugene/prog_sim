@@ -397,6 +397,22 @@ body.resizing #preview {
   background: rgba(91, 140, 255, 0.35);
 }
 
+/* ===== Перенос строк (Alt+Z, как в VS Code) ===== */
+/* Включён: длинные строки переносятся, горизонтального скролла нет. Номера строк
+   прячем — одна строка-номер не соответствует нескольким визуальным строкам. */
+body.word-wrap .editor,
+body.word-wrap .highlight {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding-left: 12px;          /* колонки номеров нет → обычный левый отступ */
+}
+body.word-wrap .editor {
+  overflow-x: hidden;
+}
+body.word-wrap .gutter {
+  display: none;
+}
+
 /* ===== Цвета токенов подсветки ===== */
 .tok-comment  { color: #6b7a8d; font-style: italic; }
 .tok-string   { color: #c3e88d; }

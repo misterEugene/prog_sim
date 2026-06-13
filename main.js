@@ -863,6 +863,25 @@ const CHIP_MAX = 6; // максимум цифр (больше — это уже
 const SWATCH_SIZE = 13;
 let pickerTarget = null; // {editor, start, len} — что заменяем выбранным цветом
 
+// ---- Перенос строк (Alt+Z, как в VS Code) ----
+const WORD_WRAP_KEY = "wordWrap";
+let wordWrap = false;
+
+// Включить/выключить перенос длинных строк во всех редакторах.
+function setWordWrap(on) {
+  wordWrap = !!on;
+  document.body.classList.toggle("word-wrap", wordWrap);
+  els.editors.forEach((ta) => {
+    ta.wrap = wordWrap ? "soft" : "off"; // textarea сам тоже должен переносить
+    updateHighlight(ta); // перенос изменил раскладку → пересчитать слои/чипы
+  });
+  try {
+    localStorage.setItem(WORD_WRAP_KEY, wordWrap ? "1" : "0");
+  } catch (e) {
+    /* storage недоступен — настройка просто не сохранится */
+  }
+}
+
 // Любой hex (3/4/5/6 цифр) → валидный #rrggbb для нативного input и фона чипа.
 function normalizeHex(hex) {
   const s = hex.slice(1).toLowerCase();
@@ -1157,7 +1176,10 @@ function caretCoords(ta, pos) {
   MIRROR_PROPS.forEach((p) => { div.style[p] = cs[p]; });
   div.style.position = "absolute";
   div.style.visibility = "hidden";
-  div.style.whiteSpace = "pre"; // wrap="off" → строки не переносятся
+  // В режиме переноса (Alt+Z) зеркало тоже должно переносить строки по ширине,
+  // иначе координаты курсора/чипов разойдутся с реальной раскладкой.
+  div.style.whiteSpace = wordWrap ? "pre-wrap" : "pre";
+  div.style.overflowWrap = wordWrap ? "anywhere" : "normal";
   div.style.overflow = "hidden";
   div.style.top = "-9999px";
   div.style.left = "0";
@@ -1855,6 +1877,12 @@ function init() {
     // иначе вставляем символ табуляции. Shift+Tab — всегда таб.
     ta.addEventListener("keydown", (e) => {
       if (e.key === "Escape") return hideEmmetPreview();
+      // Alt+Z — переключить перенос строк (как в VS Code)
+      if (e.altKey && e.code === "KeyZ" && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setWordWrap(!wordWrap);
+        return;
+      }
       if (e.key === "Tab" && !e.altKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         hideEmmetPreview();
@@ -1868,6 +1896,11 @@ function init() {
   els.tabs.forEach((tab) => {
     tab.addEventListener("click", () => switchTab(tab.dataset.tab));
   });
+
+  // Восстановить сохранённый режим переноса строк (Alt+Z)
+  let wrapPref = "0";
+  try { wrapPref = localStorage.getItem(WORD_WRAP_KEY) || "0"; } catch (e) {}
+  if (wrapPref === "1") setWordWrap(true);
 }
 
 document.addEventListener("DOMContentLoaded", init);

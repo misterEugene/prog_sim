@@ -11,6 +11,7 @@
   --border: #3a3a55;
   --success: #4caf50;
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --gutter-w: 44px;          /* ширина колонки с номерами строк */
 }
 
 * { box-sizing: border-box; }
@@ -158,6 +159,8 @@ body {
   margin: 0;
   border: 0;
   padding: 12px;
+  /* слева оставляем место под колонку с номерами строк */
+  padding-left: calc(var(--gutter-w) + 10px);
   font-family: var(--mono);
   font-size: 14px;
   line-height: 1.5;
@@ -167,6 +170,31 @@ body {
   word-wrap: normal;
   overflow-wrap: normal;
   letter-spacing: 0;
+}
+
+/* Колонка с номерами строк. Метрики (шрифт, line-height, верхний отступ)
+   совпадают со слоями кода, чтобы номера были вровень со строками.
+   Скролл по вертикали синхронизируется из JS; по горизонтали не двигается. */
+.gutter {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--gutter-w);
+  margin: 0;
+  padding: 12px 8px 12px 0;
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: right;
+  white-space: pre;
+  color: #5a6472;
+  background: #0d0d14;
+  border-right: 1px solid var(--border);
+  overflow: hidden;            /* скролл синхронизируем из JS */
+  pointer-events: none;        /* клики проходят к textarea */
+  user-select: none;
+  z-index: 3;                  /* поверх кода при горизонтальной прокрутке */
 }
 
 /* Нижний слой: раскрашенный код */

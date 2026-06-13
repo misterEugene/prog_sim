@@ -364,6 +364,7 @@ function cacheDom() {
     const wrap = ta.closest(".editor-wrap");
     ta._preEl = wrap.querySelector(".highlight");
     ta._codeEl = wrap.querySelector(".highlight code");
+    ta._gutterEl = wrap.querySelector(".gutter");
   });
   // Кнопки
   els.runBtn = document.getElementById("run-btn");
@@ -836,14 +837,29 @@ function updateHighlight(editor) {
   const codeEl = editor._codeEl;
   if (!codeEl) return;
   codeEl.innerHTML = highlight(editor.value, editor.dataset.lang);
+  updateGutter(editor);
   syncScroll(editor);
+}
+
+// Перерисовать колонку с номерами строк (по числу строк в редакторе).
+function updateGutter(editor) {
+  const gutter = editor._gutterEl;
+  if (!gutter) return;
+  const count = editor.value.split("\n").length;
+  // textContent — без HTML-инъекций; \n совпадает с переносами строк кода
+  let out = "1";
+  for (let i = 2; i <= count; i++) out += "\n" + i;
+  gutter.textContent = out;
 }
 
 function syncScroll(editor) {
   const pre = editor._preEl;
-  if (!pre) return;
-  pre.scrollTop = editor.scrollTop;
-  pre.scrollLeft = editor.scrollLeft;
+  if (pre) {
+    pre.scrollTop = editor.scrollTop;
+    pre.scrollLeft = editor.scrollLeft;
+  }
+  // Номера строк двигаются только по вертикали (по горизонтали стоят на месте).
+  if (editor._gutterEl) editor._gutterEl.scrollTop = editor.scrollTop;
 }
 
 // Вставка символа табуляции в позицию курсора (заменяя выделение, если есть).

@@ -146,6 +146,15 @@ input в textarea ──> saveToLocalStorage()         (iframe НЕ трогае
 - При `scroll` синхронизируем `pre.scrollTop/scrollLeft = textarea.scrollTop/Left`
   (`syncScroll`). У `pre` `overflow:hidden`, прокрутка только программная.
 
+**Нумерация строк.** В обёртку добавлен третий слой `.gutter` (слева, ширина
+`--gutter-w`, `z-index:3`, `pointer-events:none`). `updateGutter(editor)` пишет в
+него номера строк (`textContent`, по числу `\n`) при каждой перерисовке подсветки.
+Метрики (шрифт, `line-height`, верхний `padding`) совпадают со слоями кода →
+номера вровень со строками. Оба слоя кода получают `padding-left: var(--gutter-w)+10px`,
+освобождая место под колонку. `syncScroll` двигает gutter только по вертикали
+(`scrollTop`), по горизонтали он стоит на месте (как в настоящих редакторах);
+`paddingLeft` уже учтён в `MIRROR_PROPS`, поэтому Emmet-превью не смещается.
+
 Подсветка — собственный токенайзер `tokenize(code, patterns)` (без библиотек):
 бежим по строке, на каждой позиции пробуем **липкие** регэкспы (флаг `/y`) по
 порядку; совпало — оборачиваем в `<span class="tok-…">` с `escapeHtml`, иначе

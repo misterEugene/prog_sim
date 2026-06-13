@@ -66,24 +66,24 @@ const lesson = {
       snippets: {
         html: `<!-- Шапка магазина: логотип, меню и корзина -->
 <header class="site-header" id="home">
-  <div class="logo">🛍️ [ВПИШИ НАЗВАНИЕ МАГАЗИНА]</div>
-  <nav class="menu">
-    <a href="#home">Главная</a>
-    <a href="#products">Товары</a>
-    <a href="#contacts">Контакты</a>
-  </nav>
-  <div class="cart">🛒 Корзина: <span id="cart-count">0</span></div>
-  <!-- 👇 EMMET: щёлкни на пустую строку ниже, впиши код из задания и нажми Tab -->
-  
+	<div class="logo">🛍️ [ВПИШИ НАЗВАНИЕ МАГАЗИНА]</div>
+	<nav class="menu">
+		<a href="#home">Главная</a>
+		<a href="#products">Товары</a>
+		<a href="#contacts">Контакты</a>
+	</nav>
+	<div class="cart">🛒 Корзина: <span id="cart-count">0</span></div>
+	<!-- 👇 EMMET: щёлкни на пустую строку ниже, впиши код из задания и нажми Tab -->
+	
 </header>`,
         css: `/* Стили шапки */
 .site-header {
-  display: flex;                 /* всё в одну строку */
-  align-items: center;
-  justify-content: space-between;
-  background: [ВПИШИ ЦВЕТ];      /* цвет фона шапки */
-  color: #fff;
-  padding: 16px 24px;
+	display: flex;                 /* всё в одну строку */
+	align-items: center;
+	justify-content: space-between;
+	background: [ВПИШИ ЦВЕТ];      /* цвет фона шапки */
+	color: #fff;
+	padding: 16px 24px;
 }
 .logo { font-size: [ВПИШИ РАЗМЕР]; font-weight: bold; }
 .menu a { color: #fff; margin-left: 16px; text-decoration: none; }
@@ -122,23 +122,23 @@ const lesson = {
       snippets: {
         html: `<!-- Баннер: главный заголовок и кнопка -->
 <section class="banner">
-  <h1>[ВПИШИ ЗАГОЛОВОК СКИДКИ]</h1>
-  <p>[ВПИШИ ПОДЗАГОЛОВОК]</p>
-  <button class="banner-btn">[ВПИШИ ТЕКСТ КНОПКИ]</button>
-  <!-- 👇 EMMET: щёлкни на пустую строку ниже, впиши код из задания и нажми Tab -->
-  
+	<h1>[ВПИШИ ЗАГОЛОВОК СКИДКИ]</h1>
+	<p>[ВПИШИ ПОДЗАГОЛОВОК]</p>
+	<button class="banner-btn">[ВПИШИ ТЕКСТ КНОПКИ]</button>
+	<!-- 👇 EMMET: щёлкни на пустую строку ниже, впиши код из задания и нажми Tab -->
+	
 </section>`,
         css: `/* Стили баннера */
 .banner {
-  text-align: center;
-  padding: 60px 20px;
-  background: linear-gradient(135deg, #ffd86b, #ff8a5b);
-  color: #3a2a00;
+	text-align: center;
+	padding: 60px 20px;
+	background: linear-gradient(135deg, #ffd86b, #ff8a5b);
+	color: #3a2a00;
 }
 .banner h1 { font-size: [ВПИШИ РАЗМЕР]; margin: 0 0 10px; }
 .banner-btn {
-  background: [ВПИШИ ЦВЕТ]; color: #fff; border: none;
-  padding: 14px 28px; font-size: 18px; border-radius: 8px; cursor: pointer;
+	background: [ВПИШИ ЦВЕТ]; color: #fff; border: none;
+	padding: 14px 28px; font-size: 18px; border-radius: 8px; cursor: pointer;
 }
 .banner-btn:hover { opacity: 0.9; }
 .banner-note { margin: 12px 0 0; font-weight: bold; }`,
@@ -173,53 +173,53 @@ const lesson = {
       snippets: {
         html: `<!-- Сетка товаров: четыре карточки -->
 <section class="products" id="products">
-  <div class="card">
-    <div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
-    <h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
-    <p class="card-price">[ВПИШИ ЦЕНУ] ₽</p>
-    <button class="add-to-cart">В корзину</button>
-  </div>
-  <div class="card">
-    <div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
-    <h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
-    <p class="card-price">[ВПИШИ ЦЕНУ] ₽</p>
-    <button class="add-to-cart">В корзину</button>
-  </div>
-  <div class="card">
-    <div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
-    <h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
-    <p class="card-price">[ВПИШИ ЦЕНУ] ₽</p>
-    <button class="add-to-cart">В корзину</button>
-  </div>
-  <div class="card">
-    <div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
-    <h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
-    <p class="card-price">[ВПИШИ ЦЕНУ] ₽</p>
-    <button class="add-to-cart">В корзину</button>
-  </div>
-  <!-- 👇 EMMET: щёлкни на пустую строку ниже, впиши код из задания и нажми Tab -->
-  
+	<div class="card">
+		<div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
+		<h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
+		<p class="card-price">[ВПИШИ ЦЕНУ] ₽</p>
+		<button class="add-to-cart">В корзину</button>
+	</div>
+	<div class="card">
+		<div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
+		<h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
+		<p class="card-price">[ВПИШИ ЦЕНУ] ₽</p>
+		<button class="add-to-cart">В корзину</button>
+	</div>
+	<div class="card">
+		<div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
+		<h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
+		<p class="card-price">[ВПИШИ ЦЕНУ] ₽</p>
+		<button class="add-to-cart">В корзину</button>
+	</div>
+	<div class="card">
+		<div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
+		<h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
+		<p class="card-price">[ВПИШИ ЦЕНУ] ₽</p>
+		<button class="add-to-cart">В корзину</button>
+	</div>
+	<!-- 👇 EMMET: щёлкни на пустую строку ниже, впиши код из задания и нажми Tab -->
+	
 </section>`,
         css: `/* Сетка карточек товаров */
 .products {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
-  padding: 24px;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 16px;
+	padding: 24px;
 }
 .card {
-  border: 1px solid #e0e0e0;
-  border-radius: [ВПИШИ РАЗМЕР];
-  padding: 16px;
-  text-align: center;
-  background: #fff;
+	border: 1px solid #e0e0e0;
+	border-radius: [ВПИШИ РАЗМЕР];
+	padding: 16px;
+	text-align: center;
+	background: #fff;
 }
 .card-img { font-size: 64px; }
 .card-title { margin: 10px 0 4px; font-size: 18px; }
 .card-price { color: [ВПИШИ ЦВЕТ]; font-weight: bold; font-size: 18px; margin: 0 0 12px; }
 .add-to-cart {
-  background: #5b3df5; color: #fff; border: none;
-  padding: 10px 16px; border-radius: 6px; cursor: pointer; width: 100%;
+	background: #5b3df5; color: #fff; border: none;
+	padding: 10px 16px; border-radius: 6px; cursor: pointer; width: 100%;
 }
 .add-to-cart:hover { background: #4a2fd0; }`,
       },
@@ -256,17 +256,17 @@ const lesson = {
       snippets: {
         html: `<!-- Блок "О нас": рассказ о магазине -->
 <section class="about" id="about">
-  <h2>[ВПИШИ ЗАГОЛОВОК]</h2>
-  <p>[ВПИШИ РАССКАЗ О МАГАЗИНЕ]</p>
-  <!-- 👇 EMMET: щёлкни на пустую строку ниже, впиши код из задания и нажми Tab -->
-  
+	<h2>[ВПИШИ ЗАГОЛОВОК]</h2>
+	<p>[ВПИШИ РАССКАЗ О МАГАЗИНЕ]</p>
+	<!-- 👇 EMMET: щёлкни на пустую строку ниже, впиши код из задания и нажми Tab -->
+	
 </section>`,
         css: `/* Стили блока "О нас" */
 .about {
-  max-width: 700px;
-  margin: 24px auto;
-  padding: 0 24px;
-  text-align: center;
+	max-width: 700px;
+	margin: 24px auto;
+	padding: 0 24px;
+	text-align: center;
 }
 .about h2 { font-size: 28px; color: [ВПИШИ ЦВЕТ]; }
 .about p { font-size: 17px; line-height: 1.6; color: #333; }
@@ -299,37 +299,37 @@ const lesson = {
       snippets: {
         html: `<!-- Отзывы покупателей -->
 <section class="reviews">
-  <h2>Отзывы покупателей</h2>
-  <div class="review-list">
-    <div class="review">
-      <p class="review-text">«[ВПИШИ ТЕКСТ ОТЗЫВА]»</p>
-      <p class="review-author">— [ВПИШИ ИМЯ]</p>
-    </div>
-    <div class="review">
-      <p class="review-text">«[ВПИШИ ТЕКСТ ОТЗЫВА]»</p>
-      <p class="review-author">— [ВПИШИ ИМЯ]</p>
-    </div>
-    <div class="review">
-      <p class="review-text">«[ВПИШИ ТЕКСТ ОТЗЫВА]»</p>
-      <p class="review-author">— [ВПИШИ ИМЯ]</p>
-    </div>
-    <!-- 👇 EMMET: щёлкни на пустую строку ниже, впиши код из задания и нажми Tab -->
-    
-  </div>
+	<h2>Отзывы покупателей</h2>
+	<div class="review-list">
+		<div class="review">
+			<p class="review-text">«[ВПИШИ ТЕКСТ ОТЗЫВА]»</p>
+			<p class="review-author">— [ВПИШИ ИМЯ]</p>
+		</div>
+		<div class="review">
+			<p class="review-text">«[ВПИШИ ТЕКСТ ОТЗЫВА]»</p>
+			<p class="review-author">— [ВПИШИ ИМЯ]</p>
+		</div>
+		<div class="review">
+			<p class="review-text">«[ВПИШИ ТЕКСТ ОТЗЫВА]»</p>
+			<p class="review-author">— [ВПИШИ ИМЯ]</p>
+		</div>
+		<!-- 👇 EMMET: щёлкни на пустую строку ниже, впиши код из задания и нажми Tab -->
+		
+	</div>
 </section>`,
         css: `/* Стили отзывов */
 .reviews { padding: 24px; text-align: center; }
 .reviews h2 { font-size: 28px; color: #5b3df5; margin-bottom: 16px; }
 .review-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 16px;
 }
 .review {
-  background: [ВПИШИ ЦВЕТ];
-  border-radius: 10px;
-  padding: 16px;
-  text-align: left;
+	background: [ВПИШИ ЦВЕТ];
+	border-radius: 10px;
+	padding: 16px;
+	text-align: left;
 }
 .review-text { font-style: italic; color: #333; margin: 0; }
 .review-author { font-weight: bold; color: #5b3df5; margin: 8px 0 0; }`,
@@ -363,20 +363,20 @@ const lesson = {
       snippets: {
         html: `<!-- Подвал сайта: контакты и копирайт -->
 <footer class="site-footer" id="contacts">
-  <p>📞 Телефон: [ВПИШИ ТЕЛЕФОН]</p>
-  <p>✉️ Почта: [ВПИШИ ПОЧТУ]</p>
-  <p>📍 Адрес: [ВПИШИ АДРЕС]</p>
-  <p>© 2026 [ВПИШИ НАЗВАНИЕ МАГАЗИНА]. Все права защищены.</p>
-  <!-- 👇 EMMET: щёлкни на пустую строку ниже, впиши код из задания и нажми Tab -->
-  
+	<p>📞 Телефон: [ВПИШИ ТЕЛЕФОН]</p>
+	<p>✉️ Почта: [ВПИШИ ПОЧТУ]</p>
+	<p>📍 Адрес: [ВПИШИ АДРЕС]</p>
+	<p>© 2026 [ВПИШИ НАЗВАНИЕ МАГАЗИНА]. Все права защищены.</p>
+	<!-- 👇 EMMET: щёлкни на пустую строку ниже, впиши код из задания и нажми Tab -->
+	
 </footer>`,
         css: `/* Стили подвала */
 .site-footer {
-  background: [ВПИШИ ЦВЕТ];
-  color: #cfcfe0;
-  text-align: center;
-  padding: 24px;
-  margin-top: 20px;
+	background: [ВПИШИ ЦВЕТ];
+	color: #cfcfe0;
+	text-align: center;
+	padding: 24px;
+	margin-top: 20px;
 }
 .site-footer p { margin: 4px 0; }
 .footer-note { opacity: 0.7; }`,
@@ -411,11 +411,11 @@ const counter = document.getElementById("cart-count");
 const buttons = document.querySelectorAll(".add-to-cart");
 
 buttons.forEach(function (button) {
-  button.addEventListener("click", function () {
-    count = count + 1;            // увеличиваем счётчик
-    counter.textContent = count;  // показываем число в корзине
-    console.log("[ВПИШИ СООБЩЕНИЕ]");
-  });
+	button.addEventListener("click", function () {
+		count = count + 1;            // увеличиваем счётчик
+		counter.textContent = count;  // показываем число в корзине
+		console.log("[ВПИШИ СООБЩЕНИЕ]");
+	});
 });`,
       },
       taskMd: `🔧 **Впиши сообщение (main.js).** Найди строку:

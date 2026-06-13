@@ -81,8 +81,11 @@ body {
   background: var(--bg-panel);
 }
 
-/* Шапка колонки (название/«Результат») */
+/* Шапка колонки (название + кнопка сворачивания) */
 .col-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 9px 12px;
   font-size: 0.85rem;
   color: var(--text-muted);
@@ -90,9 +93,73 @@ body {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
+.col-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-/* Задание: белая «карточка» учебника, прокручивается внутри колонки */
-.col-task #task.md {
+/* Кнопка «свернуть колонку» (в шапке; у редактора — в ряду вкладок) */
+.col-collapse {
+  flex-shrink: 0;
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.col-collapse:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.tabs .col-collapse {
+  margin-right: 6px;       /* отступ от правого края ряда вкладок */
+}
+
+/* Тонкая полоса свёрнутой колонки — кликом разворачиваем (скрыта в норме) */
+.col-reopen {
+  display: none;
+}
+.col.collapsed {
+  flex: 0 0 auto;          /* inline-стиль из JS дублирует; ширина — ниже */
+  width: 38px;
+  min-width: 38px;
+  overflow: hidden;
+}
+.col.collapsed > :not(.col-reopen) {
+  display: none !important; /* в свёрнутом виде показываем только полосу */
+}
+.col.collapsed .col-reopen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 12px 0;
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  writing-mode: vertical-rl;  /* подпись вдоль полосы */
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.col.collapsed .col-reopen:hover {
+  color: var(--text);
+  background: var(--bg-elevated);
+}
+
+/* Задание: белая «карточка» учебника, прокручивается внутри колонки.
+   ВНИМАНИЕ: у элемента id="task.md" (с точкой) — селектор по классу, а не #id:
+   `#task.md` в CSS читается как id="task" + class="md" и не сработает. */
+.col-task .markdown-body {
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -115,13 +182,6 @@ body {
 .splitter:hover,
 .splitter.dragging {
   background: var(--accent);
-}
-
-/* Свёрнутое задание: колонка и её разделитель скрыты,
-   редактор и результат делят место (по умолчанию 50/50). */
-.layout.task-collapsed #col-task,
-.layout.task-collapsed #split-1 {
-  display: none;
 }
 
 /* Во время перетаскивания: не выделять текст и не «ловить» мышь в iframe */
@@ -170,6 +230,7 @@ body.resizing #preview {
 /* ===== Вкладки ===== */
 .tabs {
   display: flex;
+  align-items: center;
   gap: 2px;
   border-bottom: 1px solid var(--border);
 }
@@ -630,7 +691,7 @@ body.resizing #preview {
     flex: none !important;   /* перекрываем inline flex-grow */
     width: 100%;
   }
-  .col-task #task.md {
+  .col-task .markdown-body {
     min-height: 220px;
   }
   .content {

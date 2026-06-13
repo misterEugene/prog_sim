@@ -11,7 +11,6 @@
   <header class="topbar">
     <h1 id="lesson-title" class="lesson-title">Урок</h1>
     <div class="control-buttons">
-      <button id="toggle-task-btn" type="button" class="btn">◀ Свернуть задание</button>
       <button id="run-btn" type="button" class="btn btn-primary">▶ Запустить</button>
       <button id="open-tab-btn" type="button" class="btn">🔗 Открыть в новой вкладке</button>
       <button id="reset-btn" type="button" class="btn">↺ Начать заново</button>
@@ -26,7 +25,11 @@
   <main class="layout" id="layout">
     <!-- КОЛОНКА 1: Задание (Markdown урока) -->
     <section class="col col-task" id="col-task">
-      <div class="col-header">📖 Урок</div>
+      <button class="col-reopen" type="button" title="Развернуть">📖 Урок</button>
+      <div class="col-header">
+        <span class="col-title">📖 Урок</span>
+        <button class="col-collapse" type="button" title="Свернуть колонку" aria-label="Свернуть">⟨⟩</button>
+      </div>
       <div id="task.md" class="markdown-body"></div>
     </section>
 
@@ -36,10 +39,12 @@
     <!-- КОЛОНКА 2: Редакторы кода.
          Редактор = подсветка (<pre>) под прозрачным <textarea> (приём «оверлей»). -->
     <section class="col col-editors" id="col-editors">
+      <button class="col-reopen" type="button" title="Развернуть">⟨ Код ⟩</button>
       <div class="tabs" role="tablist">
         <button class="tab active" data-tab="index.html" role="tab">index.html</button>
         <button class="tab"        data-tab="style.css"  role="tab">style.css</button>
         <button class="tab"        data-tab="main.js"    role="tab">main.js</button>
+        <button class="col-collapse" type="button" title="Свернуть колонку" aria-label="Свернуть">⟨⟩</button>
       </div>
       <div class="content">
         <div class="tab-pane editor-wrap" data-pane="index.html">
@@ -67,7 +72,11 @@
 
     <!-- КОЛОНКА 3: Результат (предпросмотр + консоль) -->
     <section class="col col-preview" id="col-preview">
-      <div class="col-header preview-header">Результат</div>
+      <button class="col-reopen" type="button" title="Развернуть">Результат</button>
+      <div class="col-header preview-header">
+        <span class="col-title">Результат</span>
+        <button class="col-collapse" type="button" title="Свернуть колонку" aria-label="Свернуть">⟨⟩</button>
+      </div>
       <iframe
         id="preview"
         title="Результат выполнения кода"

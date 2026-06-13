@@ -372,7 +372,6 @@ function cacheDom() {
   els.resetBtn = document.getElementById("reset-btn");
   els.hintBtn = document.getElementById("hint-btn");
   els.downloadBtn = document.getElementById("download-btn");
-  els.toggleTaskBtn = document.getElementById("toggle-task-btn");
   // Раскладка: колонки и разделители (перетаскивание ширины, сворачивание)
   els.layout = document.getElementById("layout");
   els.colTask = document.getElementById("col-task");
@@ -1438,11 +1437,10 @@ function switchTab(tabId) {
 }
 
 // ============================================================
-// Раскладка: перетаскивание ширины колонок и сворачивание задания
+// Раскладка: перетаскивание ширины колонок и сворачивание каждой колонки
 // ============================================================
 const LAYOUT_KEY = "layoutPrefs";
 const COL_MIN_PX = 140;        // минимальная ширина колонки при перетаскивании
-let savedGrows = null;         // запомненные доли до сворачивания задания
 
 // Делает разделитель `splitter` перетаскиваемым: перенос ширины между
 // соседними колонками `left`/`right`. Доля каждой колонки — её flex-grow при
@@ -1488,32 +1486,47 @@ function makeResizable(splitter, left, right) {
   splitter.addEventListener("pointercancel", end);
 }
 
-// Свернуть/развернуть колонку задания. В свёрнутом виде редактор и результат
-// делят место поровну (50/50), запомненные доли восстанавливаются при развороте.
-function toggleTask() {
-  const collapsed = els.layout.classList.toggle("task-collapsed");
+// Доля колонки (flex-grow). У свёрнутой колонки inline-grow обнулён, поэтому
+// её «настоящую» долю помним в `_savedGrow` (для восстановления при развороте).
+function growOf(col) {
+  if (col.classList.contains("collapsed")) return col._savedGrow || "1";
+  return col.style.flexGrow || "";
+}
+
+// Свернуть/развернуть колонку. Свёрнутая → тонкая полоса (flex:0 0 auto,
+// ширина в CSS); её доля запоминается и восстанавливается при развороте.
+// Остальные колонки сохраняют свои пропорции и заполняют освободившееся место.
+function setCollapsed(col, collapsed) {
   if (collapsed) {
-    savedGrows = {
-      task: els.colTask.style.flexGrow,
-      editors: els.colEditors.style.flexGrow,
-      preview: els.colPreview.style.flexGrow,
-    };
-    els.colEditors.style.flexGrow = "1";
-    els.colPreview.style.flexGrow = "1";
-    els.toggleTaskBtn.textContent = "▶ Показать задание";
+    if (!col.classList.contains("collapsed")) col._savedGrow = col.style.flexGrow || "1";
+    col.classList.add("collapsed");
+    col.style.flex = "0 0 auto";
   } else {
-    if (savedGrows) {
-      els.colTask.style.flexGrow = savedGrows.task || "1";
-      els.colEditors.style.flexGrow = savedGrows.editors || "1";
-      els.colPreview.style.flexGrow = savedGrows.preview || "1";
-    } else {
-      // нет запомненного состояния (восстановлено свёрнутым) → равные трети
-      els.colTask.style.flexGrow = "1";
-      els.colEditors.style.flexGrow = "1";
-      els.colPreview.style.flexGrow = "1";
-    }
-    els.toggleTaskBtn.textContent = "◀ Свернуть задание";
+    col.classList.remove("collapsed");
+    col.style.flex = "";
+    col.style.flexGrow = col._savedGrow || "1";
   }
+}
+
+// Разделитель между колонками A|B бесполезен, если одна из них свёрнута в полосу.
+function updateSplitters() {
+  const t = els.colTask.classList.contains("collapsed");
+  const e = els.colEditors.classList.contains("collapsed");
+  const p = els.colPreview.classList.contains("collapsed");
+  els.split1.style.display = t || e ? "none" : "";
+  els.split2.style.display = e || p ? "none" : "";
+}
+
+function toggleCol(col, collapsed) {
+  // Не даём свернуть последнюю развёрнутую колонку — иначе экран пуст.
+  if (collapsed) {
+    const expanded = [els.colTask, els.colEditors, els.colPreview].filter(
+      (c) => !c.classList.contains("collapsed")
+    );
+    if (expanded.length <= 1) return;
+  }
+  setCollapsed(col, collapsed);
+  updateSplitters();
   saveLayout();
 }
 
@@ -1522,12 +1535,12 @@ function saveLayout() {
     localStorage.setItem(
       LAYOUT_KEY,
       JSON.stringify({
-        grows: [
-          els.colTask.style.flexGrow || "",
-          els.colEditors.style.flexGrow || "",
-          els.colPreview.style.flexGrow || "",
-        ],
-        collapsed: els.layout.classList.contains("task-collapsed"),
+        grows: [growOf(els.colTask), growOf(els.colEditors), growOf(els.colPreview)],
+        collapsed: {
+          task: els.colTask.classList.contains("collapsed"),
+          editors: els.colEditors.classList.contains("collapsed"),
+          preview: els.colPreview.classList.contains("collapsed"),
+        },
       })
     );
   } catch (e) {
@@ -1543,23 +1556,34 @@ function loadLayout() {
     p = null;
   }
   if (!p) return;
+  const cols = [els.colTask, els.colEditors, els.colPreview];
   if (Array.isArray(p.grows)) {
-    if (p.grows[0]) els.colTask.style.flexGrow = p.grows[0];
-    if (p.grows[1]) els.colEditors.style.flexGrow = p.grows[1];
-    if (p.grows[2]) els.colPreview.style.flexGrow = p.grows[2];
+    cols.forEach((col, i) => {
+      const g = p.grows[i];
+      if (g) {
+        col.style.flexGrow = g;
+        col._savedGrow = g; // чтобы свёрнутая колонка помнила долю
+      }
+    });
   }
   if (p.collapsed) {
-    els.layout.classList.add("task-collapsed");
-    els.toggleTaskBtn.textContent = "▶ Показать задание";
-    savedGrows = null; // доли до сворачивания не сохранены — разворот даст трети
+    if (p.collapsed.task) setCollapsed(els.colTask, true);
+    if (p.collapsed.editors) setCollapsed(els.colEditors, true);
+    if (p.collapsed.preview) setCollapsed(els.colPreview, true);
   }
 }
 
 function initLayout() {
   loadLayout();
+  updateSplitters();
   makeResizable(els.split1, els.colTask, els.colEditors);
   makeResizable(els.split2, els.colEditors, els.colPreview);
-  els.toggleTaskBtn.addEventListener("click", toggleTask);
+  [els.colTask, els.colEditors, els.colPreview].forEach((col) => {
+    const collapseBtn = col.querySelector(".col-collapse");
+    const reopenBtn = col.querySelector(".col-reopen");
+    if (collapseBtn) collapseBtn.addEventListener("click", () => toggleCol(col, true));
+    if (reopenBtn) reopenBtn.addEventListener("click", () => toggleCol(col, false));
+  });
 }
 
 // ============================================================

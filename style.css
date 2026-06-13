@@ -343,6 +343,42 @@ body.resizing #preview {
   min-width: 100%;
 }
 
+/* Слой цветовых чипов поверх редактора: сам слой клики пропускает,
+   ловят их только чипы. Прокрутку считаем в JS (вычитаем scrollTop/Left). */
+.swatch-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;        /* клики проходят к textarea... */
+  z-index: 3;                  /* ...кроме самих чипов (поверх textarea) */
+}
+.color-swatch {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  pointer-events: auto;        /* чип кликабелен */
+}
+.color-swatch:hover {
+  border-color: #fff;
+}
+
+/* Скрытый нативный input type=color — открывается программно по клику на чип */
+#color-input {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;        /* открываем через .click(), не мышью */
+}
+
 /* Верхний слой: ввод. Текст прозрачный, виден только курсор и выделение. */
 .editor {
   position: absolute;

@@ -365,6 +365,7 @@ function cacheDom() {
     ta._preEl = wrap.querySelector(".highlight");
     ta._codeEl = wrap.querySelector(".highlight code");
     ta._gutterEl = wrap.querySelector(".gutter");
+    ta._swatchLayer = wrap.querySelector(".swatch-layer");
   });
   // Кнопки
   els.runBtn = document.getElementById("run-btn");
@@ -385,6 +386,8 @@ function cacheDom() {
   // Emmet-превью (всплывающая подсказка у курсора)
   els.emmetPreview = document.getElementById("emmet-preview");
   els.emmetPreviewCode = els.emmetPreview.querySelector("code");
+  // Нативный выбор цвета (палитра + пипетка) для hex-цветов в коде
+  els.colorInput = document.getElementById("color-input");
 }
 
 // ============================================================
@@ -846,6 +849,79 @@ function updateHighlight(editor) {
   codeEl.innerHTML = highlight(editor.value, editor.dataset.lang);
   updateGutter(editor);
   syncScroll(editor);
+  refreshSwatches(editor);
+}
+
+// ---- Цветовые чипы у hex-цветов (#rgb / #rrggbb) ----
+// Перед каждым hex-цветом рисуем кликабельный цветной квадрат; клик открывает
+// нативную палитру (с пипеткой ОС), выбранный цвет подставляется в код.
+const HEX_RE = /#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-fA-F])/g;
+const SWATCH_SIZE = 13;
+let pickerTarget = null; // {editor, start, len} — что заменяем выбранным цветом
+
+// #fff → #ffffff (нативный input type=color принимает только #rrggbb)
+function normalizeHex(hex) {
+  let s = hex.slice(1);
+  if (s.length === 3) s = s[0] + s[0] + s[1] + s[1] + s[2] + s[2];
+  return "#" + s.toLowerCase();
+}
+
+// Пересобрать чипы у всех hex-цветов видимой области редактора.
+function refreshSwatches(editor) {
+  const layer = editor._swatchLayer;
+  if (!layer) return;
+  layer.textContent = "";
+  // Скрытый/несфокусированный редактор имеет нулевые метрики — координаты
+  // посчитаем при показе вкладки (switchTab вызывает refreshSwatches снова).
+  if (editor.offsetParent === null) return;
+
+  const val = editor.value;
+  const viewH = editor.clientHeight;
+  const viewW = editor.clientWidth;
+  HEX_RE.lastIndex = 0;
+  let m;
+  while ((m = HEX_RE.exec(val))) {
+    const start = m.index;
+    const hex = m[0];
+    const c = caretCoords(editor, start);
+    const top = c.top - editor.scrollTop + (c.lineHeight - SWATCH_SIZE) / 2;
+    const left = c.left - editor.scrollLeft - SWATCH_SIZE - 2; // чип слева от «#»
+    // За пределами видимой области (overflow:hidden обрежет, но не рисуем зря)
+    if (top < -SWATCH_SIZE || top > viewH || left < -SWATCH_SIZE || left > viewW) continue;
+
+    const sw = document.createElement("button");
+    sw.type = "button";
+    sw.className = "color-swatch";
+    sw.style.top = top + "px";
+    sw.style.left = left + "px";
+    sw.style.background = hex;
+    sw.title = "Выбрать цвет (" + hex + ")";
+    sw.addEventListener("mousedown", (e) => e.preventDefault()); // не сбивать фокус/каретку
+    sw.addEventListener("click", () => openColorPicker(editor, start, hex, sw));
+    layer.appendChild(sw);
+  }
+}
+
+// Открыть нативную палитру у чипа и запомнить, какой фрагмент кода заменить.
+function openColorPicker(editor, start, hex, swatch) {
+  const input = els.colorInput;
+  if (!input) return;
+  input.value = normalizeHex(hex);
+  pickerTarget = { editor, start, len: hex.length };
+  // Ставим скрытый input у чипа — диалог ОС откроется рядом
+  const r = swatch.getBoundingClientRect();
+  input.style.left = r.left + "px";
+  input.style.top = r.bottom + "px";
+  input.click();
+}
+
+// Применить выбранный цвет: заменить hex в коде как пользовательский ввод
+// (Ctrl+Z отменяет, подсветка/автосохранение обновляются сами).
+function applyPickedColor() {
+  if (!pickerTarget) return;
+  const { editor, start, len } = pickerTarget;
+  pickerTarget = null;
+  insertAsUserInput(editor, start, start + len, els.colorInput.value);
 }
 
 // Перерисовать колонку с номерами строк (по числу строк в редакторе).
@@ -1434,6 +1510,10 @@ function switchTab(tabId) {
     pane.hidden = pane.dataset.pane !== tabId;
   });
   hideEmmetPreview(); // при смене вкладки подсказка неактуальна
+  // Чипы цветов считаются по пиксельным координатам — у скрытого редактора их
+  // нет; пересобираем для показанного теперь редактора.
+  const shown = els.editors.find((ta) => ta.id === tabId);
+  if (shown) refreshSwatches(shown);
 }
 
 // ============================================================
@@ -1528,6 +1608,12 @@ function toggleCol(col, collapsed) {
   setCollapsed(col, collapsed);
   updateSplitters();
   saveLayout();
+  // Развернули редактор → его чипы цветов считались при скрытой колонке (нулевые
+  // координаты), пересчитываем для снова видимого редактора.
+  if (!collapsed && col === els.colEditors) {
+    const shown = els.editors.find((ta) => ta.offsetParent !== null);
+    if (shown) refreshSwatches(shown);
+  }
 }
 
 function saveLayout() {
@@ -1641,6 +1727,8 @@ function init() {
   els.hintBtn.addEventListener("click", showHint);
   els.downloadBtn.addEventListener("click", downloadProject);
   els.consoleClearBtn.addEventListener("click", clearConsole);
+  // Выбор цвета в нативной палитре → подставить в код (change = по подтверждению)
+  els.colorInput.addEventListener("change", applyPickedColor);
 
   // Сообщения из iframe (console.* и ошибки) → встроенная консоль
   window.addEventListener("message", handleConsoleMessage);
@@ -1652,9 +1740,10 @@ function init() {
       autosave();
       updateEmmetPreview(ta);
     });
-    // Прокрутка textarea → двигаем слой подсветки и переставляем превью
+    // Прокрутка textarea → двигаем слой подсветки, чипы цветов и превью
     ta.addEventListener("scroll", () => {
       syncScroll(ta);
+      refreshSwatches(ta);
       if (!els.emmetPreview.hidden) updateEmmetPreview(ta);
     });
     // Курсор сместился (клик/стрелки) → пересчитать превью

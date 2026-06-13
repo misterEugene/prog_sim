@@ -51,18 +51,21 @@
           <div class="gutter" aria-hidden="true"></div>
           <pre class="highlight" aria-hidden="true"><code></code></pre>
           <textarea id="index.html" class="editor" data-lang="html" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" wrap="off"></textarea>
+          <div class="swatch-layer" aria-hidden="true"></div>
         </div>
 
         <div class="tab-pane editor-wrap" data-pane="style.css" hidden>
           <div class="gutter" aria-hidden="true"></div>
           <pre class="highlight" aria-hidden="true"><code></code></pre>
           <textarea id="style.css" class="editor" data-lang="css" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" wrap="off"></textarea>
+          <div class="swatch-layer" aria-hidden="true"></div>
         </div>
 
         <div class="tab-pane editor-wrap" data-pane="main.js" hidden>
           <div class="gutter" aria-hidden="true"></div>
           <pre class="highlight" aria-hidden="true"><code></code></pre>
           <textarea id="main.js" class="editor" data-lang="js" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" wrap="off"></textarea>
+          <div class="swatch-layer" aria-hidden="true"></div>
         </div>
       </div>
     </section>
@@ -92,6 +95,10 @@
       </div>
     </section>
   </main>
+
+  <!-- Скрытый нативный выбор цвета (палитра + пипетка ОС). Открывается кликом по
+       цветному чипу у hex-цвета в редакторе; выбранный цвет подставляется в код. -->
+  <input type="color" id="color-input" aria-hidden="true" tabindex="-1">
 
   <!-- Контейнер для тостов (подсказка) -->
   <div id="toast-container" class="toast-container" aria-live="polite"></div>

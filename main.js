@@ -1175,15 +1175,77 @@ function applyPickedColor() {
   insertAsUserInput(editor, start, start + len, els.colorInput.value);
 }
 
-// Перерисовать колонку с номерами строк (по числу строк в редакторе).
+// Перерисовать колонку с номерами строк. Без переноса — по одному номеру на
+// строку. С переносом (Alt+Z) логическая строка может занимать несколько
+// визуальных: номер ставим у первой визуальной строки, а на строки-продолжения
+// добавляем ПУСТЫЕ записи — так номера остаются вровень с кодом.
 function updateGutter(editor) {
   const gutter = editor._gutterEl;
   if (!gutter) return;
-  const count = editor.value.split("\n").length;
-  // textContent — без HTML-инъекций; \n совпадает с переносами строк кода
-  let out = "1";
-  for (let i = 2; i <= count; i++) out += "\n" + i;
-  gutter.textContent = out;
+  const lines = editor.value.split("\n");
+  const rows = wordWrap ? wrappedRowCounts(editor, lines) : null;
+  if (!rows) {
+    let out = "1";
+    for (let i = 2; i <= lines.length; i++) out += "\n" + i;
+    gutter.textContent = out;
+    return;
+  }
+  const parts = [];
+  for (let i = 0; i < lines.length; i++) {
+    parts.push(String(i + 1));
+    for (let r = 1; r < rows[i]; r++) parts.push(""); // безномерные продолжения
+  }
+  gutter.textContent = parts.join("\n");
+}
+
+// Сколько визуальных строк занимает каждая логическая строка при переносе.
+// Меряем «зеркалом» (по одному div на строку, ширина = текстовая область
+// редактора). null → измерить нельзя (редактор скрыт) → обычная нумерация.
+let wrapMirror = null;
+function wrappedRowCounts(editor, lines) {
+  if (editor.offsetParent === null) return null;
+  // Меряем по слою подсветки <pre> — именно он показывает перенесённый код,
+  // рядом с которым стоят номера (у него те же метрики, что у textarea).
+  const target = editor._preEl || editor;
+  const cs = getComputedStyle(target);
+  const padL = parseFloat(cs.paddingLeft) || 0;
+  const padR = parseFloat(cs.paddingRight) || 0;
+  const contentW = target.clientWidth - padL - padR;
+  if (contentW <= 0) return null;
+  const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.5;
+
+  if (!wrapMirror) {
+    wrapMirror = document.createElement("div");
+    wrapMirror.setAttribute("aria-hidden", "true");
+    wrapMirror.style.position = "absolute";
+    wrapMirror.style.visibility = "hidden";
+    wrapMirror.style.top = "-9999px";
+    wrapMirror.style.left = "0";
+    wrapMirror.style.whiteSpace = "pre-wrap"; // наследуется детьми
+    wrapMirror.style.overflowWrap = "anywhere";
+    document.body.appendChild(wrapMirror);
+  }
+  const m = wrapMirror;
+  m.style.width = contentW + "px";
+  m.style.fontFamily = cs.fontFamily;
+  m.style.fontSize = cs.fontSize;
+  m.style.lineHeight = cs.lineHeight;
+  m.style.fontWeight = cs.fontWeight;
+  m.style.letterSpacing = cs.letterSpacing;
+  m.style.tabSize = cs.tabSize;
+  m.style.MozTabSize = cs.tabSize;
+
+  // Один div на строку (переиспользуем) → один пересчёт раскладки на все строки
+  while (m.children.length < lines.length) m.appendChild(document.createElement("div"));
+  while (m.children.length > lines.length) m.removeChild(m.lastChild);
+  for (let i = 0; i < lines.length; i++) {
+    m.children[i].textContent = lines[i].length ? lines[i] : "​";
+  }
+  const rows = new Array(lines.length);
+  for (let i = 0; i < lines.length; i++) {
+    rows[i] = Math.max(1, Math.round(m.children[i].offsetHeight / lh));
+  }
+  return rows;
 }
 
 function syncScroll(editor) {
@@ -1766,10 +1828,26 @@ function switchTab(tabId) {
     pane.hidden = pane.dataset.pane !== tabId;
   });
   hideEmmetPreview(); // при смене вкладки подсказка неактуальна
-  // Чипы цветов считаются по пиксельным координатам — у скрытого редактора их
-  // нет; пересобираем для показанного теперь редактора.
+  // Гаттер (число визуальных строк при переносе) и чипы цветов считаются по
+  // пиксельным метрикам — у скрытого редактора их нет; пересчитываем для
+  // показанного теперь редактора.
   const shown = els.editors.find((ta) => ta.id === tabId);
-  if (shown) refreshSwatches(shown);
+  if (shown) {
+    updateGutter(shown);
+    refreshSwatches(shown);
+  }
+}
+
+// Пересчитать перенос (нумерацию строк-продолжений и чипы) для видимого
+// редактора — после изменения его ширины (ресайз колонок/окна).
+function refreshWrapForVisible() {
+  if (!wordWrap) return;
+  const ta = els.editors.find((e) => e.offsetParent !== null);
+  if (ta) {
+    updateGutter(ta);
+    refreshSwatches(ta);
+    syncScroll(ta);
+  }
 }
 
 // ============================================================
@@ -1817,6 +1895,7 @@ function makeResizable(splitter, left, right) {
     splitter.classList.remove("dragging");
     document.body.classList.remove("resizing");
     saveLayout();
+    refreshWrapForVisible(); // ширина редактора изменилась → пересчитать перенос
   };
   splitter.addEventListener("pointerup", end);
   splitter.addEventListener("pointercancel", end);
@@ -1997,6 +2076,9 @@ function init() {
 
   // Перед закрытием/перезагрузкой — дописать историю отмены (вдруг дебаунс не успел)
   window.addEventListener("beforeunload", saveHistoryNow);
+
+  // Изменение размера окна меняет ширину редактора → пересчитать перенос строк
+  window.addEventListener("resize", refreshWrapForVisible);
 
   els.editors.forEach((ta) => {
     // Ввод → пересобрать подсветку, сохранить прогресс, обновить Emmet-превью

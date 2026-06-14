@@ -83,34 +83,22 @@ function buildStepCard(step, index) {
   action.innerHTML = markdownToHtml(step.actionMd);
   card.appendChild(action);
 
-  const buttons = document.createElement("div");
-  buttons.className = "step-buttons";
   if (isManualStep(step)) {
-    // Ручной шаг: одна кнопка «✓ Я сделал» вместо кнопок вставки.
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn-insert btn-manual-done";
-    btn.dataset.insert = String(index);
-    btn.dataset.lang = "done";
-    btn.addEventListener("click", () => markManualDone(index));
-    buttons.appendChild(btn);
-  } else {
-    stepRealLangs(step).forEach((lang) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "btn-insert";
-      btn.dataset.insert = String(index);
-      btn.dataset.lang = lang;
-      btn.addEventListener("click", () => insertPart(index, lang));
-      buttons.appendChild(btn);
-    });
-  }
-  card.appendChild(buttons);
+    // Ручной шаг: сначала инструкция, под ней — одна кнопка «✓ Я сделал».
+    const task = document.createElement("div");
+    task.className = "step-task";
+    task.innerHTML = markdownToHtml(step.taskMd);
+    card.appendChild(task);
 
-  const task = document.createElement("div");
-  task.className = "step-task";
-  task.innerHTML = markdownToHtml(step.taskMd);
-  card.appendChild(task);
+    const buttons = document.createElement("div");
+    buttons.className = "step-buttons";
+    buttons.appendChild(makeManualDoneButton(index));
+    card.appendChild(buttons);
+  } else {
+    // Шаг с кнопками: кнопки вставки идут ВНУТРИ инструкции, по местам меток
+    // [[btn:html|css|js]] — сначала кнопка нужной части, потом её кусок задания.
+    appendTaskWithInlineButtons(card, step, index);
+  }
 
   const hint = document.createElement("details");
   hint.className = "step-hint";
@@ -128,6 +116,66 @@ function buildStepCard(step, index) {
   card.appendChild(done);
 
   return card;
+}
+
+// Кнопка вставки части блока (HTML/CSS/JS). Состоянием управляет updateProgress.
+function makeInsertButton(index, lang) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "btn-insert";
+  btn.dataset.insert = String(index);
+  btn.dataset.lang = lang;
+  btn.addEventListener("click", () => insertPart(index, lang));
+  return btn;
+}
+
+// Кнопка «✓ Я выполнил этот шаг» для ручного шага.
+function makeManualDoneButton(index) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "btn-insert btn-manual-done";
+  btn.dataset.insert = String(index);
+  btn.dataset.lang = "done";
+  btn.addEventListener("click", () => markManualDone(index));
+  return btn;
+}
+
+// Разложить инструкцию шага, чередуя её куски с кнопками вставки по местам меток
+// [[btn:html]] / [[btn:css]] / [[btn:js]]. Если меток нет (шаг ещё не размечен) —
+// откатываемся к старому виду: вся инструкция, под ней все кнопки разом.
+function appendTaskWithInlineButtons(card, step, index) {
+  const taskMd = String(step.taskMd || "");
+  const parts = taskMd.split(/\[\[btn:(html|css|js)\]\]/);
+
+  if (parts.length === 1) {
+    const task = document.createElement("div");
+    task.className = "step-task";
+    task.innerHTML = markdownToHtml(taskMd);
+    card.appendChild(task);
+
+    const buttons = document.createElement("div");
+    buttons.className = "step-buttons";
+    stepRealLangs(step).forEach((lang) =>
+      buttons.appendChild(makeInsertButton(index, lang))
+    );
+    card.appendChild(buttons);
+    return;
+  }
+
+  // split с группой даёт [текст, lang, текст, lang, текст, …].
+  parts.forEach((chunk, k) => {
+    if (k % 2 === 1) {
+      const buttons = document.createElement("div");
+      buttons.className = "step-buttons";
+      buttons.appendChild(makeInsertButton(index, chunk));
+      card.appendChild(buttons);
+    } else if (chunk.trim()) {
+      const task = document.createElement("div");
+      task.className = "step-task";
+      task.innerHTML = markdownToHtml(chunk);
+      card.appendChild(task);
+    }
+  });
 }
 
 function renderLesson() {

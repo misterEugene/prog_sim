@@ -499,6 +499,12 @@ function cacheDom() {
   els.emmetPreviewCode = els.emmetPreview.querySelector("code");
   // Нативный выбор цвета (палитра + пипетка) для hex-цветов в коде
   els.colorInput = document.getElementById("color-input");
+  // Модальное окно подтверждения «Начать заново»
+  els.resetModal = document.getElementById("reset-modal");
+  els.resetModalPhrase = document.getElementById("reset-modal-phrase");
+  els.resetModalInput = document.getElementById("reset-modal-input");
+  els.resetModalCancel = document.getElementById("reset-modal-cancel");
+  els.resetModalConfirm = document.getElementById("reset-modal-confirm");
 }
 
 // ============================================================
@@ -1810,6 +1816,41 @@ function handleConsoleMessage(e) {
 // ============================================================
 // Сброс к шаблону
 // ============================================================
+// Фраза, которую ребёнок должен ввести ВРУЧНУЮ, чтобы подтвердить сброс.
+// Защита от случайного нажатия: одного клика «Да» недостаточно — нужно
+// осознанно перепечатать фразу целиком.
+const RESET_CONFIRM_PHRASE =
+  "Да, я уверен, что хочу начать заново и знаю, что это необратимо";
+
+// Открыть модальное окно подтверждения сброса.
+function openResetModal() {
+  // Подставляем эталонную фразу в окно и сбрасываем поле ввода.
+  els.resetModalPhrase.textContent = RESET_CONFIRM_PHRASE;
+  els.resetModalInput.value = "";
+  els.resetModalConfirm.disabled = true;
+  els.resetModal.hidden = false;
+  els.resetModalInput.focus();
+}
+
+// Закрыть модальное окно без сброса.
+function closeResetModal() {
+  els.resetModal.hidden = true;
+}
+
+// Кнопку «Да, начать заново» включаем, только когда введённая фраза
+// в точности совпадает с эталонной (пробелы по краям не считаем).
+function validateResetPhrase() {
+  els.resetModalConfirm.disabled =
+    els.resetModalInput.value.trim() !== RESET_CONFIRM_PHRASE;
+}
+
+// Подтверждённый сброс: закрыть окно и обнулить проект.
+function confirmReset() {
+  if (els.resetModalInput.value.trim() !== RESET_CONFIRM_PHRASE) return;
+  closeResetModal();
+  resetToTemplate();
+}
+
 function resetToTemplate() {
   els.htmlEditor.value = lesson.initialHTML;
   els.cssEditor.value = lesson.initialCSS;
@@ -2229,8 +2270,27 @@ function init() {
   // ---- Обработчики ----
   els.runBtn.addEventListener("click", updateIframe);
   els.openTabBtn.addEventListener("click", openInNewTab);
-  els.resetBtn.addEventListener("click", resetToTemplate);
+  els.resetBtn.addEventListener("click", openResetModal);
   els.hintBtn.addEventListener("click", showHint);
+
+  // Модальное окно подтверждения сброса
+  els.resetModalInput.addEventListener("input", validateResetPhrase);
+  els.resetModalCancel.addEventListener("click", closeResetModal);
+  els.resetModalConfirm.addEventListener("click", confirmReset);
+  // Enter в поле подтверждает (если фраза верна), Escape — закрывает окно
+  els.resetModalInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      confirmReset();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      closeResetModal();
+    }
+  });
+  // Клик по затемнённому фону (вне самого окна) — закрыть без сброса
+  els.resetModal.addEventListener("click", (e) => {
+    if (e.target === els.resetModal) closeResetModal();
+  });
   els.downloadBtn.addEventListener("click", downloadProject);
   els.consoleClearBtn.addEventListener("click", clearConsole);
   // Выбор цвета в нативной палитре → подставить в код (change = по подтверждению)

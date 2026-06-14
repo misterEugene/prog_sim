@@ -100,6 +100,35 @@
        цветному чипу у hex-цвета в редакторе; выбранный цвет подставляется в код. -->
   <input type="color" id="color-input" aria-hidden="true" tabindex="-1">
 
+  <!-- Модальное окно подтверждения «Начать заново»: чтобы случайно не стереть
+       весь прогресс, ребёнок должен ВРУЧНУЮ ввести фразу-подтверждение. -->
+  <div id="reset-modal" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
+      <h2 id="reset-modal-title" class="modal-title">⚠ Начать заново?</h2>
+      <p class="modal-text">
+        Вы точно уверены, что хотите начать заново? Весь ваш код и прогресс будут
+        удалены, а это действие <strong>необратимо</strong>.
+      </p>
+      <p class="modal-text">Чтобы подтвердить, введите в поле ниже фразу:</p>
+      <p id="reset-modal-phrase" class="modal-phrase"></p>
+      <input
+        type="text"
+        id="reset-modal-input"
+        class="modal-input"
+        placeholder="Введите фразу точно так же"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false">
+      <div class="modal-actions">
+        <button id="reset-modal-cancel" type="button" class="btn">Отмена</button>
+        <button id="reset-modal-confirm" type="button" class="btn btn-danger" disabled>
+          Да, начать заново
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Контейнер для тостов (подсказка) -->
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 

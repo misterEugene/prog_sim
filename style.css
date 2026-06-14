@@ -10,6 +10,8 @@
   --accent-hover: #7aa2ff;
   --border: #3a3a55;
   --success: #4caf50;
+  --danger: #e0524c;
+  --danger-hover: #ec6a64;
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   --gutter-w: 44px;          /* ширина колонки с номерами строк */
 }
@@ -225,6 +227,24 @@ body.resizing #preview {
 .btn-small {
   padding: 6px 10px;
   font-size: 0.82rem;
+}
+
+/* Кнопка опасного/необратимого действия (подтверждение «Начать заново») */
+.btn-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+  font-weight: 600;
+}
+.btn-danger:hover {
+  background: var(--danger-hover);
+  border-color: var(--danger-hover);
+}
+.btn-danger:disabled {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+  color: var(--text-muted);
+  cursor: not-allowed;
 }
 
 /* ===== Вкладки ===== */
@@ -689,6 +709,76 @@ body.word-wrap .editor {
   color: var(--success);
   margin-bottom: 4px;
   font-size: 0.85rem;
+}
+
+/* ===== Модальное окно подтверждения «Начать заново» ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+.modal-overlay[hidden] { display: none; }
+
+.modal {
+  background: var(--bg-panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  padding: 24px;
+  width: 100%;
+  max-width: 460px;
+}
+
+.modal-title {
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+  color: var(--danger);
+}
+
+.modal-text {
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.modal-text strong { color: var(--danger); }
+
+.modal-phrase {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: var(--bg-editor);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--text);
+  user-select: all;
+}
+
+.modal-input {
+  width: 100%;
+  background: var(--bg-editor);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  margin-bottom: 16px;
+}
+.modal-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 /* ===== Emmet-превью: всплывающая подсказка у курсора ===== */

@@ -1,0 +1,156 @@
+/* ===== Markdown-описание ===== */
+.markdown-body {
+  background: #ffffff;
+  color: #1a1a1a;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  line-height: 1.6;
+}
+
+.markdown-body h1 { font-size: 1.5rem; margin: 0 0 0.5em; }
+.markdown-body h2 { font-size: 1.25rem; margin: 0.8em 0 0.4em; }
+.markdown-body h3 { font-size: 1.1rem; margin: 0.8em 0 0.4em; }
+.markdown-body p { margin: 0.6em 0; }
+.markdown-body ul { margin: 0.6em 0; padding-left: 1.4em; }
+.markdown-body li { margin: 0.2em 0; }
+.markdown-body code {
+  background: #eef0f4;
+  color: #c7254e;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.9em;
+}
+.markdown-body strong { font-weight: 700; }
+.markdown-body em { font-style: italic; }
+
+/* ===== Урок-конструктор: вступление, прогресс, шаги, финал ===== */
+.lesson-intro { margin-bottom: 8px; }
+
+/* Прогресс-бар «N из M» */
+.lesson-progress {
+  position: sticky;            /* виден при прокрутке списка шагов */
+  top: -18px;                  /* компенсируем верхний padding .markdown-body */
+  background: #ffffff;
+  padding: 10px 0;
+  margin: 4px 0 12px;
+  border-bottom: 1px solid #e6e6ee;
+  z-index: 1;
+}
+.progress-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #5b3df5;
+  margin-bottom: 6px;
+}
+.progress-bar {
+  height: 8px;
+  background: #ececf3;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #5b3df5, #8a6bff);
+  transition: width 0.3s ease;
+}
+
+/* Карточка шага */
+.step {
+  border: 1px solid #e3e3ee;
+  border-left: 4px solid #5b3df5;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 14px 0;
+  background: #fbfbfe;
+}
+.step-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.step-num {
+  background: #5b3df5;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.step-title { font-size: 1.05rem; font-weight: 700; }
+.step-time { margin-left: auto; font-size: 0.8rem; color: #8a8aa0; }
+
+.step-goal, .step-action { margin: 6px 0; }
+.step-action { font-size: 0.92em; color: #444; }
+
+/* Ряд кнопок вставки кусочков блока (отдельная кнопка на HTML/CSS/JS) */
+.step-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+.btn-insert {
+  display: inline-block;
+  background: #5b3df5;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.btn-insert:hover { background: #4a2fd0; }
+.btn-insert.done {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+.btn-insert.done:hover { background: #d3ecd5; }
+.btn-insert.locked {
+  background: #ececf3;
+  color: #9a9ab0;
+  cursor: not-allowed;
+}
+
+/* Задание «сделай сам», подсказка, критерий */
+.step-task {
+  background: #fff7e6;
+  border: 1px solid #ffe2a8;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+}
+.step-hint {
+  margin: 8px 0;
+  font-size: 0.92em;
+}
+.step-hint summary {
+  cursor: pointer;
+  color: #5b3df5;
+  font-weight: 600;
+  user-select: none;
+}
+.step-hint summary::-webkit-details-marker { color: #5b3df5; }
+.step-hint > div { margin-top: 6px; }
+.step-done {
+  font-size: 0.92em;
+  color: #2e7d32;
+  margin-top: 8px;
+}
+
+/* Финал-поздравление */
+.lesson-outro {
+  border: 2px solid #5b3df5;
+  background: linear-gradient(135deg, #f3effe, #fff);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-top: 18px;
+}
+.lesson-outro[hidden] { display: none; }

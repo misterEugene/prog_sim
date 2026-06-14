@@ -6,8 +6,62 @@
 ## Концепция
 
 Локальная (без сервера/сборки/библиотек) платформа для обучения детей коду.
-**Один** предустановленный урок, зашитый в `main.js` (объект `lesson`).
+**Один** предустановленный урок, зашитый в `js/lesson-data.js` (объект `lesson`).
 Создание новых уроков через UI **не предусмотрено** — это намеренное упрощение.
+
+## Структура исходников (модули js/ и css/)
+
+Раньше вся логика жила в одном `main.js` (~2380 строк), а стили — в одном
+`style.css` (~840 строк). Файлы разнесены по модулям для читаемости. **Поведение
+не менялось** — код перенесён байт-в-байт (нарезка по диапазонам строк, не
+перепечатывание; см. PITFALLS про trailing whitespace).
+
+**Почему классические скрипты, а НЕ ES-модули.** Платформа должна открываться
+прямо в браузере, в т.ч. из `file://`. ES-модули (`type="module"`/`import`)
+требуют HTTP (CORS блокирует `file://`), поэтому модули — обычные `<script defer>`.
+Связь между ними — через **общую глобальную лексическую область**: top-level
+`const`/`let`/`function` одного классического скрипта видны функциям другого
+(в пределах одного realm). Это работает, потому что все межмодульные обращения
+происходят ВНУТРИ функций, вызываемых на `DOMContentLoaded`, — к этому моменту
+все `defer`-скрипты уже выполнены. На верхнем уровне модулей нет обращений к
+чужим биндингам (только объявления + регистрация `init` в `js/main.js`), поэтому
+порядок подключения для корректности некритичен; он задан логически, `js/main.js`
+— последним.
+
+Порядок `<script>` (в `index.html`): `emmet` → `lesson-data` → `dom` → `markdown`
+→ `storage` → `editor` → `highlight` → `swatches` → `history` →
+`emmet-integration` → `lesson-render` → `console` → `preview` → `zip` → `toast`
+→ `reset` → `tabs` → `layout` → `main`.
+
+Карта модулей `js/`:
+
+| Модуль | Что внутри |
+|--------|-----------|
+| `lesson-data.js` | объект `lesson` (7 шагов + сниппеты), `STORAGE_KEY`, `PREVIEW_DOC_KEY` |
+| `dom.js` | `els` + `cacheDom()` |
+| `markdown.js` | `escapeHtml`, `inlineMarkdown`, `markdownToHtml` |
+| `storage.js` | `loadFromLocalStorage`/`saveToLocalStorage`/`autosave` |
+| `editor.js` | курсор-«зеркало» (`caretCoords`/`MIRROR_PROPS`), `syncScroll`, нумерация (`updateGutter`/`wrappedRowCounts`), перенос (`wordWrap`/`setWordWrap`), `insertTab`, `insertAsUserInput`, `smartEnter`/`endsWithOpenTag` |
+| `highlight.js` | токенайзер, `*_PATTERNS`, `highlight`, `updateHighlight` |
+| `swatches.js` | цветовые чипы у hex-цветов (`refreshSwatches`, `ensureColorSpacing`, палитра) |
+| `history.js` | своя история отмены/повтора (`histRecord`/`histUndo`/… + localStorage) |
+| `emmet-integration.js` | Tab-раскрытие (`tryExpandEmmet`/`extractAbbreviation`) + превью у курсора |
+| `lesson-render.js` | `renderLesson`/`buildStepCard`/`insertPart`/`updateProgress`, `doneParts`, `PART_INFO` |
+| `console.js` | встроенная консоль (приём `postMessage` из iframe) |
+| `preview.js` | `buildDocument`, `CONSOLE_HOOK`/`LINK_GUARD`, `updateIframe`, `openInNewTab` |
+| `zip.js` | ручная сборка ZIP (`crc32`/`buildZip`) + скачивание проекта |
+| `toast.js` | `showToast`/`showHint` |
+| `reset.js` | модальное подтверждение + `resetToTemplate` |
+| `tabs.js` | `switchTab`, `refreshWrapForVisible` |
+| `layout.js` | три колонки: перетаскивание ширины, сворачивание, сохранение раскладки |
+| `main.js` | точка входа `init()` + навешивание обработчиков (последним) |
+| `emmet.js` | свой мини-Emmet (движок, `window.Emmet`) |
+
+Карта модулей `css/` (подключаются по порядку каскада): `base` (переменные,
+сбросы, верхняя панель) → `layout` (колонки/разделители/сворачивание) →
+`buttons` → `editor` (вкладки, оверлей-редактор, gutter, чипы, токены) →
+`markdown` (учебник: шаги, прогресс, финал) → `preview` (iframe + консоль) →
+`components` (тосты, модалка, Emmet-превью) → `responsive` (адаптив <800px).
 
 Ребёнок: читает задачу (`task.md`), правит HTML/CSS/JS, жмёт «Запустить», видит
 результат в iframe. Прогресс автосохраняется в `localStorage`, восстанавливается

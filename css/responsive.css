@@ -1,0 +1,29 @@
+/* ===== Адаптивность: узкий экран — колонки в столбец ===== */
+@media (max-width: 800px) {
+  html, body {
+    height: auto;
+  }
+  body {
+    overflow: auto;          /* на мобильном прокручиваем всю страницу */
+  }
+  .layout {
+    flex-direction: column;
+    min-height: 0;
+  }
+  .splitter {
+    display: none;           /* по вертикали тянуть нечего */
+  }
+  .col {
+    flex: none !important;   /* перекрываем inline flex-grow */
+    width: 100%;
+  }
+  .col-task .markdown-body {
+    min-height: 220px;
+  }
+  .content {
+    min-height: 300px;
+  }
+  #preview {
+    min-height: 320px;
+  }
+}

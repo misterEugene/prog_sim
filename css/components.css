@@ -1,0 +1,139 @@
+/* ===== Тосты (подсказка) ===== */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--success);
+  border-left-width: 4px;
+  border-radius: 6px;
+  padding: 12px 16px;
+  max-width: 320px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-title {
+  font-weight: 600;
+  color: var(--success);
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+}
+
+/* ===== Модальное окно подтверждения «Начать заново» ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+.modal-overlay[hidden] { display: none; }
+
+.modal {
+  background: var(--bg-panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  padding: 24px;
+  width: 100%;
+  max-width: 460px;
+}
+
+.modal-title {
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+  color: var(--danger);
+}
+
+.modal-text {
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.modal-text strong { color: var(--danger); }
+
+.modal-phrase {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: var(--bg-editor);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--text);
+  user-select: all;
+}
+
+.modal-input {
+  width: 100%;
+  background: var(--bg-editor);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  margin-bottom: 16px;
+}
+.modal-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ===== Emmet-превью: всплывающая подсказка у курсора ===== */
+.emmet-preview {
+  position: fixed;
+  z-index: 1000;
+  max-width: 60ch;
+  max-height: 50vh;
+  overflow: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  padding: 6px 8px;
+  pointer-events: none;          /* не перехватывает клики/набор */
+}
+.emmet-preview[hidden] { display: none; }
+.emmet-preview-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.emmet-preview-code {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.45;
+  tab-size: 4;
+  -moz-tab-size: 4;
+  white-space: pre;
+  color: var(--text);
+}

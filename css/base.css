@@ -1,0 +1,60 @@
+/* ===== Базовые сбросы и переменные ===== */
+:root {
+  --bg-page: #1e1e2f;
+  --bg-panel: #25253a;
+  --bg-editor: #0a0a0f;
+  --bg-elevated: #2d2d44;
+  --text: #e6e6f0;
+  --text-muted: #9a9ab0;
+  --accent: #5b8cff;
+  --accent-hover: #7aa2ff;
+  --border: #3a3a55;
+  --success: #4caf50;
+  --danger: #e0524c;
+  --danger-hover: #ec6a64;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --gutter-w: 44px;          /* ширина колонки с номерами строк */
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg-page);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  display: flex;            /* верхняя панель + раскладка колонок */
+  flex-direction: column;
+  overflow: hidden;         /* прокрутка — внутри колонок */
+}
+
+/* ===== Верхняя панель управления ===== */
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.lesson-title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.control-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}

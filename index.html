@@ -4,7 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Урок программирования</title>
-  <link rel="stylesheet" href="style.css">
+  <!-- Стили разнесены по модулям (порядок = каскад: база → раскладка → … → адаптив) -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/buttons.css">
+  <link rel="stylesheet" href="css/editor.css">
+  <link rel="stylesheet" href="css/markdown.css">
+  <link rel="stylesheet" href="css/preview.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
   <!-- Верхняя панель: заголовок урока и общие кнопки управления -->
@@ -138,7 +146,28 @@
     <pre class="emmet-preview-code"><code></code></pre>
   </div>
 
-  <script src="emmet.js" defer></script>
-  <script src="main.js" defer></script>
+  <!-- Скрипты — классические (НЕ ES-модули): работают и из file://. Подключаются
+       с defer (выполняются по порядку, до DOMContentLoaded). Порядок логический;
+       все межмодульные вызовы происходят в функциях на DOMContentLoaded, когда
+       загружено уже всё. main.js (точка входа) — последним. -->
+  <script src="js/emmet.js" defer></script>
+  <script src="js/lesson-data.js" defer></script>
+  <script src="js/dom.js" defer></script>
+  <script src="js/markdown.js" defer></script>
+  <script src="js/storage.js" defer></script>
+  <script src="js/editor.js" defer></script>
+  <script src="js/highlight.js" defer></script>
+  <script src="js/swatches.js" defer></script>
+  <script src="js/history.js" defer></script>
+  <script src="js/emmet-integration.js" defer></script>
+  <script src="js/lesson-render.js" defer></script>
+  <script src="js/console.js" defer></script>
+  <script src="js/preview.js" defer></script>
+  <script src="js/zip.js" defer></script>
+  <script src="js/toast.js" defer></script>
+  <script src="js/reset.js" defer></script>
+  <script src="js/tabs.js" defer></script>
+  <script src="js/layout.js" defer></script>
+  <script src="js/main.js" defer></script>
 </body>
 </html>

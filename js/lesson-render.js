@@ -18,15 +18,35 @@ function partKey(index, lang) {
   return index + ":" + lang;
 }
 
-// Языки частей шага в порядке вставки (html → css → js).
-function stepLangs(step) {
+// Реальные языки сниппетов шага в порядке вставки (html → css → js).
+function stepRealLangs(step) {
   return PART_ORDER.filter((lang) => step.snippets && step.snippets[lang]);
 }
 
-// Шаг выполнен, когда вставлены ВСЕ его части.
+// «Ручной» шаг — без сниппетов (ребёнок печатает код руками). Завершается
+// кнопкой «✓ Я выполнил этот шаг»; его единственная «часть» — псевдо-язык "done".
+function isManualStep(step) {
+  return step.manual === true || stepRealLangs(step).length === 0;
+}
+
+// «Части», из которых складывается готовность шага: для обычного шага — реальные
+// языки сниппетов, для ручного — единственная псевдо-часть "done".
+function stepLangs(step) {
+  return isManualStep(step) ? ["done"] : stepRealLangs(step);
+}
+
+// Шаг выполнен, когда отмечены ВСЕ его части.
 function isStepDone(index) {
   return stepLangs(lesson.steps[index]).every((lang) =>
     doneParts.has(partKey(index, lang))
+  );
+}
+
+// Первый ещё не вставленный реальный язык шага (для поочерёдной разблокировки
+// html → css → js ВНУТРИ шага). undefined — если все части уже вставлены.
+function firstUndonePartOfStep(index) {
+  return stepRealLangs(lesson.steps[index]).find(
+    (lang) => !doneParts.has(partKey(index, lang))
   );
 }
 
@@ -65,15 +85,26 @@ function buildStepCard(step, index) {
 
   const buttons = document.createElement("div");
   buttons.className = "step-buttons";
-  stepLangs(step).forEach((lang) => {
+  if (isManualStep(step)) {
+    // Ручной шаг: одна кнопка «✓ Я сделал» вместо кнопок вставки.
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "btn-insert";
+    btn.className = "btn-insert btn-manual-done";
     btn.dataset.insert = String(index);
-    btn.dataset.lang = lang;
-    btn.addEventListener("click", () => insertPart(index, lang));
+    btn.dataset.lang = "done";
+    btn.addEventListener("click", () => markManualDone(index));
     buttons.appendChild(btn);
-  });
+  } else {
+    stepRealLangs(step).forEach((lang) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn-insert";
+      btn.dataset.insert = String(index);
+      btn.dataset.lang = lang;
+      btn.addEventListener("click", () => insertPart(index, lang));
+      buttons.appendChild(btn);
+    });
+  }
   card.appendChild(buttons);
 
   const task = document.createElement("div");
@@ -138,22 +169,51 @@ function updateProgress() {
 
   els.markdown.querySelectorAll(".btn-insert").forEach((btn) => {
     const i = Number(btn.dataset.insert);
-    const info = PART_INFO[btn.dataset.lang];
+    const lang = btn.dataset.lang;
     btn.classList.remove("done", "locked");
     btn.title = "";
-    if (doneParts.has(partKey(i, btn.dataset.lang))) {
+
+    // Ручной шаг: кнопка «✓ Я выполнил этот шаг».
+    if (lang === "done") {
+      if (doneParts.has(partKey(i, "done"))) {
+        btn.disabled = true;
+        btn.classList.add("done");
+        btn.textContent = "✓ Шаг выполнен";
+      } else if (i === next) {
+        btn.disabled = false;
+        btn.textContent = "✓ Я выполнил этот шаг";
+      } else {
+        btn.disabled = true;
+        btn.classList.add("locked");
+        btn.textContent = "🔒 Я выполнил этот шаг";
+        btn.title = `Сначала выполни шаг ${next + 1}`;
+      }
+      return;
+    }
+
+    const info = PART_INFO[lang];
+    if (doneParts.has(partKey(i, lang))) {
       // Уже добавленную часть можно вставить повторно (если ребёнок удалил код)
       btn.disabled = false;
       btn.classList.add("done");
       btn.textContent = `↻ Вставить ${info.label} снова`;
-    } else if (i === next) {
+    } else if (i === next && lang === firstUndonePartOfStep(i)) {
+      // Активна только СЛЕДУЮЩАЯ невставленная часть текущего шага (html→css→js)
       btn.disabled = false;
       btn.textContent = `➕ Вставить ${info.label} → ${info.file}`;
     } else {
       btn.disabled = true;
       btn.classList.add("locked");
       btn.textContent = `🔒 Вставить ${info.label}`;
-      btn.title = `Сначала собери блок ${next + 1}`;
+      if (i === next) {
+        // Шаг текущий, но раньше идёт другая часть (например, сначала HTML)
+        const need = firstUndonePartOfStep(i);
+        btn.title = need
+          ? `Сначала вставь ${PART_INFO[need].label}`
+          : `Сначала собери блок ${next + 1}`;
+      } else {
+        btn.title = `Сначала собери блок ${next + 1}`;
+      }
     }
   });
 
@@ -193,8 +253,12 @@ function wrapBlock(lang, title, code) {
 function insertPart(index, lang) {
   const key = partKey(index, lang);
   const isReinsert = doneParts.has(key);
-  // Новые части вставляем только в текущем блоке; добавленную — повторно в любой момент
-  if (!isReinsert && index !== firstUndoneStep()) return;
+  // Новые части вставляем только в текущем блоке и только по порядку html→css→js;
+  // добавленную — повторно в любой момент.
+  if (!isReinsert) {
+    if (index !== firstUndoneStep()) return;
+    if (lang !== firstUndonePartOfStep(index)) return;
+  }
 
   const step = lesson.steps[index];
   const code = step.snippets && step.snippets[lang];
@@ -263,6 +327,31 @@ function insertPart(index, lang) {
     showToast(
       `Блок «${step.title}» собран!`,
       `${info.label} вставлен в ${info.file}. Нажми ▶ Запустить, чтобы увидеть результат!`
+    );
+  }
+}
+
+// Отметить «ручной» шаг (без сниппетов) выполненным по кнопке «✓ Я сделал»:
+// добавить псевдо-часть "done", сохранить прогресс, разблокировать следующий шаг.
+function markManualDone(index) {
+  const key = partKey(index, "done");
+  if (doneParts.has(key)) return; // уже отмечен
+  if (index !== firstUndoneStep()) return; // соблюдаем порядок шагов
+
+  doneParts.add(key);
+  autosave();
+  updateProgress();
+
+  const step = lesson.steps[index];
+  if (doneStepCount() === lesson.steps.length) {
+    showToast(
+      "🎉 Все шаги выполнены!",
+      "Отличная работа! Можешь скачать проект кнопкой ⬇ Скачать."
+    );
+  } else {
+    showToast(
+      `Шаг «${step.title}» выполнен!`,
+      "Молодец! Переходи к следующему шагу 👇"
     );
   }
 }

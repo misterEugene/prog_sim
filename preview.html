@@ -33,8 +33,18 @@
     // документ на каждый «Запустить», а мы его показываем и переотображаем при
     // изменении (событие storage приходит из другой вкладки того же origin).
     var KEY = "previewDoc";
+    var DEFAULT_TITLE = "Мой интернет-магазин — просмотр";
     var frame = document.getElementById("frame");
     var empty = document.getElementById("empty");
+
+    // Название вкладки браузера берётся из <title> ЭТОЙ страницы, а не из <title>
+    // внутри iframe (стандарт). Поэтому достаём <title> ученика из документа и
+    // присваиваем его document.title — тогда во вкладке виден заголовок сайта.
+    function applyTitle(doc) {
+      var m = /<title>([\s\S]*?)<\/title>/i.exec(doc || "");
+      var t = m ? m[1].trim() : "";
+      document.title = t || DEFAULT_TITLE;
+    }
 
     function render() {
       var doc = null;
@@ -43,9 +53,11 @@
         empty.classList.remove("show");
         frame.classList.remove("hide");
         frame.srcdoc = doc;
+        applyTitle(doc);
       } else {
         frame.classList.add("hide");
         empty.classList.add("show");
+        document.title = DEFAULT_TITLE;
       }
     }
 

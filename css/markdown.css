@@ -119,6 +119,16 @@
   cursor: not-allowed;
 }
 
+/* Кнопка «✓ Я сделал» у ручных шагов (где код печатается руками, без вставки) */
+.btn-manual-done { background: #2e9e4f; }
+.btn-manual-done:hover { background: #268043; }
+.btn-manual-done.done {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  cursor: default;
+}
+
 /* Задание «сделай сам», подсказка, критерий */
 .step-task {
   background: #fff7e6;

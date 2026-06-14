@@ -4,7 +4,11 @@
 // Нативная история textarea стирается при перезагрузке (контент грузится через
 // value=). Поэтому ведём свой стек снимков на каждый редактор и храним его в
 // localStorage; Ctrl+Z/Ctrl+Shift+Z (Ctrl+Y) работают и после перезагрузки.
-const HISTORY_KEY = "undoHistory";
+// Ключ истории отмен зависит от урока (см. LESSON_KEY_SUFFIX в lesson-data*.js):
+// иначе история редакторов урока 1 подхватилась бы в редакторы урока 2 и затёрла
+// бы их стартовый код. lesson-data* подключается ДО history.js (см. index*.html).
+const HISTORY_KEY =
+  "undoHistory" + (typeof LESSON_KEY_SUFFIX !== "undefined" ? LESSON_KEY_SUFFIX : "");
 const HIST_MAX = 80;        // максимум шагов на редактор
 const COALESCE_MS = 400;    // быстрый набор внутри строки = один шаг отмены
 let restoring = false;      // идёт восстановление снимка → не записываем в историю

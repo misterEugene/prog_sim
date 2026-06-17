@@ -561,8 +561,16 @@ function loadDemoShop() {
 // адреса, и в верхней панели появится постоянная кнопка «🛠 Весь магазин».
 // Дальше кнопка доступна на каждой загрузке (флаг хранится в localStorage),
 // заходить по секретному адресу больше не нужно. Кнопка зовёт loadDemoShop().
+//
+// ВЫКЛЮЧИТЬ режим обратно можно тремя симметричными путями:
+//   • секретный адрес  index.html#mega-admin-off  (или  ?mega-admin-off)
+//   • из консоли:  disableMegaAdmin()
+//   • правый клик (контекстное меню) по кнопке «🛠 Весь магазин» → подтвердить
+// → флаг `megaDevAdmin` удаляется, кнопка пропадает, при следующих загрузках
+// её больше нет (пока снова не зайдёшь по адресу включения).
 // ============================================================
 const DEV_SECRET = "mega-admin";
+const DEV_SECRET_OFF = "mega-admin-off";   // должен проверяться РАНЬШЕ включения
 const DEV_FLAG_KEY = "megaDevAdmin";
 
 function isDevUnlocked() {
@@ -573,10 +581,27 @@ function isDevUnlocked() {
   }
 }
 
-// Заметили секрет в адресе → сохранили флаг и почистили адресную строку.
+// Выключить режим разработчика: убрать флаг и спрятать кнопку.
+function disableDevMode() {
+  try { localStorage.removeItem(DEV_FLAG_KEY); } catch (e) {}
+  const btn = document.getElementById("dev-fill-btn");
+  if (btn) btn.remove();
+  if (typeof showToast === "function") {
+    showToast(
+      "🛠 Режим разработчика выключен",
+      "Кнопка «Весь магазин» убрана. Включить снова: адрес #mega-admin."
+    );
+  }
+}
+
+// Заметили секрет в адресе → включили/выключили флаг и почистили адресную строку.
+// Сначала проверяем выключение: строка «mega-admin-off» содержит «mega-admin».
 function checkSecretUnlock() {
   const where = (location.hash + " " + location.search).toLowerCase();
-  if (where.indexOf(DEV_SECRET) !== -1) {
+  if (where.indexOf(DEV_SECRET_OFF) !== -1) {
+    try { localStorage.removeItem(DEV_FLAG_KEY); } catch (e) {}
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  } else if (where.indexOf(DEV_SECRET) !== -1) {
     try { localStorage.setItem(DEV_FLAG_KEY, "true"); } catch (e) {}
     try { history.replaceState(null, "", location.pathname); } catch (e) {}
   }
@@ -593,8 +618,17 @@ function injectDevButton() {
   btn.type = "button";
   btn.className = "btn";
   btn.textContent = "🛠 Весь магазин";
-  btn.title = "Загрузить готовый собранный магазин (режим разработчика)";
+  btn.title = "Загрузить готовый магазин (правый клик — выключить режим)";
   btn.addEventListener("click", loadDemoShop);
+  // Правый клик по кнопке → предложить выключить режим разработчика.
+  btn.addEventListener("contextmenu", function (e) {
+    e.preventDefault();
+    const ok = confirm(
+      "Выключить режим разработчика и убрать кнопку «🛠 Весь магазин»?\n" +
+      "Включить снова можно адресом #mega-admin."
+    );
+    if (ok) disableDevMode();
+  });
   bar.appendChild(btn);
 }
 
@@ -608,7 +642,10 @@ if (document.readyState === "loading") {
 // Запасные способы (работают всегда):
 //  • из консоли:  loadDemoShop()  (если DevTools попросит — введи «allow pasting»)
 //  • горячие клавиши Ctrl+Alt+D (раскладка-независимо: e.code === "KeyD")
-if (typeof window !== "undefined") window.loadDemoShop = loadDemoShop;
+if (typeof window !== "undefined") {
+  window.loadDemoShop = loadDemoShop;
+  window.disableMegaAdmin = disableDevMode; // выключить режим из консоли
+}
 document.addEventListener("keydown", function (e) {
   if ((e.ctrlKey || e.metaKey) && e.altKey && e.code === "KeyD") {
     e.preventDefault();

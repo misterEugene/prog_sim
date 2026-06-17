@@ -2,13 +2,26 @@
 // Урок 1 «МегаМагазин» — единственный предустановленный урок.
 // Локально, без сервера и без внешних библиотек.
 //
+// Многостраничное приложение (псевдостраницы в одном srcdoc-документе):
+// секции лежат плоскими соседями в <body>, а JS-роутер сайта (showPage)
+// показывает/прячет их группами по «страницам» (Главная / Вход / Регистрация /
+// Товар). Навигация — ссылки с data-link / карточки с data-product; собственный
+// click-обработчик сайта переключает страницу. Конфликта с LINK_GUARD платформы
+// нет: ссылки используют href="#", LINK_GUARD просто гасит переход.
+//
 // Дуга навыков (порядок ввода приёмов важен, см. docs/LESSON_REDESIGN.md):
 //   A. пишем теги/текст/CSS РУКАМИ (ручные шаги, без кнопок) →
 //   B. кнопки «Вставить» + заполнение жёлтых меток [ВПИШИ …] →
 //   C. то же + сам пишешь 1 CSS-свойство →
 //   D. вводим Emmet (короткий код + Tab) →
-//   E–G. закрепление (Emmet, свой CSS, JS) →
-//   H–I. УЯЗВИМЫЕ фичи (вход, комментарии) — для урока 2 (кибербез).
+//   E–G. закрепление (Emmet, свой CSS, JS: корзина) →
+//   H. страницы вход/регистрация + JS-роутер + аккаунты →
+//   I. страница товара + комментарии после входа (с логином автора).
+//
+// УЯЗВИМОСТИ заложены НАМЕРЕННО (для урока 2 «Этичный хакер»): XSS через
+// innerHTML (комментарии, имя автора, приветствие, user-box), пароль в коде +
+// в HTML-комментарии, пароли пользователей в открытом виде в localStorage,
+// обход входа через localStorage, повышение прав через is_admin.
 //
 // «Ручной» шаг — без snippets (manual:true): вместо кнопок вставки одна кнопка
 // «✓ Я выполнил этот шаг». Обычный шаг: HTML открывается первым, CSS/JS — после
@@ -23,7 +36,15 @@ const lesson = {
 
 Привет! Сегодня ты — настоящий **веб-разработчик**. С нуля, своими руками, ты
 соберёшь интернет-магазин техники **МегаМагазин**: с шапкой, товарами, отзывами,
-корзиной и даже личным кабинетом.
+корзиной, **разными страницами**, регистрацией и личным кабинетом.
+
+## Что получится в конце
+
+Настоящий **многостраничный** сайт: по меню можно переходить между страницами
+(Главная / Вход / Регистрация), каждая **карточка товара открывается отдельной
+страницей**, можно **зарегистрироваться и войти** (логин появится в правом
+верхнем углу), а **комментарий к товару** можно оставить только после входа — и
+рядом с ним будет виден твой логин.
 
 ## Как мы будем работать
 
@@ -37,7 +58,8 @@ const lesson = {
 - 2️⃣ Потом — **вставляешь блоки кнопками** и заполняешь жёлтые метки \`[ВПИШИ …]\`.
 - 3️⃣ Потом — **сам пишешь правила CSS**.
 - 4️⃣ Дальше — волшебство **Emmet**: короткий код + Tab превращается в теги.
-- 5️⃣ В конце — **оживляешь** страницу на **JavaScript**.
+- 5️⃣ В конце — **оживляешь** страницу на **JavaScript**: корзина, страницы,
+  аккаунты и комментарии.
 
 Тег — это слово, обёрнутое в угловые скобки (например \`<h1>\`). Именно из тегов
 состоят все сайты в интернете.
@@ -51,17 +73,18 @@ const lesson = {
 - писал теги **HTML руками** и вставлял блоки кнопками;
 - настраивал **CSS** — цвета, размеры, скругления;
 - освоил **Emmet** (короткий код + Tab);
-- оживил сайт на **JavaScript**: рабочая корзина, вход и комментарии.
+- оживил сайт на **JavaScript**: рабочая корзина, **переходы между страницами**,
+  **регистрация и вход**, **страницы товаров** и **комментарии с логином автора**.
 
 Нажми **⬇ Скачать проект** вверху — магазин сохранится в файл. Покажи друзьям!
 
 ## 🕵️ Что дальше?
 
 На **следующем уроке** ты станешь **этичным («белым») хакером** и найдёшь
-**уязвимости в ЭТОМ же сайте**: и во входе, и в комментариях спрятаны настоящие
-дыры в безопасности. Ты научишься их находить **и чинить**. До встречи! 🔐`,
+**уязвимости в ЭТОМ же сайте**: и во входе/регистрации, и в комментариях спрятаны
+настоящие дыры в безопасности. Ты научишься их находить **и чинить**. До встречи! 🔐`,
 
-  hint: "На ручных шагах печатай код сам и жми «✓ Я выполнил этот шаг». На остальных: вставь блок кнопкой (сначала HTML, потом CSS) → впиши значения вместо ВСЕХ жёлтых меток [ВПИШИ …] точно как в задании → нажми ▶ Запустить. После каждой маленькой правки запускай заново и смотри результат.",
+  hint: "На ручных шагах печатай код сам и жми «✓ Я выполнил этот шаг». На остальных: вставь блок кнопкой (сначала HTML, потом CSS, потом JS) → впиши значения вместо ВСЕХ жёлтых меток [ВПИШИ …] точно как в задании → нажми ▶ Запустить. Навигация по страницам, регистрация, вход и комментарии заработают после JS-шагов в конце урока.",
 
   initialHTML: ``, // пусто — сайт «вырастает» из того, что пишет/вставляет ребёнок
   initialCSS: ``,
@@ -151,23 +174,26 @@ const lesson = {
         "✅ **Готово, когда** заголовок `<h1>` цветной и стоит по центру страницы.",
     },
     {
-      // ----- B: Шапка магазина (кнопки HTML→CSS + метки) -----
-      title: "Шапка магазина",
-      time: "13 мин",
+      // ----- B: Шапка магазина: меню навигации + уголок пользователя -----
+      title: "Шапка магазина и меню навигации",
+      time: "14 мин",
       goalMd:
-        "**Цель:** добавить верхнюю часть сайта — *шапку*.\n\n**Новый термин:** `<header>` — это HTML-тег для «шапки» страницы, где живут логотип и меню.",
+        "**Цель:** добавить верхнюю часть сайта — *шапку* с меню и местом для имени пользователя.\n\n**Новый термин:** `<header>` — это HTML-тег для «шапки» страницы, где живут логотип и меню. Ссылки меню помечены `data-link` — позже по ним заработают переходы между страницами.",
       actionMd:
         "Теперь работаем кнопками. Сначала станет активна кнопка **HTML**, после неё — **CSS**.",
       snippets: {
-        html: `<!-- Шапка магазина: логотип, меню и корзина -->
+        html: `<!-- Шапка магазина: логотип, меню, корзина и уголок пользователя -->
 <header class="site-header" id="home">
 	<div class="logo">🛍️ [ВПИШИ НАЗВАНИЕ МАГАЗИНА]</div>
 	<nav class="menu">
-		<a href="#home">[ВПИШИ ПУНКТ МЕНЮ]</a>
-		<a href="#products">[ВПИШИ ПУНКТ МЕНЮ]</a>
-		<a href="#contacts">[ВПИШИ ПУНКТ МЕНЮ]</a>
+		<a href="#" data-link="home">[ВПИШИ ПУНКТ МЕНЮ]</a>
+		<a href="#" data-link="login">[ВПИШИ ПУНКТ МЕНЮ]</a>
+		<a href="#" data-link="register">[ВПИШИ ПУНКТ МЕНЮ]</a>
 	</nav>
-	<div class="cart">🛒 [ВПИШИ СЛОВО]: <span id="cart-count">0</span></div>
+	<div class="header-right">
+		<div class="cart">🛒 [ВПИШИ СЛОВО]: <span id="cart-count">0</span></div>
+		<div id="user-box" class="user-box"></div>
+	</div>
 </header>`,
         css: `/* Стили шапки */
 .site-header {
@@ -179,9 +205,12 @@ const lesson = {
 	padding: 16px 24px;
 }
 .logo { font-size: [ВПИШИ РАЗМЕР]; font-weight: bold; }
-.menu a { color: #fff; margin-left: 16px; text-decoration: none; }
+.menu a { color: #fff; margin-left: 16px; text-decoration: none; cursor: pointer; }
 .menu a:hover { text-decoration: underline; }
-.cart { font-weight: bold; }`,
+.header-right { display: flex; align-items: center; gap: 16px; }
+.cart { font-weight: bold; }
+.user-box a { color: #fff; text-decoration: underline; cursor: pointer; }
+.user-box .logout-link { margin-left: 8px; font-size: 14px; }`,
       },
       taskMd: `🔧 **Главный цикл: маленькая правка → ▶ Запустить → смотрю.**
 
@@ -192,8 +221,8 @@ const lesson = {
 
 **1. Название (index.html).** Замени \`[ВПИШИ НАЗВАНИЕ МАГАЗИНА]\` на: **МегаМагазин**
 
-**2. Пункты меню (index.html).** Заполни три ссылки по порядку (узнаёшь по \`href\`):
-\`#home\` → **Главная**, \`#products\` → **Товары**, \`#contacts\` → **Контакты**.
+**2. Пункты меню (index.html).** Заполни три ссылки по порядку (узнаёшь по \`data-link\`):
+\`home\` → **Главная**, \`login\` → **Вход**, \`register\` → **Регистрация**.
 
 **3. Слово у корзины.** Замени \`[ВПИШИ СЛОВО]\` на: **Корзина** (значок 🛒,
 двоеточие \`:\` и цифру \`0\` не трогай).
@@ -205,14 +234,17 @@ const lesson = {
 
 **4. Цвет шапки.** Замени \`[ВПИШИ ЦВЕТ]\` на: **#5b3df5** → ▶ Запустить.
 
-**5. Размер логотипа.** Замени \`[ВПИШИ РАЗМЕР]\` на: **24px** → ▶ Запустить.`,
+**5. Размер логотипа.** Замени \`[ВПИШИ РАЗМЕР]\` на: **24px** → ▶ Запустить.
+
+💡 Пустой уголок \`user-box\` справа — это место, где позже появится твой логин
+после входа. Пока он пустой — так и должно быть.`,
       hintMd:
-        "Метку стирай полностью, вместе со скобками `[` и `]`. Пункты меню — по порядку: Главная, Товары, Контакты. Цвет — ровно `#5b3df5`, размер — `24px` (без пробела).",
+        "Метку стирай полностью, вместе со скобками `[` и `]`. Пункты меню — по порядку: Главная, Вход, Регистрация. Цвет — ровно `#5b3df5`, размер — `24px` (без пробела).",
       doneMd:
-        "✅ **Готово, когда** вверху виден логотип «🛍️ МегаМагазин», меню «Главная / Товары / Контакты» и надпись «🛒 Корзина: 0» (нигде нет [ВПИШИ …]).",
+        "✅ **Готово, когда** вверху виден логотип «🛍️ МегаМагазин», меню «Главная / Вход / Регистрация» и надпись «🛒 Корзина: 0» (нигде нет [ВПИШИ …]).",
     },
     {
-      // ----- C: Баннер (кнопки + СВОЁ CSS-свойство, P8) -----
+      // ----- C: Баннер (кнопки + СВОЁ CSS-свойство) -----
       title: "Баннер со скидкой",
       time: "16 мин",
       goalMd:
@@ -220,8 +252,8 @@ const lesson = {
       actionMd:
         "Снова кнопки HTML → CSS. А ещё ты впервые **сам напишешь одно свойство** CSS!",
       snippets: {
-        html: `<!-- Баннер: главный заголовок и кнопка -->
-<section class="banner">
+        html: `<!-- Баннер: главный заголовок и кнопка (страница «Главная») -->
+<section class="banner" id="banner">
 	<h1>[ВПИШИ ЗАГОЛОВОК СКИДКИ]</h1>
 	<p>[ВПИШИ ПОДЗАГОЛОВОК]</p>
 	<button class="banner-btn">[ВПИШИ ТЕКСТ КНОПКИ]</button>
@@ -270,37 +302,45 @@ const lesson = {
         "✅ **Готово, когда** виден баннер с заголовком «Скидки до 50% на технику!», подзаголовком и оранжевой кнопкой «Купить сейчас» с круглыми углами.",
     },
     {
-      // ----- D: Товары + ВВОДИМ Emmet (кнопки + аббревиатуры) -----
+      // ----- D: Товары + ВВОДИМ Emmet (карточки кликабельны → data-product) -----
       title: "Карточки товаров + Emmet",
       time: "22 мин",
       goalMd:
-        "**Цель:** показать товары сеткой и впервые освоить **Emmet**.\n\n**Новый супер-приём — Emmet:** пишешь короткий код, жмёшь **Tab** — он превращается в теги! Значки: `>` вложить внутрь, `+` поставить рядом, `.имя` — класс, `{текст}` — текст внутри. Например `.card>h3{Привет}` + Tab даст `<div class=\"card\"><h3>Привет</h3></div>`.",
+        "**Цель:** показать товары сеткой и впервые освоить **Emmet**.\n\n**Новое:** у каждой карточки есть ссылка с `data-product=\"номер\"` — позже по клику она будет открывать **отдельную страницу товара**.\n\n**Новый супер-приём — Emmet:** пишешь короткий код, жмёшь **Tab** — он превращается в теги! Значки: `>` вложить внутрь, `+` поставить рядом, `^` подняться на уровень выше, `.имя` — класс, `{текст}` — текст внутри.",
       actionMd:
         "Вставь HTML и CSS кнопками, заполни метки, а потом **сам добавишь 5-ю карточку через Emmet**.",
       snippets: {
-        html: `<!-- Сетка товаров: четыре карточки -->
+        html: `<!-- Сетка товаров: карточки кликабельны (страница «Главная») -->
 <section class="products" id="products">
 	<div class="card">
-		<div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
-		<h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
+		<a href="#" class="card-link" data-product="0">
+			<div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
+			<h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
+		</a>
 		<p class="card-price">[ВПИШИ ЦЕНУ] ₽</p>
 		<button class="add-to-cart">В корзину</button>
 	</div>
 	<div class="card">
-		<div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
-		<h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
+		<a href="#" class="card-link" data-product="1">
+			<div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
+			<h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
+		</a>
 		<p class="card-price">[ВПИШИ ЦЕНУ] ₽</p>
 		<button class="add-to-cart">В корзину</button>
 	</div>
 	<div class="card">
-		<div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
-		<h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
+		<a href="#" class="card-link" data-product="2">
+			<div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
+			<h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
+		</a>
 		<p class="card-price">[ВПИШИ ЦЕНУ] ₽</p>
 		<button class="add-to-cart">В корзину</button>
 	</div>
 	<div class="card">
-		<div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
-		<h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
+		<a href="#" class="card-link" data-product="3">
+			<div class="card-img">[ВПИШИ ЭМОДЗИ]</div>
+			<h3 class="card-title">[ВПИШИ НАЗВАНИЕ]</h3>
+		</a>
 		<p class="card-price">[ВПИШИ ЦЕНУ] ₽</p>
 		<button class="add-to-cart">В корзину</button>
 	</div>
@@ -321,6 +361,8 @@ const lesson = {
 	text-align: center;
 	background: #fff;
 }
+.card-link { text-decoration: none; color: inherit; cursor: pointer; display: block; }
+.card-link:hover .card-title { text-decoration: underline; }
 .card-img { font-size: 64px; }
 .card-title { margin: 10px 0 4px; font-size: 18px; }
 .card-price { color: [ВПИШИ ЦВЕТ]; font-weight: bold; font-size: 18px; margin: 0 0 12px; }
@@ -334,13 +376,15 @@ const lesson = {
 
 🔧 **Нажми «Вставить HTML» ⬆, заполни 4 карточки** (после каждой пары — ▶ Запустить):
 
-- Карточка 1: эмодзи **📱**, название **Смартфон**, цена **19990**
-- Карточка 2: эмодзи **🎧**, название **Наушники**, цена **2490**
-- Карточка 3: эмодзи **⌚**, название **Умные часы**, цена **5990**
-- Карточка 4: эмодзи **💻**, название **Ноутбук**, цена **45990**
+- Карточка 1 (\`data-product="0"\`): эмодзи **📱**, название **Смартфон**, цена **19990**
+- Карточка 2 (\`data-product="1"\`): эмодзи **🎧**, название **Наушники**, цена **2490**
+- Карточка 3 (\`data-product="2"\`): эмодзи **⌚**, название **Умные часы**, цена **5990**
+- Карточка 4 (\`data-product="3"\`): эмодзи **💻**, название **Ноутбук**, цена **45990**
 
 В каждой: \`[ВПИШИ ЭМОДЗИ]\` → эмодзи, \`[ВПИШИ НАЗВАНИЕ]\` → название,
 \`[ВПИШИ ЦЕНУ]\` → число (значок \`₽\` уже стоит справа). После каждой карточки — ▶ Запустить.
+
+⚠️ \`data-product\` и ссылку \`<a …>\` не трогай — по ним позже откроется страница товара.
 
 [[btn:css]]
 
@@ -348,11 +392,11 @@ const lesson = {
 \`[ВПИШИ ЦВЕТ]\` (цвет цены) → **#5b3df5**, \`[ВПИШИ РАЗМЕР]\` (скругление) → **12px**.
 
 **✨ Теперь Emmet!** Найди строку \`<!-- 👇 EMMET … -->\`, щёлкни на **пустую строку
-под ним**, впиши этот код и нажми **Tab** — появится 5-я карточка:
-\`.card>.card-img{🎮}+h3.card-title{Геймпад}+p.card-price{2990 ₽}+button.add-to-cart{В корзину}\`
+под ним**, впиши этот код и нажми **Tab** — появится 5-я карточка (\`data-product="4"\`):
+\`.card>a.card-link[href="#" data-product="4"]>.card-img{🎮}+h3.card-title{Геймпад}^p.card-price{2990 ₽}+button.add-to-cart{В корзину}\`
 → ▶ Запустить.`,
       hintMd:
-        "Цену пиши только числом (`19990`) — `₽` уже справа. Эмодзи копируй из задания (Ctrl+C → Ctrl+V). Emmet-код длинный — проще скопировать его целиком, поставить курсор на пустую строку и нажать Tab.",
+        "Цену пиши только числом (`19990`) — `₽` уже справа. Эмодзи копируй из задания (Ctrl+C → Ctrl+V). Emmet-код длинный — проще скопировать его целиком, поставить курсор на пустую строку и нажать Tab. `data-product` у карточек должны идти по порядку 0,1,2,3,4.",
       doneMd:
         "✅ **Готово, когда** видны пять карточек (📱🎧⌚💻🎮) с названиями, ценами и кнопками «В корзину».",
     },
@@ -365,7 +409,7 @@ const lesson = {
       actionMd:
         "Кнопки HTML → CSS, заполни метки, и снова **сам допишешь одно свойство** CSS.",
       snippets: {
-        html: `<!-- Блок "О нас": рассказ о магазине -->
+        html: `<!-- Блок "О нас": рассказ о магазине (страница «Главная») -->
 <section class="about" id="about">
 	<h2>[ВПИШИ ЗАГОЛОВОК]</h2>
 	<p>[ВПИШИ РАССКАЗ О МАГАЗИНЕ]</p>
@@ -418,8 +462,8 @@ const lesson = {
       actionMd:
         "Кнопки HTML → CSS, заполни три отзыва, потом добавь 4-й через Emmet.",
       snippets: {
-        html: `<!-- Отзывы покупателей -->
-<section class="reviews">
+        html: `<!-- Отзывы покупателей (страница «Главная») -->
+<section class="reviews" id="reviews">
 	<h2>Отзывы покупателей</h2>
 	<div class="review-list">
 		<div class="review">
@@ -485,10 +529,10 @@ const lesson = {
       title: "Подвал с контактами",
       time: "9 мин",
       goalMd:
-        "**Цель:** добавить подвал с контактами.\n\n**Новый термин:** `<footer>` — «подвал» страницы, где пишут контакты и копирайт.",
+        "**Цель:** добавить подвал с контактами.\n\n**Новый термин:** `<footer>` — «подвал» страницы, где пишут контакты и копирайт. Подвал виден на всех страницах.",
       actionMd: "Кнопки HTML → CSS, заполни контакты.",
       snippets: {
-        html: `<!-- Подвал сайта: контакты и копирайт -->
+        html: `<!-- Подвал сайта: контакты и копирайт (виден на всех страницах) -->
 <footer class="site-footer" id="contacts">
 	<p>📞 Телефон: [ВПИШИ ТЕЛЕФОН]</p>
 	<p>✉️ Почта: [ВПИШИ ПОЧТУ]</p>
@@ -532,7 +576,7 @@ const lesson = {
       actionMd:
         "Нажми кнопку **JS** — код уйдёт в **main.js** и оживит все кнопки «В корзину».",
       snippets: {
-        js: `// Заставляем кнопки "В корзину" работать
+        js: `// ===== Корзина =====
 let count = 0;
 const counter = document.getElementById("cart-count");
 const buttons = document.querySelectorAll(".add-to-cart");
@@ -565,31 +609,40 @@ buttons.forEach(function (button) {
         "✅ **Готово, когда** клик по «В корзину» увеличивает число у «🛒 Корзина», а в консоли появляется сообщение.",
     },
     {
-      // ----- H: Личный кабинет / вход ⚠ НАМЕРЕННО УЯЗВИМО -----
-      // Для урока 2: пароль в коде, секрет в HTML-комментарии, приветствие через
-      // innerHTML (XSS через имя), is_admin в localStorage (повышение прав),
-      // приветствие из #hash (отражённый XSS). Дыры заложены специально.
-      title: "Личный кабинет (вход) ⚠",
-      time: "15 мин",
+      // ----- H1: Страницы «Вход» и «Регистрация» (HTML + CSS) -----
+      title: "Страницы «Вход» и «Регистрация»",
+      time: "16 мин",
       goalMd:
-        "**Цель:** добавить вход в личный кабинет.\n\n**Важно:** этот блок мы делаем как обычную фичу — но на **следующем уроке** ты узнаешь, что во входе спрятаны настоящие *дыры в безопасности*, и научишься их находить и чинить. Пока просто собери его.",
+        "**Цель:** добавить две новые страницы — форму входа и форму регистрации.\n\n**Новое:** это отдельные `<section>` с id `login-page` и `register-page`. Пока они показываются под каталогом — на следующем шаге JS-роутер начнёт переключать их как настоящие страницы.\n\n**Важно:** во входе спрятаны учебные *дыры в безопасности* — на уроке 2 ты их найдёшь. Пока просто собери формы.",
       actionMd:
-        "Кнопки HTML → CSS → JS. Заполни метки и попробуй войти.",
+        "Кнопки HTML → CSS. Заполни метки заголовков и кнопок.",
       snippets: {
-        html: `<!-- Личный кабинет: форма входа -->
-<section class="login" id="login">
+        html: `<!-- Страница «Вход» -->
+<section class="auth" id="login-page">
 	<h2>[ВПИШИ ЗАГОЛОВОК]</h2>
 	<!-- TODO для входа в админку: логин admin, пароль megapass123 -->
 	<input id="login-name" placeholder="Логин">
 	<input id="login-pass" type="password" placeholder="Пароль">
 	<button id="login-btn">[ВПИШИ ТЕКСТ КНОПКИ]</button>
-	<p id="login-hello" class="login-hello" hidden></p>
+	<p id="login-msg" class="auth-msg"></p>
+	<p class="auth-switch">Нет аккаунта? <a href="#" data-link="register">Зарегистрируйся</a></p>
 	<div id="admin-panel" class="admin-panel" hidden>
 		🛠 Админ-панель. Секретный код магазина: <b>MEGA-2026-ADMIN</b>
 	</div>
+</section>
+
+<!-- Страница «Регистрация» -->
+<section class="auth" id="register-page">
+	<h2>[ВПИШИ ЗАГОЛОВОК]</h2>
+	<input id="reg-name" placeholder="Придумай логин">
+	<input id="reg-pass" type="password" placeholder="Придумай пароль">
+	<input id="reg-pass2" type="password" placeholder="Повтори пароль">
+	<button id="reg-btn">[ВПИШИ ТЕКСТ КНОПКИ]</button>
+	<p id="reg-msg" class="auth-msg"></p>
+	<p class="auth-switch">Уже есть аккаунт? <a href="#" data-link="login">Войти</a></p>
 </section>`,
-        css: `/* Стили личного кабинета */
-.login {
+        css: `/* Стили страниц входа и регистрации */
+.auth {
 	max-width: 360px;
 	margin: 24px auto;
 	padding: 20px;
@@ -597,157 +650,384 @@ buttons.forEach(function (button) {
 	border-radius: 12px;
 	text-align: center;
 }
-.login h2 { color: [ВПИШИ ЦВЕТ]; }
-.login input {
+.auth h2 { color: [ВПИШИ ЦВЕТ]; }
+.auth input {
 	display: block; width: 100%; box-sizing: border-box;
 	margin: 8px 0; padding: 10px; border: 1px solid #ccc; border-radius: 6px;
 }
-.login button {
+.auth button {
 	background: #5b3df5; color: #fff; border: none;
 	padding: 10px 18px; border-radius: 8px; cursor: pointer;
 }
-.login-hello { font-weight: bold; color: #2e7d32; }
+.auth-msg { font-weight: bold; color: #2e7d32; min-height: 20px; }
+.auth-switch { font-size: 14px; }
+.auth-switch a { color: #5b3df5; cursor: pointer; }
 .admin-panel { margin-top: 12px; padding: 12px; background: #fff3cd; border-radius: 8px; }`,
-        js: `// Вход в личный кабинет
-const ADMIN_LOGIN = "admin";
-const ADMIN_PASS = "megapass123";
-const loginBtn = document.getElementById("login-btn");
-const helloBox = document.getElementById("login-hello");
+      },
+      taskMd: `[[btn:html]]
 
-loginBtn.addEventListener("click", function () {
-	const name = document.getElementById("login-name").value;
-	const pass = document.getElementById("login-pass").value;
-	if (name === ADMIN_LOGIN && pass === ADMIN_PASS) {
-		localStorage.setItem("isLoggedIn", "true");
-		localStorage.setItem("currentUser", name);
-		helloBox.hidden = false;
-		helloBox.innerHTML = "Привет, " + name + "!";  // приветствие через innerHTML
+🔧 **Нажми «Вставить HTML» ⬆ → ▶ Запустить → заполни метки** (после каждой — ▶ Запустить):
+
+**1. Заголовок страницы входа.** Первый \`[ВПИШИ ЗАГОЛОВОК]\` (в \`id="login-page"\`)
+→ **Вход** → ▶ Запустить.
+
+**2. Кнопка входа.** \`[ВПИШИ ТЕКСТ КНОПКИ]\` в блоке входа → **Войти** → ▶ Запустить.
+
+**3. Заголовок страницы регистрации.** Второй \`[ВПИШИ ЗАГОЛОВОК]\`
+(в \`id="register-page"\`) → **Регистрация** → ▶ Запустить.
+
+**4. Кнопка регистрации.** \`[ВПИШИ ТЕКСТ КНОПКИ]\` в блоке регистрации
+→ **Зарегистрироваться** → ▶ Запустить.
+
+[[btn:css]]
+
+**Нажми «Вставить CSS» ⬆ → ▶ Запустить → заполни метку:**
+
+**5.** \`[ВПИШИ ЦВЕТ]\` (цвет заголовков, style.css) → **#5b3df5** → ▶ Запустить.
+
+💡 Сейчас обе формы видны сразу под каталогом — это нормально. На следующем шаге
+они станут **отдельными страницами**, и появятся по клику в меню.`,
+      hintMd:
+        "Метки `[ВПИШИ ЗАГОЛОВОК]` две: первая — в секции `id=\"login-page\"` (впиши «Вход»), вторая — в `id=\"register-page\"` (впиши «Регистрация»). Кнопки: «Войти» и «Зарегистрироваться».",
+      doneMd:
+        "✅ **Готово, когда** на странице появились две формы: «Вход» (логин + пароль + кнопка «Войти») и «Регистрация» (логин + два пароля + кнопка «Зарегистрироваться»).",
+    },
+    {
+      // ----- H2: JS-роутер псевдостраниц + уголок пользователя -----
+      // Навигация по data-link / data-product. Конфликта с LINK_GUARD нет
+      // (href="#"). renderUserBox выводит имя через innerHTML — XSS-вектор.
+      title: "Навигация по страницам (JS-роутер)",
+      time: "16 мин",
+      goalMd:
+        "**Цель:** превратить блоки в **настоящие страницы** — чтобы по меню можно было переключаться между Главной, Входом и Регистрацией, а карточка товара открывала свою страницу.\n\n**Новый приём:** *роутер* — код, который показывает одну «страницу» (группу секций) и прячет остальные.",
+      actionMd:
+        "Нажми кнопку **JS** — добавится роутер. Сразу заработают меню, переходы и уголок пользователя.",
+      snippets: {
+        js: `// ===== Роутер: переключение страниц =====
+// Карта: имя страницы -> какие секции показывать. Шапка и подвал видны всегда.
+const PAGES = {
+	home: ["banner", "products", "about", "reviews"],
+	login: ["login-page"],
+	register: ["register-page"],
+	product: ["product-detail"],
+};
+const ALL_SECTIONS = [
+	"banner", "products", "about", "reviews",
+	"login-page", "register-page", "product-detail",
+];
+
+function showPage(name) {
+	ALL_SECTIONS.forEach(function (id) {
+		const el = document.getElementById(id);
+		if (el) el.style.display = "none";          // прячем все секции
+	});
+	(PAGES[name] || PAGES.home).forEach(function (id) {
+		const el = document.getElementById(id);
+		if (el) el.style.display = "";               // показываем нужную страницу
+	});
+	window.scrollTo(0, 0);
+}
+
+// Уголок пользователя в правом верхнем углу
+function renderUserBox() {
+	const box = document.getElementById("user-box");
+	if (!box) return;
+	if (localStorage.getItem("isLoggedIn") === "true") {
+		const userName = localStorage.getItem("currentUser") || "гость";
+		box.innerHTML = "👤 " + userName +
+			' <a href="#" data-link="logout" class="logout-link">Выйти</a>';
 	} else {
-		helloBox.hidden = false;
-		helloBox.textContent = "Неверный логин или пароль";
+		box.innerHTML = '<a href="#" data-link="login">Войти</a>';
+	}
+}
+
+// Один обработчик кликов на всю страницу: меню, ссылки, карточки товара
+document.addEventListener("click", function (e) {
+	const link = e.target.closest("[data-link]");
+	if (link) {
+		const dest = link.getAttribute("data-link");
+		if (dest === "logout") {
+			localStorage.removeItem("isLoggedIn");
+			localStorage.removeItem("currentUser");
+			renderUserBox();
+			showPage("home");
+		} else {
+			showPage(dest);
+		}
+		return;
+	}
+	const card = e.target.closest("[data-product]");
+	if (card && typeof openProduct === "function") {
+		openProduct(card.getAttribute("data-product"));
 	}
 });
 
-// Если уже входили раньше — сразу здороваемся (имя берём из localStorage)
+renderUserBox();
+showPage("home"); // при загрузке показываем Главную`,
+      },
+      taskMd: `[[btn:js]]
+
+🔧 **Нажми «Вставить JS» ⬆ → ▶ Запустить.** Магазин стал многостраничным!
+
+**1.** Нажми ▶ Запустить. Теперь видна только **Главная** (баннер, товары, о нас,
+отзывы). Формы входа и регистрации спрятались — они на других страницах.
+
+**2.** В меню вверху щёлкай **Вход** и **Регистрация** — страницы переключаются!
+А в правом верхнем углу появилась ссылка **Войти**.
+
+**3.** Щёлкни **Главная** — вернулся каталог. Попробуй щёлкнуть по карточке товара —
+пока ничего не происходит: страницу товара мы добавим на последнем шаге.
+
+💡 *Как это работает:* функция \`showPage("login")\` прячет все секции и показывает
+только нужную. Клик по ссылке с \`data-link="login"\` её и вызывает.`,
+      hintMd:
+        "Ничего вписывать не нужно — просто вставь JS и нажми ▶ Запустить. Если страницы не переключаются, проверь, что шапку (шаг «Шапка») ты собрал с пунктами меню `data-link`. Карточки товара заработают после последнего шага.",
+      doneMd:
+        "✅ **Готово, когда** по меню переключаются страницы Главная / Вход / Регистрация, а в правом верхнем углу видна ссылка «Войти».",
+    },
+    {
+      // ----- H3: Аккаунты (регистрация + вход) ⚠ НАМЕРЕННО УЯЗВИМО -----
+      // Пароль в коде + в HTML-комментарии; пароли пользователей в открытом виде
+      // в localStorage; обход входа через isLoggedIn; is_admin -> админ-панель;
+      // приветствие/user-box через innerHTML (XSS). Дыры для урока 2.
+      title: "Аккаунты: регистрация и вход ⚠",
+      time: "18 мин",
+      goalMd:
+        "**Цель:** заставить формы работать — чтобы можно было **зарегистрироваться**, **войти**, и логин появлялся в правом верхнем углу.\n\n**Важно:** этот код мы пишем как обычную фичу, но в нём спрятаны настоящие *дыры в безопасности* (пароли хранятся небезопасно). На уроке 2 ты их найдёшь и починишь.",
+      actionMd:
+        "Нажми кнопку **JS** — добавятся регистрация и вход. Заполнять метки не нужно, только попробовать.",
+      snippets: {
+        js: `// ===== Аккаунты: регистрация и вход =====
+const ADMIN_LOGIN = "admin";
+const ADMIN_PASS = "megapass123";        // ⚠ пароль прямо в коде
+
+// Все зарегистрированные пользователи (учебная «база» в localStorage)
+function getUsers() {
+	return JSON.parse(localStorage.getItem("users") || "[]");
+}
+
+// --- Регистрация ---
+const regBtn = document.getElementById("reg-btn");
+if (regBtn) {
+	regBtn.addEventListener("click", function () {
+		const name = document.getElementById("reg-name").value;
+		const pass = document.getElementById("reg-pass").value;
+		const pass2 = document.getElementById("reg-pass2").value;
+		const msg = document.getElementById("reg-msg");
+		if (!name || !pass) { msg.textContent = "Заполни логин и пароль"; return; }
+		if (pass !== pass2) { msg.textContent = "Пароли не совпадают"; return; }
+		const users = getUsers();
+		if (users.some(function (u) { return u.login === name; })) {
+			msg.textContent = "Такой логин уже занят"; return;
+		}
+		users.push({ login: name, password: pass });   // ⚠ пароль в открытом виде
+		localStorage.setItem("users", JSON.stringify(users));
+		msg.textContent = "Готово! Теперь войди на странице «Вход».";
+	});
+}
+
+// --- Вход ---
+const loginBtn = document.getElementById("login-btn");
+const loginMsg = document.getElementById("login-msg");
+if (loginBtn) {
+	loginBtn.addEventListener("click", function () {
+		const name = document.getElementById("login-name").value;
+		const pass = document.getElementById("login-pass").value;
+		const users = getUsers();
+		const ok = users.some(function (u) {
+			return u.login === name && u.password === pass;
+		});
+		const isAdmin = (name === ADMIN_LOGIN && pass === ADMIN_PASS); // ⚠ backdoor
+		if (ok || isAdmin) {
+			localStorage.setItem("isLoggedIn", "true");
+			localStorage.setItem("currentUser", name);
+			loginMsg.innerHTML = "Привет, " + name + "!";   // ⚠ innerHTML (XSS)
+			if (typeof renderUserBox === "function") renderUserBox();
+		} else {
+			loginMsg.textContent = "Неверный логин или пароль";
+		}
+	});
+}
+
+// Если уже входили раньше — обновим уголок пользователя
 if (localStorage.getItem("isLoggedIn") === "true") {
-	const saved = localStorage.getItem("currentUser") || "гость";
-	helloBox.hidden = false;
-	helloBox.innerHTML = "Привет, " + saved + "!";
+	if (typeof renderUserBox === "function") renderUserBox();
 }
 
 // Секретная админ-панель — если в localStorage is_admin === "true"
 if (localStorage.getItem("is_admin") === "true") {
-	document.getElementById("admin-panel").hidden = false;
+	const ap = document.getElementById("admin-panel");
+	if (ap) ap.hidden = false;
 }
 
-// Приветствие из адресной строки (текст после # в ссылке)
-if (location.hash) {
+// Приветствие из адресной строки (текст после # в ссылке) — ⚠ отражённый XSS
+if (location.hash && location.hash.length > 1) {
 	const fromUrl = decodeURIComponent(location.hash.slice(1));
-	helloBox.hidden = false;
-	helloBox.innerHTML = "Привет, " + fromUrl + "!";  // отражаем кусок ссылки
+	const box = document.getElementById("login-msg");
+	if (box) box.innerHTML = "Привет, " + fromUrl + "!";   // ⚠ innerHTML
 }`,
       },
-      taskMd: `[[btn:html]]
+      taskMd: `[[btn:js]]
 
-🔧 **Нажми «Вставить HTML» ⬆ → ▶ Запустить → заполни метки** (после каждой — ▶ Запустить):
+🔧 **Нажми «Вставить JS» ⬆ → ▶ Запустить.** Теперь аккаунты работают!
 
-**1.** \`[ВПИШИ ЗАГОЛОВОК]\` → **Личный кабинет** → ▶ Запустить.
+**1. Зарегистрируйся.** Открой в меню **Регистрация**, придумай логин и пароль
+(пароль введи дважды), нажми «Зарегистрироваться» — появится «Готово! Теперь войди».
 
-**2.** \`[ВПИШИ ТЕКСТ КНОПКИ]\` → **Войти** → ▶ Запустить.
+**2. Войди.** Перейди на **Вход**, введи свой логин и пароль, нажми «Войти» —
+появится «Привет, ⟨твой логин⟩!», а в правом верхнем углу — твоё имя и ссылка
+**Выйти**. 🎉
 
-[[btn:css]]
+**3. Выйди и зайди снова.** Нажми **Выйти** в уголке — имя исчезло. Войди опять —
+логин снова в углу. Имя сохраняется даже после перезагрузки страницы.
 
-**Нажми «Вставить CSS» ⬆ → ▶ Запустить → заполни метку:**
+🔑 Есть и «служебный» вход: логин **admin**, пароль **megapass123**.
 
-**3.** \`[ВПИШИ ЦВЕТ]\` (цвет заголовка, style.css) → **#5b3df5** → ▶ Запустить.
-
-[[btn:js]]
-
-**Нажми «Вставить JS» ⬆ → ▶ Запустить.** Теперь форма работает. Попробуй войти:
-логин **admin**, пароль **megapass123** — появится «Привет, admin!». Это твой рабочий вход. 🔑
-
-🔒 *Запомни этот блок — на уроке про хакеров ты узнаешь, почему хранить пароль
-прямо в коде небезопасно.*`,
+🔒 *Запомни этот блок: на уроке про хакеров ты узнаешь, почему хранить пароли
+прямо в коде и в браузере — небезопасно.*`,
       hintMd:
-        "Кнопки HTML/CSS/JS включаются по очереди: сначала вставь HTML, потом станет активной CSS, затем JS. Логин и пароль для входа подсказаны прямо в задании (и в коде).",
+        "Вписывать метки не нужно — просто вставь JS и попробуй зарегистрироваться и войти. Если кнопки не реагируют, проверь, что формы из прошлого шага «Вход/Регистрация» собраны (есть поля с id `reg-name`, `login-name` и т.д.).",
       doneMd:
-        "✅ **Готово, когда** виден блок «Личный кабинет», и вход с логином admin / паролем megapass123 показывает «Привет, admin!».",
+        "✅ **Готово, когда** можно зарегистрировать аккаунт, войти под ним, и логин показывается в правом верхнем углу (а кнопка «Выйти» убирает его).",
     },
     {
-      // ----- I: Комментарии посетителей ⚠ НАМЕРЕННО УЯЗВИМО -----
-      // Stored XSS: comments.innerHTML += text (без экранирования) + сохранение в
-      // localStorage. Для урока 2. Дыра заложена специально.
-      title: "Комментарии посетителей ⚠",
-      time: "15 мин",
+      // ----- I: Страница товара + комментарии после входа ⚠ НАМЕРЕННО УЯЗВИМО -----
+      // Stored XSS: комментарии и имя автора через innerHTML + localStorage по
+      // ключу comments_<id>. Гейт по входу. Дыра заложена специально (урок 2).
+      title: "Страница товара и комментарии ⚠",
+      time: "20 мин",
       goalMd:
-        "**Цель:** дать посетителям оставлять комментарии.\n\n**Важно:** это последняя фича — и в ней тоже спрятана дыра, которую ты будешь искать на следующем уроке. Пока собери её как обычно.",
+        "**Цель:** сделать так, чтобы по клику на карточку открывалась **страница товара**, а оставить комментарий можно было **только после входа** — с твоим логином рядом.\n\n**Важно:** в комментариях спрятана последняя учебная дыра. Пока собери фичу как обычно.",
       actionMd:
-        "Кнопки HTML → CSS → JS. Заполни метки и оставь пару комментариев.",
+        "Кнопки HTML → CSS → JS. Заполни метки заголовков, потом проверь переход и комментарии.",
       snippets: {
-        html: `<!-- Комментарии посетителей -->
-<section class="comments" id="comments-section">
-	<h2>[ВПИШИ ЗАГОЛОВОК]</h2>
-	<input id="comment-input" placeholder="Напиши комментарий…">
-	<button id="comment-btn">[ВПИШИ ТЕКСТ КНОПКИ]</button>
-	<div id="comments"></div>
+        html: `<!-- Страница одного товара (заполняется из JS) -->
+<section class="product-detail" id="product-detail">
+	<a href="#" data-link="home" class="back-link">← Назад в каталог</a>
+	<div class="pd-img" id="pd-img"></div>
+	<h2 id="pd-title"></h2>
+	<p class="card-price" id="pd-price"></p>
+	<p id="pd-desc"></p>
+	<button class="add-to-cart" id="pd-add">В корзину</button>
+
+	<div class="pd-comments">
+		<h3>[ВПИШИ ЗАГОЛОВОК]</h3>
+		<div id="pd-comment-form"></div>
+		<div id="pd-comments"></div>
+	</div>
 </section>`,
-        css: `/* Стили блока комментариев */
-.comments { max-width: 600px; margin: 24px auto; padding: 0 24px; text-align: center; }
-.comments h2 { color: [ВПИШИ ЦВЕТ]; }
-#comment-input {
-	width: 70%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;
+        css: `/* Стили страницы товара */
+.product-detail {
+	max-width: 600px; margin: 24px auto; padding: 0 24px; text-align: center;
 }
-#comment-btn {
+.back-link { display: inline-block; margin-bottom: 12px; color: #5b3df5; cursor: pointer; }
+.pd-img { font-size: 96px; }
+#pd-title { font-size: 28px; margin: 8px 0; }
+#pd-desc { color: #333; font-size: 17px; }
+.pd-comments { margin-top: 24px; text-align: left; }
+.pd-comments h3 { color: [ВПИШИ ЦВЕТ]; text-align: center; }
+#pd-comment-input { width: 70%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+#pd-comment-btn {
 	padding: 10px 16px; background: #5b3df5; color: #fff;
 	border: none; border-radius: 8px; cursor: pointer;
 }
-.cmt {
-	background: #f5f3ff; border-radius: 8px;
-	padding: 10px; margin: 8px 0; text-align: left;
+.pd-gate { text-align: center; color: #777; }
+.pd-gate a { color: #5b3df5; cursor: pointer; }
+.cmt { background: #f5f3ff; border-radius: 8px; padding: 10px; margin: 8px 0; }
+.cmt-author { font-weight: bold; color: #5b3df5; margin-right: 6px; }`,
+        js: `// ===== Страница товара и комментарии =====
+const products = [
+	{ emoji: "📱", title: "Смартфон", price: "19990 ₽", desc: "Мощный смартфон с большим экраном и хорошей камерой." },
+	{ emoji: "🎧", title: "Наушники", price: "2490 ₽", desc: "Беспроводные наушники с чистым звуком." },
+	{ emoji: "⌚", title: "Умные часы", price: "5990 ₽", desc: "Считают шаги, пульс и показывают уведомления." },
+	{ emoji: "💻", title: "Ноутбук", price: "45990 ₽", desc: "Лёгкий и быстрый ноутбук для учёбы и игр." },
+	{ emoji: "🎮", title: "Геймпад", price: "2990 ₽", desc: "Удобный геймпад для любимых игр." },
+];
+
+// Комментарии каждого товара лежат отдельно: ключ comments_<номер товара>
+function loadComments(id) {
+	return JSON.parse(localStorage.getItem("comments_" + id) || "[]");
+}
+function renderComments(id) {
+	const box = document.getElementById("pd-comments");
+	const list = loadComments(id);
+	box.innerHTML = list.map(function (c) {
+		// ⚠ имя автора и текст вставляются как HTML
+		return '<div class="cmt"><span class="cmt-author">' + c.author +
+			":</span>" + c.text + "</div>";
+	}).join("");
+}
+
+// Форма комментария: показываем ТОЛЬКО если пользователь вошёл
+function renderCommentForm(id) {
+	const wrap = document.getElementById("pd-comment-form");
+	if (localStorage.getItem("isLoggedIn") === "true") {
+		wrap.innerHTML =
+			'<input id="pd-comment-input" placeholder="Ваш комментарий…">' +
+			'<button id="pd-comment-btn">Отправить</button>';
+		document.getElementById("pd-comment-btn").addEventListener("click", function () {
+			const text = document.getElementById("pd-comment-input").value;
+			const author = localStorage.getItem("currentUser") || "гость";
+			const list = loadComments(id);
+			list.push({ author: author, text: text });    // ⚠ автор = текущий логин
+			localStorage.setItem("comments_" + id, JSON.stringify(list));
+			renderComments(id);
+			document.getElementById("pd-comment-input").value = "";
+		});
+	} else {
+		wrap.innerHTML =
+			'<p class="pd-gate">Чтобы оставить комментарий, ' +
+			'<a href="#" data-link="login">войди в аккаунт</a>.</p>';
+	}
+}
+
+// Открыть страницу одного товара по его номеру
+function openProduct(id) {
+	const p = products[id];
+	if (!p) return;
+	document.getElementById("pd-img").textContent = p.emoji;
+	document.getElementById("pd-title").textContent = p.title;
+	document.getElementById("pd-price").textContent = p.price;
+	document.getElementById("pd-desc").textContent = p.desc;
+	renderCommentForm(id);
+	renderComments(id);
+	showPage("product");
 }`,
-        js: `// Комментарии посетителей
-const commentBtn = document.getElementById("comment-btn");
-const commentsBox = document.getElementById("comments");
-
-// Показать ранее сохранённые комментарии
-commentsBox.innerHTML = localStorage.getItem("comments") || "";
-
-commentBtn.addEventListener("click", function () {
-	const text = document.getElementById("comment-input").value;
-	commentsBox.innerHTML += '<div class="cmt">' + text + '</div>';  // добавляем как HTML
-	localStorage.setItem("comments", commentsBox.innerHTML);
-	console.log("[ВПИШИ СООБЩЕНИЕ]");
-});`,
       },
       taskMd: `[[btn:html]]
 
-🔧 **Нажми «Вставить HTML» ⬆ → ▶ Запустить → заполни метки** (после каждой — ▶ Запустить):
+🔧 **Нажми «Вставить HTML» ⬆ → ▶ Запустить → заполни метку:**
 
-**1.** \`[ВПИШИ ЗАГОЛОВОК]\` → **Комментарии посетителей** → ▶ Запустить.
-
-**2.** \`[ВПИШИ ТЕКСТ КНОПКИ]\` → **Отправить** → ▶ Запустить.
+**1.** \`[ВПИШИ ЗАГОЛОВОК]\` (заголовок над комментариями) → **Комментарии о товаре**
+→ ▶ Запустить.
 
 [[btn:css]]
 
 **Нажми «Вставить CSS» ⬆ → ▶ Запустить → заполни метку:**
 
-**3.** \`[ВПИШИ ЦВЕТ]\` (цвет заголовка, style.css) → **#5b3df5** → ▶ Запустить.
+**2.** \`[ВПИШИ ЦВЕТ]\` (цвет заголовка комментариев, style.css) → **#5b3df5** → ▶ Запустить.
 
 [[btn:js]]
 
-**Нажми «Вставить JS» ⬆ → заполни метку → ▶ Запустить:**
+**Нажми «Вставить JS» ⬆ → ▶ Запустить.** Теперь всё связано:
 
-**4.** \`[ВПИШИ СООБЩЕНИЕ]\` (main.js) → **Новый комментарий добавлен!** → ▶ Запустить.
+**3.** На **Главной** щёлкни по любой карточке товара — откроется **страница этого
+товара** с большим эмодзи, названием, ценой и описанием. Кнопка «← Назад в каталог»
+возвращает на Главную.
 
-**5.** Напиши пару комментариев и нажми «Отправить» — они
-появятся в списке и сохранятся (обнови страницу — комментарии на месте).
+**4.** Пока ты **не вошёл**, под товаром написано «Чтобы оставить комментарий, войди
+в аккаунт». Щёлкни ссылку, **войди** (или зарегистрируйся), вернись к товару —
+появилось поле для комментария.
 
-🔒 *Это финальная фича твоего магазина. На следующем уроке ты узнаешь, почему
-добавлять чужой текст через \`innerHTML\` — опасно.*`,
+**5.** Напиши комментарий и нажми «Отправить» — он появится, и **рядом будет твой
+логин**. У разных товаров комментарии разные, и они сохраняются после перезагрузки.
+
+🔒 *Это финальная фича. На уроке про хакеров ты узнаешь, почему показывать чужой
+текст через \`innerHTML\` — опасно.*`,
       hintMd:
-        "Кнопки включаются по очереди: HTML → CSS → JS. Не стирай кавычки вокруг сообщения в `console.log`. После запуска комментарии сохраняются в браузере.",
+        "Метка `[ВПИШИ ЗАГОЛОВОК]` — над комментариями (впиши «Комментарии о товаре»). Если карточка не открывает страницу товара, проверь, что роутер из шага «Навигация» вставлен и что у карточек есть `data-product`. Форма комментария появляется только после входа.",
       doneMd:
-        "✅ **Готово, когда** виден блок «Комментарии посетителей»: можно написать текст, нажать «Отправить» и увидеть его в списке.",
+        "✅ **Готово, когда** клик по карточке открывает страницу товара; без входа форма комментариев закрыта, а после входа можно оставить комментарий, и рядом с ним виден логин автора.",
     },
   ],
 };

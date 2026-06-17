@@ -552,10 +552,63 @@ function loadDemoShop() {
   }
 }
 
-// Открыть доступ из консоли разработчика: loadDemoShop()
-if (typeof window !== "undefined") window.loadDemoShop = loadDemoShop;
+// ============================================================
+// Секретная разблокировка «режима разработчика».
+//
+// Перейди по СЕКРЕТНОМУ адресу один раз:
+//     index.html#mega-admin        (или  index.html?mega-admin)
+// → в localStorage сохранится флаг `megaDevAdmin=true`, секрет уберётся из
+// адреса, и в верхней панели появится постоянная кнопка «🛠 Весь магазин».
+// Дальше кнопка доступна на каждой загрузке (флаг хранится в localStorage),
+// заходить по секретному адресу больше не нужно. Кнопка зовёт loadDemoShop().
+// ============================================================
+const DEV_SECRET = "mega-admin";
+const DEV_FLAG_KEY = "megaDevAdmin";
 
-// Горячие клавиши Ctrl+Alt+D (раскладка-независимо: e.code === "KeyD")
+function isDevUnlocked() {
+  try {
+    return localStorage.getItem(DEV_FLAG_KEY) === "true";
+  } catch (e) {
+    return false;
+  }
+}
+
+// Заметили секрет в адресе → сохранили флаг и почистили адресную строку.
+function checkSecretUnlock() {
+  const where = (location.hash + " " + location.search).toLowerCase();
+  if (where.indexOf(DEV_SECRET) !== -1) {
+    try { localStorage.setItem(DEV_FLAG_KEY, "true"); } catch (e) {}
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  }
+}
+
+// Кнопка «🛠 Весь магазин» в верхней панели (только если режим разблокирован).
+function injectDevButton() {
+  if (!isDevUnlocked()) return;
+  if (document.getElementById("dev-fill-btn")) return; // уже добавлена
+  const bar = document.querySelector(".control-buttons");
+  if (!bar) return;
+  const btn = document.createElement("button");
+  btn.id = "dev-fill-btn";
+  btn.type = "button";
+  btn.className = "btn";
+  btn.textContent = "🛠 Весь магазин";
+  btn.title = "Загрузить готовый собранный магазин (режим разработчика)";
+  btn.addEventListener("click", loadDemoShop);
+  bar.appendChild(btn);
+}
+
+checkSecretUnlock();
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", injectDevButton);
+} else {
+  injectDevButton(); // defer-скрипт: топбар уже в DOM
+}
+
+// Запасные способы (работают всегда):
+//  • из консоли:  loadDemoShop()  (если DevTools попросит — введи «allow pasting»)
+//  • горячие клавиши Ctrl+Alt+D (раскладка-независимо: e.code === "KeyD")
+if (typeof window !== "undefined") window.loadDemoShop = loadDemoShop;
 document.addEventListener("keydown", function (e) {
   if ((e.ctrlKey || e.metaKey) && e.altKey && e.code === "KeyD") {
     e.preventDefault();

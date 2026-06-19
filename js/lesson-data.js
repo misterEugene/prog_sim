@@ -213,9 +213,9 @@ body > p  { font-size: 13px; color: #cfcfe0; padding: 0 16px 8px; }`,
 <header class="site-header" id="home">
 	<div class="logo">🛍️ [ВПИШИ НАЗВАНИЕ МАГАЗИНА]</div>
 	<nav class="menu">
-		<a href="#" data-link="home">[ВПИШИ ПУНКТ МЕНЮ]</a>
-		<a href="#" data-link="login">[ВПИШИ ПУНКТ МЕНЮ]</a>
-		<a href="#" data-link="register">[ВПИШИ ПУНКТ МЕНЮ]</a>
+		<a href="#" data-link="home">[ВПИШИ ПУНКТ МЕНЮ HOME]</a>
+		<a href="#" data-link="login">[ВПИШИ ПУНКТ МЕНЮ LOGIN]</a>
+		<a href="#" data-link="register">[ВПИШИ ПУНКТ МЕНЮ REGISTER]</a>
 	</nav>
 	<div class="header-right">
 		<div class="cart">🛒 [ВПИШИ СЛОВО]: <span id="cart-count">0</span></div>
@@ -246,8 +246,10 @@ body > p  { font-size: 13px; color: #cfcfe0; padding: 0 16px 8px; }`,
 
 **2.** Замени \`[ВПИШИ НАЗВАНИЕ МАГАЗИНА]\` на: **МегаМагазин**
 
-**3. Пункты меню (index.html).** Заполни три ссылки по порядку (узнаёшь по \`data-link\`):
-\`home\` → **Главная**, \`login\` → **Вход**, \`register\` → **Регистрация**.
+**3. Пункты меню (index.html).** Замени каждую метку на свой текст:
+- \`[ВПИШИ ПУНКТ МЕНЮ HOME]\` замени на: **Главная**
+- \`[ВПИШИ ПУНКТ МЕНЮ LOGIN]\` замени на: **Вход**
+- \`[ВПИШИ ПУНКТ МЕНЮ REGISTER]\` замени на: **Регистрация**
 
 **4. Слово у корзины.** Замени \`[ВПИШИ СЛОВО]\` на: **Корзина** (значок 🛒,
 двоеточие \`:\` и цифру \`0\` не трогай).

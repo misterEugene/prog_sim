@@ -305,7 +305,7 @@ body > p  { font-size: 13px; color: #cfcfe0; padding: 0 16px 8px; }`,
 }
 .banner-btn:hover { opacity: 0.9; }`,
       },
-      taskMd: `**1.** Нажми «Вставить HTML» ⬇ → ▶ Запустить → заполни метки:
+      taskMd: `**1.** Нажми «Вставить HTML» ⬇ → ▶ Запустить.
 
 [[btn:html]]
 

@@ -9,12 +9,15 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;");
 }
 
-// Инлайн-замены. Порядок важен: код → жирный → курсив.
+// Инлайн-замены. Порядок важен: код → жирный → курсив. В конце — превращаем
+// упоминание «▶ Запустить» в визуальный чип, повторяющий вид настоящей кнопки
+// «Запустить» (чтобы ребёнок узнавал её в инструкции). См. .run-chip в markdown.css.
 function inlineMarkdown(text) {
   return text
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>");
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/▶\s*Запустить/g, '<span class="run-chip">▶ Запустить</span>');
 }
 
 function markdownToHtml(md) {

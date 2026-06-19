@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Урок 3 — Аналитик данных и ИИ: квест KNN</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>🧠 Профессия: аналитик данных и создатель ИИ</h1>
+    <p class="subtitle">Квест: научи искусственный интеллект отличать 🔵 синих от 🔴 красных по алгоритму <b>KNN</b></p>
+  </header>
+
+  <!-- Гид из 4 шагов -->
+  <ol class="guide">
+    <li><span class="num">1</span> Нанеси точки</li>
+    <li><span class="num">2</span> Настрой <b>k</b> и обучи</li>
+    <li><span class="num">3</span> Проверь на тесте</li>
+    <li><span class="num">4</span> Экспортируй результат</li>
+  </ol>
+
+  <main class="workspace">
+    <!-- Поле -->
+    <section class="field-wrap">
+      <canvas id="field" width="600" height="600"></canvas>
+      <p class="hint">Левая кнопка мыши — точка активного цвета, правая — другого цвета.</p>
+    </section>
+
+    <!-- Панель управления -->
+    <aside class="panel">
+      <button id="color-toggle" class="btn toggle-blue">🔵 Рисую: Синий</button>
+
+      <div class="control">
+        <label for="k-slider">Соседей <b>k</b>: <span id="k-value">5</span></label>
+        <input id="k-slider" type="range" min="1" max="15" value="5">
+      </div>
+
+      <button id="btn-train" class="btn neon">🧠 Обучить</button>
+      <button id="btn-starter" class="btn">✨ Стартовый датасет</button>
+      <button id="btn-test" class="btn">🎯 Секретный тест</button>
+      <button id="btn-clear" class="btn">🗑 Очистить всё</button>
+      <button id="btn-export" class="btn">📤 Экспорт</button>
+      <label class="btn import-label">📥 Импорт
+        <input id="file-import" type="file" accept="application/json" hidden>
+      </label>
+
+      <div class="stats">
+        <div>Точек: <b id="stat-points">0 (🔵 0 / 🔴 0)</b></div>
+        <div>Точность теста: <b id="stat-acc">—</b></div>
+      </div>
+    </aside>
+  </main>
+
+  <p id="status" class="status"></p>
+
+  <!-- Панель ответов секретного теста -->
+  <section id="test-panel" class="test-panel">
+    <h2>🎯 Секретный тест: угадай класс каждой точки</h2>
+    <div id="answers" class="answers"></div>
+    <button id="btn-reveal" class="btn neon">✅ Показать ответы</button>
+  </section>
+
+  <!-- Скрипты: классические, по порядку. config → knn → tests → rendering → app -->
+  <script src="js/config.js"></script>
+  <script src="js/knn.js"></script>
+  <script src="js/tests.js"></script>
+  <script src="js/rendering.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

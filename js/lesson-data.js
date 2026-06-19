@@ -431,8 +431,9 @@ body > p  { font-size: 13px; color: #cfcfe0; padding: 0 16px 8px; }`,
 
 [[btn:css]]
 
-**7. ✨ Теперь Emmet!** Найди строку \`<!-- 👇 EMMET … -->\`, щёлкни на **пустую строку
-под ним**, впиши этот код и нажми **Tab** — появится 5-я карточка (\`data-product="4"\`):
+**7. ✨ Теперь Emmet!** Перейди на вкладку **index.html**. Найди строку
+\`<!-- 👇 EMMET … -->\`, щёлкни на **пустую строку под ним**, впиши этот код и нажми
+**Tab** — появится 5-я карточка (\`data-product="4"\`):
 \`.card>a.card-link[href="#" data-product="4"]>.card-img{🎮}+h3.card-title{Геймпад}^p.card-price{2990 ₽}+button.add-to-cart{В корзину}\`
 → ▶ Запустить.`,
       hintMd:

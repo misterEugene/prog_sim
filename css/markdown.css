@@ -180,3 +180,19 @@
   white-space: nowrap;
   vertical-align: baseline;
 }
+
+/* Чип «🔗 Открыть в новой вкладке» в тексте задания — повторяет вид настоящей
+   вторичной кнопки .btn (без -primary). */
+.open-tab-chip {
+  display: inline-block;
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1px 8px;
+  font-size: 0.85em;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: nowrap;
+  vertical-align: baseline;
+}

@@ -17,7 +17,11 @@ function inlineMarkdown(text) {
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/▶\s*Запустить/g, '<span class="run-chip">▶ Запустить</span>');
+    .replace(/▶\s*Запустить/g, '<span class="run-chip">▶ Запустить</span>')
+    .replace(
+      /🔗\s*Открыть в новой вкладке/g,
+      '<span class="open-tab-chip">🔗 Открыть в новой вкладке</span>'
+    );
 }
 
 function markdownToHtml(md) {

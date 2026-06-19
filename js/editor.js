@@ -55,6 +55,13 @@ function caretCoords(ta, pos) {
   div.style.overflow = "hidden";
   div.style.top = "-9999px";
   div.style.left = "0";
+  // Ширину берём по РЕАЛЬНОЙ области текста (clientWidth уже без скроллбара и
+  // border), иначе в режиме переноса (scrollbar-gutter: stable) зеркало
+  // переносит строки на бОльшей ширине, чем textarea, и чипы уезжают вверх.
+  const padL = parseFloat(cs.paddingLeft) || 0;
+  const padR = parseFloat(cs.paddingRight) || 0;
+  div.style.boxSizing = "content-box";
+  div.style.width = Math.max(0, ta.clientWidth - padL - padR) + "px";
 
   div.textContent = ta.value.slice(0, pos);
   const marker = document.createElement("span");

@@ -1256,7 +1256,10 @@ if (burgerHeader && burgerMenu && !burgerHeader.querySelector(".burger")) {
 	}
 	.about { padding: 0 16px; }
 	.auth,
-	.product-detail { margin: 16px auto; }   /* auto — чтобы остались по центру */
+	.product-detail {
+		max-width: none;   /* во всю ширину телефона */
+		margin: 16px;      /* одинаковые отступы по краям */
+	}
 }`,
       },
       taskMd: `**1. Сначала проверь, как сейчас.** Сузь окно, как экран телефона. Карточки

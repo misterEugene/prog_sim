@@ -1262,7 +1262,7 @@ if (burgerHeader && burgerMenu && !burgerHeader.querySelector(".burger")) {
 	}
 	.about { padding: 0 16px; }
 	.auth,
-	.product-detail { margin: 16px; }
+	.product-detail { margin: 16px auto; }   /* auto — чтобы остались по центру */
 }`,
       },
       taskMd: `**1. Сначала проверь, как сейчас.** Сузь окно, как экран телефона. Карточки

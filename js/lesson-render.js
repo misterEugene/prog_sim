@@ -69,7 +69,7 @@ function buildStepCard(step, index) {
   head.innerHTML =
     `<span class="step-num">Шаг ${index + 1}</span>` +
     `<span class="step-title"></span>` +
-    `<span class="step-time">⏱ ${step.time}</span>`;
+    (step.time ? `<span class="step-time">⏱ ${step.time}</span>` : "");
   head.querySelector(".step-title").textContent = step.title;
   card.appendChild(head);
 

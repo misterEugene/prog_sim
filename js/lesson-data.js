@@ -278,6 +278,7 @@ body > p  { font-size: 13px; color: #cfcfe0; padding: 0 16px 8px; }`,
       snippets: {
         html: `<!-- Баннер: главный заголовок и кнопка (страница «Главная») -->
 <section class="banner" id="banner">
+	<p id="welcome-box" class="welcome-box" hidden></p>
 	<h1>[ВПИШИ ЗАГОЛОВОК СКИДКИ]</h1>
 	<p>[ВПИШИ ПОДЗАГОЛОВОК]</p>
 	<a href="#products" class="banner-btn" data-scroll="products">[ВПИШИ ТЕКСТ КНОПКИ]</a>
@@ -288,6 +289,10 @@ body > p  { font-size: 13px; color: #cfcfe0; padding: 0 16px 8px; }`,
 	padding: 60px 20px;
 	background: linear-gradient(135deg, #ffd86b, #ff8a5b);
 	color: #3a2a00;
+}
+.welcome-box {
+	background: #fff3cd; color: #3a2a00; font-weight: bold;
+	max-width: 480px; margin: 0 auto 16px; padding: 10px 16px; border-radius: 8px;
 }
 .banner h1 { font-size: [ВПИШИ РАЗМЕР]; margin: 0 0 10px; }
 .banner-btn {
@@ -610,6 +615,7 @@ body { margin: 0; }`,
 	<p>✉️ Почта: [ВПИШИ ПОЧТУ]</p>
 	<p>📍 Адрес: [ВПИШИ АДРЕС]</p>
 	<p>© 2026 [ВПИШИ НАЗВАНИЕ МАГАЗИНА]. Все права защищены.</p>
+	<!-- FLAG{секрет_спрятан_в_html_комментарии} -->
 </footer>`,
         css: `/* Стили подвала */
 .site-footer {
@@ -660,7 +666,11 @@ buttons.forEach(function (button) {
 		counter.textContent = count;  // показываем число в корзине
 		console.log("[ВПИШИ СООБЩЕНИЕ]");
 	});
-});`,
+});
+
+// CTF-бонус: спрятанные «флаги» (намеренно — пригодятся на уроке 2 «Этичный хакер»)
+var hiddenFlag = "FLAG{секрет_в_коде_джаваскрипт}";
+localStorage.setItem("secret_flag", "FLAG{секрет_в_local_storage}");`,
       },
       taskMd: `**1.** Нажми «Вставить JS» ⬇ → ▶ Запустить.
 
@@ -801,6 +811,15 @@ function showPage(name) {
 // Показать страницу по текущему адресу (часть после # — это «адрес» страницы).
 // Хэш меняется при навигации и сам пишется в историю браузера, поэтому работают
 // встроенные кнопки браузера «Назад» и «Вперёд».
+// Приветствие из адреса: ссылка вида #welcome=Имя показывает «С возвращением».
+// ⚠ имя берётся из адреса и вставляется через innerHTML — отражённый XSS (урок 2).
+function showWelcome(name) {
+	const box = document.getElementById("welcome-box");
+	if (!box) return;
+	box.hidden = false;
+	box.innerHTML = "С возвращением, " + name + "!";   // ⚠ innerHTML
+}
+
 function applyRoute() {
 	const h = location.hash.slice(1);              // например "login" или "product-2"
 	if (h.indexOf("product-") === 0) {             // страница конкретного товара
@@ -808,6 +827,11 @@ function applyRoute() {
 		try {
 			if (typeof openProduct === "function") { openProduct(id); return; }
 		} catch (e) { /* код товара ещё не загрузился — покажем Главную */ }
+	}
+	if (h.indexOf("welcome=") === 0) {             // приветствие из ссылки (#welcome=…)
+		showPage("home");
+		showWelcome(decodeURIComponent(h.slice("welcome=".length)));
+		return;
 	}
 	showPage(PAGES[h] ? h : "home");
 }

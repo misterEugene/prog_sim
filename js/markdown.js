@@ -29,6 +29,7 @@ function markdownToHtml(md) {
   const html = [];
   let listItems = null; // накапливаем пункты текущего списка
   let paragraph = null; // накапливаем строки текущего абзаца
+  let codeLines = null; // строки внутри блока ```…``` (или null вне блока)
 
   const flushList = () => {
     if (listItems) {
@@ -45,6 +46,24 @@ function markdownToHtml(md) {
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
+
+    // Ограждённый блок кода ```…``` — строки внутри выводим как есть (уже
+    // экранированы), без инлайн-разметки и без сворачивания пробелов/переносов.
+    if (line.startsWith("```")) {
+      if (codeLines === null) {
+        flushParagraph();
+        flushList();
+        codeLines = [];
+      } else {
+        html.push('<pre class="code-block"><code>' + codeLines.join("\n") + "</code></pre>");
+        codeLines = null;
+      }
+      continue;
+    }
+    if (codeLines !== null) {
+      codeLines.push(rawLine);
+      continue;
+    }
 
     if (line === "") {
       flushParagraph();
@@ -75,6 +94,9 @@ function markdownToHtml(md) {
     paragraph.push(line);
   }
 
+  if (codeLines !== null) {
+    html.push('<pre class="code-block"><code>' + codeLines.join("\n") + "</code></pre>");
+  }
   flushParagraph();
   flushList();
   return html.join("\n");

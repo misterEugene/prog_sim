@@ -311,20 +311,54 @@ const DEV_CSS = `body { margin: 0; }
 }
 .site-footer p { margin: 4px 0; }
 
-/* 📱 Телефоны (узкий экран): шапка в столбик, баннер компактнее */
+/* Кнопка-бургер (три полоски). На широком экране её не видно. */
+.burger {
+	display: none;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 30px;
+	height: 22px;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+}
+.burger span {
+	display: block;
+	width: 100%;
+	height: 3px;
+	background: #fff;
+	border-radius: 2px;
+	transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* 📱 Телефоны: красивое бургер-меню с анимацией + компактный баннер */
 @media (max-width: 600px) {
-	.site-header {
+	.site-header { flex-wrap: wrap; padding: 12px 16px; }
+	.logo { order: 1; }
+	.burger { display: flex; order: 2; margin-left: auto; }
+	.menu {
+		order: 3;
+		flex-basis: 100%;
+		display: flex;
 		flex-direction: column;
-		gap: 8px;
-		text-align: center;
-		padding: 12px;
+		align-items: center;
+		overflow: hidden;
+		max-height: 0;
+		opacity: 0;
+		transition: max-height 0.35s ease, opacity 0.35s ease;
 	}
-	.menu a { margin: 0 8px; }
+	.menu a { margin: 8px 0; }
+	.header-right { order: 4; flex-basis: 100%; justify-content: center; margin-top: 8px; }
+	.site-header.menu-open .menu { max-height: 220px; opacity: 1; }
+	.site-header.menu-open .burger span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
+	.site-header.menu-open .burger span:nth-child(2) { opacity: 0; }
+	.site-header.menu-open .burger span:nth-child(3) { transform: translateY(-9px) rotate(-45deg); }
 	.banner { padding: 32px 16px; }
 	.banner h1 { font-size: 28px; }
 }
 
-/* 📱 Телефоны: товары и отзывы в один столбик, блоки во всю ширину */
+/* 📱 Телефоны: товары и отзывы в один столбик, формы во всю ширину */
 @media (max-width: 600px) {
 	.products,
 	.review-list {
@@ -332,7 +366,10 @@ const DEV_CSS = `body { margin: 0; }
 	}
 	.about { padding: 0 16px; }
 	.auth,
-	.product-detail { margin: 16px; }
+	.product-detail {
+		max-width: none;
+		margin: 16px;
+	}
 }`;
 
 const DEV_JS = `// ===== Корзина =====
@@ -373,6 +410,20 @@ function showPage(name) {
 	window.scrollTo(0, 0);
 }
 
+// Показать страницу по текущему адресу (часть после #). Хэш сам пишется в историю
+// браузера, поэтому работают встроенные кнопки «Назад» и «Вперёд».
+function applyRoute() {
+	const h = location.hash.slice(1);
+	if (h.indexOf("product-") === 0) {
+		const id = h.slice("product-".length);
+		try {
+			if (typeof openProduct === "function") { openProduct(id); return; }
+		} catch (e) { /* код товара ещё не загрузился */ }
+	}
+	showPage(PAGES[h] ? h : "home");
+}
+window.addEventListener("hashchange", applyRoute);
+
 // Уголок пользователя в правом верхнем углу
 function renderUserBox() {
 	const box = document.getElementById("user-box");
@@ -395,20 +446,67 @@ document.addEventListener("click", function (e) {
 			localStorage.removeItem("isLoggedIn");
 			localStorage.removeItem("currentUser");
 			renderUserBox();
-			showPage("home");
+			location.hash = "home";
 		} else {
-			showPage(dest);
+			location.hash = dest;   // меняем адрес → запись в истории браузера
 		}
 		return;
 	}
 	const card = e.target.closest("[data-product]");
-	if (card && typeof openProduct === "function") {
-		openProduct(card.getAttribute("data-product"));
+	if (card) {
+		location.hash = "product-" + card.getAttribute("data-product");
 	}
 });
 
+// ===== Бургер-меню для телефонов =====
+const burgerHeader = document.querySelector(".site-header");
+const burgerMenu = burgerHeader ? burgerHeader.querySelector(".menu") : null;
+if (burgerHeader && burgerMenu && !burgerHeader.querySelector(".burger")) {
+	const burger = document.createElement("button");
+	burger.className = "burger";
+	burger.type = "button";
+	burger.setAttribute("aria-label", "Меню");
+	burger.innerHTML = "<span></span><span></span><span></span>";
+	const logo = burgerHeader.querySelector(".logo");
+	if (logo) logo.after(burger);
+	else burgerHeader.appendChild(burger);
+	burger.addEventListener("click", function () {
+		burgerHeader.classList.toggle("menu-open");
+	});
+	burgerMenu.addEventListener("click", function (e) {
+		if (e.target.closest("a")) burgerHeader.classList.remove("menu-open");
+	});
+}
+
+// Подвал — в самый конец <body>, чтобы он был ниже любой открытой страницы
+const footerEl = document.getElementById("contacts");
+if (footerEl) document.body.appendChild(footerEl);
+
+// Оборачиваем все страницы-секции в <main> (всё, кроме шапки и подвала)
+let mainEl = document.getElementById("main-content");
+if (!mainEl) {
+	mainEl = document.createElement("main");
+	mainEl.id = "main-content";
+	const headerEl = document.querySelector(".site-header");
+	if (headerEl) headerEl.after(mainEl);
+	else document.body.insertBefore(mainEl, document.body.firstChild);
+}
+ALL_SECTIONS.forEach(function (id) {
+	const el = document.getElementById(id);
+	if (el && el.parentNode !== mainEl) mainEl.appendChild(el);
+});
+
+// Раскладка: шапка сверху, подвал снизу, контент по центру при нехватке высоты
+document.body.style.display = "flex";
+document.body.style.flexDirection = "column";
+document.body.style.minHeight = "100vh";
+mainEl.style.flex = "1";
+mainEl.style.display = "flex";
+mainEl.style.flexDirection = "column";
+mainEl.style.justifyContent = "center";
+
 renderUserBox();
-showPage("home"); // при загрузке показываем Главную
+applyRoute(); // при загрузке показываем страницу по текущему адресу
 
 // ===== Аккаунты: регистрация и вход =====
 const ADMIN_LOGIN = "admin";
@@ -471,13 +569,6 @@ if (localStorage.getItem("isLoggedIn") === "true") {
 if (localStorage.getItem("is_admin") === "true") {
 	const ap = document.getElementById("admin-panel");
 	if (ap) ap.hidden = false;
-}
-
-// Приветствие из адресной строки (текст после # в ссылке) — ⚠ отражённый XSS
-if (location.hash && location.hash.length > 1) {
-	const fromUrl = decodeURIComponent(location.hash.slice(1));
-	const box = document.getElementById("login-msg");
-	if (box) box.innerHTML = "Привет, " + fromUrl + "!";   // ⚠ innerHTML
 }
 
 // ===== Страница товара и комментарии =====

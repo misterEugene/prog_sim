@@ -168,7 +168,9 @@ const DEV_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const DEV_CSS = `/* Стили шапки */
+const DEV_CSS = `body { margin: 0; }
+
+/* Стили шапки */
 .site-header {
 	display: flex;                 /* всё в одну строку */
 	align-items: center;
@@ -307,7 +309,31 @@ const DEV_CSS = `/* Стили шапки */
 	padding: 24px;
 	margin-top: 20px;
 }
-.site-footer p { margin: 4px 0; }`;
+.site-footer p { margin: 4px 0; }
+
+/* 📱 Телефоны (узкий экран): шапка в столбик, баннер компактнее */
+@media (max-width: 600px) {
+	.site-header {
+		flex-direction: column;
+		gap: 8px;
+		text-align: center;
+		padding: 12px;
+	}
+	.menu a { margin: 0 8px; }
+	.banner { padding: 32px 16px; }
+	.banner h1 { font-size: 28px; }
+}
+
+/* 📱 Телефоны: товары и отзывы в один столбик, блоки во всю ширину */
+@media (max-width: 600px) {
+	.products,
+	.review-list {
+		grid-template-columns: 1fr;
+	}
+	.about { padding: 0 16px; }
+	.auth,
+	.product-detail { margin: 16px; }
+}`;
 
 const DEV_JS = `// ===== Корзина =====
 let count = 0;

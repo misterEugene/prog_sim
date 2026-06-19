@@ -115,6 +115,20 @@ function buildStepCard(step, index) {
   done.innerHTML = markdownToHtml(step.doneMd);
   card.appendChild(done);
 
+  // Секретная кнопка для админа (только в дев-режиме): заполнить код шагов 1…N
+  // одним кликом — чтобы быстро «дойти» до нужного места урока.
+  if (typeof isDevUnlocked === "function" && isDevUnlocked()) {
+    const adminBtn = document.createElement("button");
+    adminBtn.type = "button";
+    adminBtn.className = "btn dev-step-fill";
+    adminBtn.textContent = "🗝 Заполнить по этот шаг (admin)";
+    adminBtn.title = "Только для админа: подставить готовый код шагов 1…" + (index + 1);
+    adminBtn.style.cssText =
+      "margin-top:10px;background:#3a2a5a;color:#fff;border:1px dashed #8a7ad0;font-size:13px;";
+    adminBtn.addEventListener("click", function () { fillUpToStep(index); });
+    card.appendChild(adminBtn);
+  }
+
   return card;
 }
 

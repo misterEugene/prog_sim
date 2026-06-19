@@ -670,6 +670,220 @@ function loadDemoShop() {
 }
 
 // ============================================================
+// Админ: «Заполнить ПО ЭТОТ шаг» — на каждом шаге (только в дев-режиме).
+//
+// Подставляет в редакторы готовый код всех шагов с 1-го по выбранный (с уже
+// заполненными метками, раскрытым Emmet и своими свойствами), отмечает их
+// выполненными и запускает превью. Это как пройти урок до нужного места одним
+// кликом — дальше можно продолжать обычными кнопками.
+//
+// STEP_FILL — данные для подстановки, по ЗАГОЛОВКУ шага:
+//   answers     — { "[ВПИШИ X]": "значение" } (замена меток в сниппете);
+//   ownPropCss  — строка-свойство в «своей» пустой строке между 👇 и 👆;
+//   emmetHtml   — готовая разметка вместо пустой строки под «👇 EMMET …»;
+//   html/css/js — полная замена части (используется для каркаса 1-го шага).
+// ============================================================
+const FILL_SKELETON =
+`<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>МегаМагазин</title>
+</head>
+<body>
+
+</body>
+</html>`;
+
+const FILL_CARD5 =
+`	<div class="card">
+		<a href="#" class="card-link" data-product="4">
+			<div class="card-img">🎮</div>
+			<h3 class="card-title">Геймпад</h3>
+		</a>
+		<p class="card-price">2990 ₽</p>
+		<button class="add-to-cart">В корзину</button>
+	</div>`;
+
+const FILL_REVIEW4 =
+`		<div class="review">
+			<p class="review-text">«Лучший магазин техники, рекомендую!»</p>
+			<p class="review-author">— Олег</p>
+		</div>`;
+
+const STEP_FILL = {
+  "Каркас сайта и название во вкладке": { html: FILL_SKELETON },
+  "Шапка магазина и меню навигации": {
+    answers: {
+      "[ВПИШИ НАЗВАНИЕ МАГАЗИНА]": "МегаМагазин",
+      "[ВПИШИ ПУНКТ МЕНЮ HOME]": "Главная",
+      "[ВПИШИ ПУНКТ МЕНЮ LOGIN]": "Вход",
+      "[ВПИШИ ПУНКТ МЕНЮ REGISTER]": "Регистрация",
+      "[ВПИШИ СЛОВО]": "Корзина",
+      "[ВПИШИ ЦВЕТ]": "#5b3df5",
+      "[ВПИШИ РАЗМЕР]": "24px",
+    },
+  },
+  "Баннер со скидкой": {
+    answers: {
+      "[ВПИШИ ЗАГОЛОВОК СКИДКИ]": "Скидки до 50% на технику!",
+      "[ВПИШИ ПОДЗАГОЛОВОК]": "Только до конца недели — успей купить!",
+      "[ВПИШИ ТЕКСТ КНОПКИ]": "Купить сейчас",
+      "[ВПИШИ РАЗМЕР]": "44px",
+      "[ВПИШИ ЦВЕТ]": "#ff5722",
+    },
+    ownPropCss: "border-radius: 8px;",
+  },
+  "Карточки товаров + Emmet": {
+    answers: {
+      "[ВПИШИ ЭМОДЗИ СМАРТФОНА]": "📱", "[ВПИШИ НАЗВАНИЕ СМАРТФОНА]": "Смартфон", "[ВПИШИ ЦЕНУ СМАРТФОНА]": "19990",
+      "[ВПИШИ ЭМОДЗИ НАУШНИКОВ]": "🎧", "[ВПИШИ НАЗВАНИЕ НАУШНИКОВ]": "Наушники", "[ВПИШИ ЦЕНУ НАУШНИКОВ]": "2490",
+      "[ВПИШИ ЭМОДЗИ ЧАСОВ]": "⌚", "[ВПИШИ НАЗВАНИЕ ЧАСОВ]": "Умные часы", "[ВПИШИ ЦЕНУ ЧАСОВ]": "5990",
+      "[ВПИШИ ЭМОДЗИ НОУТБУКА]": "💻", "[ВПИШИ НАЗВАНИЕ НОУТБУКА]": "Ноутбук", "[ВПИШИ ЦЕНУ НОУТБУКА]": "45990",
+      "[ВПИШИ РАЗМЕР]": "12px", "[ВПИШИ ЦВЕТ]": "#5b3df5",
+    },
+    emmetHtml: FILL_CARD5,
+  },
+  "Блок «О нас»": {
+    answers: {
+      "[ВПИШИ ЗАГОЛОВОК]": "О нас",
+      "[ВПИШИ РАССКАЗ О МАГАЗИНЕ]": "МегаМагазин работает с 2020 года. Мы продаём только проверенную технику и доставляем заказы по всей России за 1–3 дня.",
+      "[ВПИШИ ЦВЕТ]": "#5b3df5",
+    },
+    ownPropCss: "line-height: 1.7;",
+  },
+  "Отзывы покупателей": {
+    answers: {
+      "[ВПИШИ ТЕКСТ ОТЗЫВА 1]": "Заказал смартфон — привезли на следующий день. Всё работает отлично!",
+      "[ВПИШИ ИМЯ 1]": "Артём",
+      "[ВПИШИ ТЕКСТ ОТЗЫВА 2]": "Купила наушники, звук супер. Спасибо за быструю доставку!",
+      "[ВПИШИ ИМЯ 2]": "Мария",
+      "[ВПИШИ ТЕКСТ ОТЗЫВА 3]": "Очень доволен ноутбуком, цена ниже, чем везде.",
+      "[ВПИШИ ИМЯ 3]": "Иван",
+      "[ВПИШИ ЦВЕТ]": "#f5f3ff",
+    },
+    emmetHtml: FILL_REVIEW4,
+  },
+  "Подвал с контактами": {
+    answers: {
+      "[ВПИШИ ТЕЛЕФОН]": "8-800-555-35-35",
+      "[ВПИШИ ПОЧТУ]": "shop@megamagazin.ru",
+      "[ВПИШИ АДРЕС]": "г. Москва, ул. Цифровая, 7",
+      "[ВПИШИ НАЗВАНИЕ МАГАЗИНА]": "МегаМагазин",
+      "[ВПИШИ ЦВЕТ]": "#2b2b3a",
+    },
+  },
+  "Оживляем кнопку «В корзину»": {
+    answers: { "[ВПИШИ СООБЩЕНИЕ]": "Товар добавлен в корзину!" },
+  },
+  "Страницы «Вход» и «Регистрация»": {
+    answers: {
+      "[ВПИШИ ЗАГОЛОВОК ВХОДА]": "Вход",
+      "[ВПИШИ ТЕКСТ КНОПКИ ВХОДА]": "Войти",
+      "[ВПИШИ ЗАГОЛОВОК РЕГИСТРАЦИИ]": "Регистрация",
+      "[ВПИШИ ТЕКСТ КНОПКИ РЕГИСТРАЦИИ]": "Зарегистрироваться",
+      "[ВПИШИ ЦВЕТ]": "#5b3df5",
+    },
+  },
+  "Страница товара и комментарии ⚠": {
+    answers: {
+      "[ВПИШИ ЗАГОЛОВОК]": "Комментарии о товаре",
+      "[ВПИШИ ЦВЕТ]": "#5b3df5",
+    },
+  },
+};
+
+// Заполнить сниппет одного шага: метки, своё свойство, Emmet-разметка.
+function fillCode(code, f, lang) {
+  if (f.answers) {
+    Object.keys(f.answers).forEach(function (k) {
+      code = code.split(k).join(f.answers[k]);
+    });
+  }
+  if (lang === "css" && f.ownPropCss) {
+    code = code.replace(
+      /(\/\* 👇[^\n]*\*\/\n)[ \t]*\n([ \t]*\/\* 👆)/,
+      "$1\t" + f.ownPropCss + "\n$2"
+    );
+  }
+  if (lang === "html" && f.emmetHtml) {
+    code = code.replace(
+      /(<!-- 👇 EMMET[^\n]*-->\n)[ \t]*\n/,
+      "$1" + f.emmetHtml + "\n"
+    );
+  }
+  return code;
+}
+
+// Готовые части шага (в порядке html → css → js).
+function solvedParts(step) {
+  const f = STEP_FILL[step.title] || {};
+  const parts = [];
+  ["html", "css", "js"].forEach(function (lang) {
+    if (f[lang] != null) { parts.push({ lang: lang, code: f[lang] }); return; }
+    if (step.snippets && step.snippets[lang] != null) {
+      parts.push({ lang: lang, code: fillCode(step.snippets[lang], f, lang) });
+    }
+  });
+  return parts;
+}
+
+// Вставить HTML-часть так же, как обычная кнопка: внутрь каркаса перед </body>.
+function adminInsertHtml(title, code) {
+  const ed = els.htmlEditor;
+  const v = ed.value;
+  const m = /([ \t]*)<\/body>/i.exec(v);
+  if (!m) { ed.value = code; return; } // каркаса ещё нет — это и есть скелет
+  const indent = (m[1] || "") + "\t";
+  const block = wrapBlock("html", title, code);
+  const hasPrev = /НАЧАЛО:/.test(v);
+  const text =
+    (hasPrev ? "\n" : "") +
+    block.split("\n").map(function (l) { return l ? indent + l : l; }).join("\n") +
+    "\n";
+  ed.value = v.slice(0, m.index) + text + v.slice(m.index);
+}
+
+// Дописать CSS/JS-часть в конец соответствующего файла.
+function adminAppend(lang, title, code) {
+  const ed = lang === "css" ? els.cssEditor : els.jsEditor;
+  const block = wrapBlock(lang, title, code);
+  const trimmed = ed.value.replace(/\s+$/, "");
+  ed.value = trimmed ? trimmed + "\n\n" + block : block;
+}
+
+// Заполнить редакторы кодом шагов 1…targetIndex, отметить их и запустить превью.
+function fillUpToStep(targetIndex) {
+  if (typeof els === "undefined" || !els.htmlEditor) return;
+  els.htmlEditor.value = "";
+  els.cssEditor.value = "";
+  els.jsEditor.value = "";
+  doneParts.clear();
+  for (let i = 0; i <= targetIndex; i++) {
+    const step = lesson.steps[i];
+    solvedParts(step).forEach(function (p) {
+      if (p.lang === "html") adminInsertHtml(step.title, p.code);
+      else adminAppend(p.lang, step.title, p.code);
+    });
+    stepLangs(step).forEach(function (lang) { doneParts.add(partKey(i, lang)); });
+  }
+  ensureColorSpacing(els.cssEditor);
+  els.editors.forEach(function (ta) { updateHighlight(ta); histInit(ta); });
+  autosave();
+  updateProgress();
+  switchTab("index.html");
+  updateIframe();
+  if (typeof showToast === "function") {
+    showToast(
+      "🗝 Заполнено по шаг " + (targetIndex + 1),
+      "Готовый код шагов 1–" + (targetIndex + 1) + " подставлен, прогресс отмечен, превью запущено."
+    );
+  }
+}
+if (typeof window !== "undefined") window.fillUpToStep = fillUpToStep;
+
+// ============================================================
 // Секретная разблокировка «режима разработчика».
 //
 // Перейди по СЕКРЕТНОМУ адресу один раз:

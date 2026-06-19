@@ -777,7 +777,7 @@ const ALL_SECTIONS = [
 	"login-page", "register-page", "product-detail",
 ];
 
-function showPage(name, addToHistory) {
+function showPage(name) {
 	ALL_SECTIONS.forEach(function (id) {
 		const el = document.getElementById(id);
 		if (el) el.style.display = "none";          // прячем все секции
@@ -787,18 +787,24 @@ function showPage(name, addToHistory) {
 		if (el) el.style.display = "";               // показываем нужную страницу
 	});
 	window.scrollTo(0, 0);
-	// Запоминаем страницу в истории браузера, чтобы работала кнопка «Назад».
-	// addToHistory === false — это уже переход по истории (popstate), не пишем.
-	if (addToHistory !== false) {
-		try { history.pushState({ page: name }, "", ""); } catch (e) {}
-	}
 }
 
-// Кнопки «Назад»/«Вперёд» браузера — показываем страницу из истории
-window.addEventListener("popstate", function (e) {
-	const name = (e.state && e.state.page) || "home";
-	showPage(name, false);   // false — не создаём новую запись истории
-});
+// Показать страницу по текущему адресу (часть после # — это «адрес» страницы).
+// Хэш меняется при навигации и сам пишется в историю браузера, поэтому работают
+// встроенные кнопки браузера «Назад» и «Вперёд».
+function applyRoute() {
+	const h = location.hash.slice(1);              // например "login" или "product-2"
+	if (h.indexOf("product-") === 0) {             // страница конкретного товара
+		const id = h.slice("product-".length);
+		try {
+			if (typeof openProduct === "function") { openProduct(id); return; }
+		} catch (e) { /* код товара ещё не загрузился — покажем Главную */ }
+	}
+	showPage(PAGES[h] ? h : "home");
+}
+
+// «Назад»/«Вперёд» в браузере меняют хэш → перерисовываем страницу
+window.addEventListener("hashchange", applyRoute);
 
 // Уголок пользователя в правом верхнем углу
 function renderUserBox() {
@@ -822,15 +828,15 @@ document.addEventListener("click", function (e) {
 			localStorage.removeItem("isLoggedIn");
 			localStorage.removeItem("currentUser");
 			renderUserBox();
-			showPage("home");
+			location.hash = "home";
 		} else {
-			showPage(dest);
+			location.hash = dest;   // меняем адрес → запись в истории браузера
 		}
 		return;
 	}
 	const card = e.target.closest("[data-product]");
-	if (card && typeof openProduct === "function") {
-		openProduct(card.getAttribute("data-product"));
+	if (card) {
+		location.hash = "product-" + card.getAttribute("data-product");
 	}
 });
 
@@ -864,8 +870,7 @@ mainEl.style.flexDirection = "column";
 mainEl.style.justifyContent = "center";
 
 renderUserBox();
-history.replaceState({ page: "home" }, "", ""); // стартовая запись истории
-showPage("home", false); // при загрузке показываем Главную (без новой записи)`,
+applyRoute(); // при загрузке показываем страницу по текущему адресу (по умолчанию — Главную)`,
       },
       taskMd: `**1.** Нажми «Вставить JS» ⬇ → ▶ Запустить. Магазин стал многостраничным!
 
@@ -959,13 +964,6 @@ if (localStorage.getItem("isLoggedIn") === "true") {
 if (localStorage.getItem("is_admin") === "true") {
 	const ap = document.getElementById("admin-panel");
 	if (ap) ap.hidden = false;
-}
-
-// Приветствие из адресной строки (текст после # в ссылке) — ⚠ отражённый XSS
-if (location.hash && location.hash.length > 1) {
-	const fromUrl = decodeURIComponent(location.hash.slice(1));
-	const box = document.getElementById("login-msg");
-	if (box) box.innerHTML = "Привет, " + fromUrl + "!";   // ⚠ innerHTML
 }`,
       },
       taskMd: `**1.** Нажми «Вставить JS» ⬇ → ▶ Запустить. Теперь аккаунты работают!

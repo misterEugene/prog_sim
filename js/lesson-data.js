@@ -777,7 +777,7 @@ const ALL_SECTIONS = [
 	"login-page", "register-page", "product-detail",
 ];
 
-function showPage(name) {
+function showPage(name, addToHistory) {
 	ALL_SECTIONS.forEach(function (id) {
 		const el = document.getElementById(id);
 		if (el) el.style.display = "none";          // прячем все секции
@@ -787,7 +787,18 @@ function showPage(name) {
 		if (el) el.style.display = "";               // показываем нужную страницу
 	});
 	window.scrollTo(0, 0);
+	// Запоминаем страницу в истории браузера, чтобы работала кнопка «Назад».
+	// addToHistory === false — это уже переход по истории (popstate), не пишем.
+	if (addToHistory !== false) {
+		try { history.pushState({ page: name }, "", ""); } catch (e) {}
+	}
 }
+
+// Кнопки «Назад»/«Вперёд» браузера — показываем страницу из истории
+window.addEventListener("popstate", function (e) {
+	const name = (e.state && e.state.page) || "home";
+	showPage(name, false);   // false — не создаём новую запись истории
+});
 
 // Уголок пользователя в правом верхнем углу
 function renderUserBox() {
@@ -829,7 +840,8 @@ const footerEl = document.getElementById("contacts");
 if (footerEl) document.body.appendChild(footerEl);
 
 renderUserBox();
-showPage("home"); // при загрузке показываем Главную`,
+history.replaceState({ page: "home" }, "", ""); // стартовая запись истории
+showPage("home", false); // при загрузке показываем Главную (без новой записи)`,
       },
       taskMd: `**1.** Нажми «Вставить JS» ⬇ → ▶ Запустить. Магазин стал многостраничным!
 
@@ -842,7 +854,10 @@ showPage("home"); // при загрузке показываем Главную
 А в правом верхнем углу появилась ссылка **Войти**.
 
 **4.** Щёлкни **Главная** — вернулся каталог. Попробуй щёлкнуть по карточке товара —
-пока ничего не происходит: страницу товара мы добавим на последнем шаге.`,
+пока ничего не происходит: страницу товара мы добавим на последнем шаге.
+
+**5.** Понажимай кнопку **← Назад** самого браузера — страницы переключаются назад,
+как на настоящем сайте! (А кнопка «Вперёд» возвращает обратно.)`,
       hintMd:
         "Ничего вписывать не нужно — просто вставь JS и нажми ▶ Запустить. Если страницы не переключаются, проверь, что шапку (шаг «Шапка») ты собрал с пунктами меню `data-link`. Карточки товара заработают после последнего шага.",
       doneMd:

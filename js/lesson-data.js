@@ -829,6 +829,11 @@ document.addEventListener("click", function (e) {
 	}
 });
 
+// Подвал добавили РАНЬШЕ страниц входа/товара, поэтому в коде он стоит выше них.
+// Перенесём его в самый конец <body> — тогда он всегда ниже любой открытой страницы.
+const footerEl = document.getElementById("contacts");
+if (footerEl) document.body.appendChild(footerEl);
+
 renderUserBox();
 showPage("home"); // при загрузке показываем Главную`,
       },

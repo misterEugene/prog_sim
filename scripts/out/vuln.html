@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>МегаМагазин</title>
+</head>
+<body>
+
+	<h1>Добро пожаловать в МегаМагазин</h1>
+	<p>Тут будут самые крутые товары!</p>
+
+	<!-- Шапка магазина: логотип, меню, корзина и уголок пользователя -->
+	<header class="site-header" id="home">
+		<div class="logo">🛍️ МегаМагазин</div>
+		<nav class="menu">
+			<a href="#" data-link="home">Главная</a>
+			<a href="#" data-link="login">Вход</a>
+			<a href="#" data-link="register">Регистрация</a>
+		</nav>
+		<div class="header-right">
+			<div class="cart">🛒 Корзина: <span id="cart-count">0</span></div>
+			<div id="user-box" class="user-box"></div>
+		</div>
+	</header>
+
+	<!-- Баннер: главный заголовок и кнопка (страница «Главная») -->
+	<section class="banner" id="banner">
+		<p id="welcome-box" class="welcome-box" hidden></p>
+		<h1>Скидки до 50% на технику!</h1>
+		<p>Только до конца недели — успей купить!</p>
+		<a href="#products" class="banner-btn" data-scroll="products">Купить сейчас</a>
+	</section>
+
+	<!-- Сетка товаров: карточки кликабельны (страница «Главная») -->
+	<section class="products" id="products">
+		<div class="card">
+			<a href="#" class="card-link" data-product="0">
+				<div class="card-img">📱</div>
+				<h3 class="card-title">Смартфон</h3>
+			</a>
+			<p class="card-price">19990 ₽</p>
+			<button class="add-to-cart">В корзину</button>
+		</div>
+		<div class="card">
+			<a href="#" class="card-link" data-product="1">
+				<div class="card-img">🎧</div>
+				<h3 class="card-title">Наушники</h3>
+			</a>
+			<p class="card-price">2490 ₽</p>
+			<button class="add-to-cart">В корзину</button>
+		</div>
+		<div class="card">
+			<a href="#" class="card-link" data-product="2">
+				<div class="card-img">⌚</div>
+				<h3 class="card-title">Умные часы</h3>
+			</a>
+			<p class="card-price">5990 ₽</p>
+			<button class="add-to-cart">В корзину</button>
+		</div>
+		<div class="card">
+			<a href="#" class="card-link" data-product="3">
+				<div class="card-img">💻</div>
+				<h3 class="card-title">Ноутбук</h3>
+			</a>
+			<p class="card-price">45990 ₽</p>
+			<button class="add-to-cart">В корзину</button>
+		</div>
+		<div class="card">
+			<a href="#" class="card-link" data-product="4">
+				<div class="card-img">🎮</div>
+				<h3 class="card-title">Геймпад</h3>
+			</a>
+			<p class="card-price">2990 ₽</p>
+			<button class="add-to-cart">В корзину</button>
+		</div>
+	</section>
+
+	<!-- Блок "О нас": рассказ о магазине (страница «Главная») -->
+	<section class="about" id="about">
+		<h2>О нас</h2>
+		<p>МегаМагазин работает с 2020 года. Мы продаём только проверенную технику и доставляем заказы по всей России за 1–3 дня.</p>
+	</section>
+
+	<!-- Отзывы покупателей (страница «Главная») -->
+	<section class="reviews" id="reviews">
+		<h2>Отзывы покупателей</h2>
+		<div class="review-list">
+			<div class="review">
+				<p class="review-text">«Заказал смартфон — привезли на следующий день. Всё работает отлично!»</p>
+				<p class="review-author">— Артём</p>
+			</div>
+			<div class="review">
+				<p class="review-text">«Купила наушники, звук супер. Спасибо за быструю доставку!»</p>
+				<p class="review-author">— Мария</p>
+			</div>
+			<div class="review">
+				<p class="review-text">«Очень доволен ноутбуком, цена ниже, чем везде.»</p>
+				<p class="review-author">— Иван</p>
+			</div>
+			<div class="review">
+				<p class="review-text">«Лучший магазин техники, рекомендую!»</p>
+				<p class="review-author">— Олег</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- Подвал сайта: контакты и копирайт (виден на всех страницах) -->
+	<footer class="site-footer" id="contacts">
+		<p>📞 Телефон: 8-800-555-35-35</p>
+		<p>✉️ Почта: shop@megamagazin.ru</p>
+		<p>📍 Адрес: г. Москва, ул. Цифровая, 7</p>
+		<p>© 2026 МегаМагазин. Все права защищены.</p>
+		<!-- FLAG{секрет_спрятан_в_html_комментарии} -->
+	</footer>
+
+	<!-- Страница «Вход» -->
+	<section class="auth" id="login-page">
+		<h2>Вход</h2>
+		<!-- TODO для входа в админку: логин admin, пароль megapass123 -->
+		<input id="login-name" placeholder="Логин">
+		<input id="login-pass" type="password" placeholder="Пароль">
+		<button id="login-btn">Войти</button>
+		<p id="login-msg" class="auth-msg"></p>
+		<p class="auth-switch">Нет аккаунта? <a href="#" data-link="register">Зарегистрируйся</a></p>
+		<div id="admin-panel" class="admin-panel" hidden>
+			🛠 Админ-панель. Секретный код магазина: <b>MEGA-2026-ADMIN</b>
+		</div>
+	</section>
+
+	<!-- Страница «Регистрация» -->
+	<section class="auth" id="register-page">
+		<h2>Регистрация</h2>
+		<input id="reg-name" placeholder="Придумай логин">
+		<input id="reg-pass" type="password" placeholder="Придумай пароль">
+		<input id="reg-pass2" type="password" placeholder="Повтори пароль">
+		<button id="reg-btn">Зарегистрироваться</button>
+		<p id="reg-msg" class="auth-msg"></p>
+		<p class="auth-switch">Уже есть аккаунт? <a href="#" data-link="login">Войти</a></p>
+	</section>
+
+	<!-- Страница одного товара (заполняется из JS) -->
+	<section class="product-detail" id="product-detail">
+		<a href="#" data-link="home" class="back-link">← Назад в каталог</a>
+		<div class="pd-img" id="pd-img"></div>
+		<h2 id="pd-title"></h2>
+		<p class="card-price" id="pd-price"></p>
+		<p id="pd-desc"></p>
+		<button class="add-to-cart" id="pd-add">В корзину</button>
+
+		<div class="pd-comments">
+			<h3>Комментарии о товаре</h3>
+			<div id="pd-comment-form"></div>
+			<div id="pd-comments"></div>
+		</div>
+	</section>
+</body>
+</html>

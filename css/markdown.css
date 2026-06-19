@@ -25,6 +25,27 @@
 .markdown-body strong { font-weight: 700; }
 .markdown-body em { font-style: italic; }
 
+/* Ограждённый блок кода ```…``` (например, исправленный код в уроке 2) */
+.markdown-body pre.code-block {
+  background: #1e1e2f;
+  color: #e6e6f0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 10px 0;
+  border: 1px solid #d0d3dc;
+}
+.markdown-body pre.code-block code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.86em;
+  white-space: pre;
+  display: block;
+  line-height: 1.5;
+}
+
 /* ===== Урок-конструктор: вступление, прогресс, шаги, финал ===== */
 .lesson-intro { margin-bottom: 8px; }
 

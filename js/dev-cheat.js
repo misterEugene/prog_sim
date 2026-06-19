@@ -57,6 +57,12 @@ const FILL_REVIEW4 =
 
 const STEP_FILL = {
   "Каркас сайта и название во вкладке": { html: FILL_SKELETON },
+  "Первый текст на странице — руками": {
+    html: "<h1>Добро пожаловать в МегаМагазин</h1>\n<p>Тут будут самые крутые товары!</p>",
+  },
+  "Первый стиль — раскрась заголовок": {
+    cssRaw: "h1 { color: #5b3df5; text-align: center; }",
+  },
   "Шапка магазина и меню навигации": {
     answers: {
       "[ВПИШИ НАЗВАНИЕ МАГАЗИНА]": "МегаМагазин",
@@ -162,38 +168,40 @@ function fillCode(code, f, lang) {
 // Готовые части шага (в порядке html → css → js).
 function solvedParts(step) {
   const f = STEP_FILL[step.title] || {};
+  const manual = step.manual === true; // ручной шаг — код «как руками», без границ
   const parts = [];
+  // Ручной CSS/HTML, который ребёнок печатает ДО сниппета шага (без комментов).
+  if (f.cssRaw) parts.push({ lang: "css", code: f.cssRaw, raw: true });
   ["html", "css", "js"].forEach(function (lang) {
-    if (f[lang] != null) { parts.push({ lang: lang, code: f[lang] }); return; }
+    if (f[lang] != null) { parts.push({ lang: lang, code: f[lang], raw: manual }); return; }
     if (step.snippets && step.snippets[lang] != null) {
-      parts.push({ lang: lang, code: fillCode(step.snippets[lang], f, lang) });
+      parts.push({ lang: lang, code: fillCode(step.snippets[lang], f, lang), raw: false });
     }
   });
   return parts;
 }
 
 // Вставить HTML-часть так же, как обычная кнопка: внутрь каркаса перед </body>.
-function adminInsertHtml(title, code) {
+// raw=true — ручной код (без комментариев-границ), как печатает ребёнок.
+function adminInsertHtml(title, code, raw) {
   const ed = els.htmlEditor;
   const v = ed.value;
   const m = /([ \t]*)<\/body>/i.exec(v);
   if (!m) { ed.value = code; return; } // каркаса ещё нет — это и есть скелет
   const indent = (m[1] || "") + "\t";
-  const block = wrapBlock("html", title, code);
-  const hasPrev = /НАЧАЛО:/.test(v);
-  const text =
-    (hasPrev ? "\n" : "") +
-    block.split("\n").map(function (l) { return l ? indent + l : l; }).join("\n") +
-    "\n";
+  const payload = raw ? code : wrapBlock("html", title, code);
+  const indented = payload.split("\n").map(function (l) { return l ? indent + l : l; }).join("\n");
+  const hasPrev = !raw && /НАЧАЛО:/.test(v);
+  const text = (hasPrev ? "\n" : "") + indented + "\n";
   ed.value = v.slice(0, m.index) + text + v.slice(m.index);
 }
 
-// Дописать CSS/JS-часть в конец соответствующего файла.
-function adminAppend(lang, title, code) {
+// Дописать CSS/JS-часть в конец соответствующего файла. raw=true — без границ.
+function adminAppend(lang, title, code, raw) {
   const ed = lang === "css" ? els.cssEditor : els.jsEditor;
-  const block = wrapBlock(lang, title, code);
+  const piece = raw ? code : wrapBlock(lang, title, code);
   const trimmed = ed.value.replace(/\s+$/, "");
-  ed.value = trimmed ? trimmed + "\n\n" + block : block;
+  ed.value = trimmed ? trimmed + "\n\n" + piece : piece;
 }
 
 // Заполнить редакторы кодом шагов 1…targetIndex, отметить их и запустить превью.
@@ -206,8 +214,8 @@ function fillUpToStep(targetIndex) {
   for (let i = 0; i <= targetIndex; i++) {
     const step = lesson.steps[i];
     solvedParts(step).forEach(function (p) {
-      if (p.lang === "html") adminInsertHtml(step.title, p.code);
-      else adminAppend(p.lang, step.title, p.code);
+      if (p.lang === "html") adminInsertHtml(step.title, p.code, p.raw);
+      else adminAppend(p.lang, step.title, p.code, p.raw);
     });
     stepLangs(step).forEach(function (lang) { doneParts.add(partKey(i, lang)); });
   }

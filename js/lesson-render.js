@@ -286,13 +286,15 @@ function firstUndoneStep() {
 // чтобы в файле было видно, где блок начинается и заканчивается.
 function wrapBlock(lang, title, code) {
   const bar = "=======";
+  // Пустые строки до/после кода → комментарий-граница отбит пустой строкой и от
+  // кода блока, и (вместе с отбивкой между блоками) от соседних блоков.
   if (lang === "html") {
-    return `<!-- ${bar} НАЧАЛО: ${title} ${bar} -->\n${code}\n<!-- ${bar} КОНЕЦ: ${title} ${bar} -->`;
+    return `<!-- ${bar} НАЧАЛО: ${title} ${bar} -->\n\n${code}\n\n<!-- ${bar} КОНЕЦ: ${title} ${bar} -->`;
   }
   if (lang === "css") {
-    return `/* ${bar} НАЧАЛО: ${title} ${bar} */\n${code}\n/* ${bar} КОНЕЦ: ${title} ${bar} */`;
+    return `/* ${bar} НАЧАЛО: ${title} ${bar} */\n\n${code}\n\n/* ${bar} КОНЕЦ: ${title} ${bar} */`;
   }
-  return `// ${bar} НАЧАЛО: ${title} ${bar}\n${code}\n// ${bar} КОНЕЦ: ${title} ${bar}`;
+  return `// ${bar} НАЧАЛО: ${title} ${bar}\n\n${code}\n\n// ${bar} КОНЕЦ: ${title} ${bar}`;
 }
 
 // Вставить ОДНУ часть блока (html/css/js) в её файл: открыть нужную вкладку,
@@ -331,7 +333,11 @@ function insertPart(index, lang) {
     }
     const indent = (m[1] || "") + "\t"; // содержимое body — на уровень глубже </body>
     start = end = m.index;
+    // Если в body уже есть вставленный блок — отбиваем новый пустой строкой,
+    // чтобы между «КОНЕЦ» прошлого и «НАЧАЛО» нового была пустая строка.
+    const hasPrev = /НАЧАЛО:/.test(v);
     text =
+      (hasPrev ? "\n" : "") +
       block
         .split("\n")
         .map((line) => (line ? indent + line : line))

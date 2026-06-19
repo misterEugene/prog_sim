@@ -117,9 +117,35 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
+// В редакторе HTML стили и скрипт лежат в отдельных файлах, а превью подключает
+// их инъекцией. Чтобы скачанный index.html работал сам по себе (открыли файл —
+// и стили со скриптами на месте), добавляем в него <link> на style.css и
+// <script> на main.js. Каркас от Emmet «!» этих ссылок не содержит.
+function linkAssets(html) {
+  let doc = html;
+  const linkTag = '<link rel="stylesheet" href="style.css">';
+  const scriptTag = '<script src="main.js"></script>';
+
+  if (!/href=["']style\.css["']/i.test(doc)) {
+    if (/<\/head>/i.test(doc)) {
+      doc = doc.replace(/([ \t]*)<\/head>/i, (m, pad) => `${pad}\t${linkTag}\n${pad}</head>`);
+    } else {
+      doc = `${linkTag}\n${doc}`; // нет <head> — кладём ссылку в начало
+    }
+  }
+  if (!/src=["']main\.js["']/i.test(doc)) {
+    if (/<\/body>/i.test(doc)) {
+      doc = doc.replace(/([ \t]*)<\/body>/i, (m, pad) => `${pad}\t${scriptTag}\n${pad}</body>`);
+    } else {
+      doc = `${doc}\n${scriptTag}`; // нет <body> — дописываем в конец
+    }
+  }
+  return doc;
+}
+
 function downloadProject() {
   const zip = buildZip([
-    { name: "index.html", content: els.htmlEditor.value },
+    { name: "index.html", content: linkAssets(els.htmlEditor.value) },
     { name: "style.css", content: els.cssEditor.value },
     { name: "main.js", content: els.jsEditor.value },
   ]);

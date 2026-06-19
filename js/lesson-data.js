@@ -823,6 +823,7 @@ function renderUserBox() {
 document.addEventListener("click", function (e) {
 	const link = e.target.closest("[data-link]");
 	if (link) {
+		e.preventDefault();   // не даём ссылке href="#" перезагружать страницу
 		const dest = link.getAttribute("data-link");
 		if (dest === "logout") {
 			localStorage.removeItem("isLoggedIn");
@@ -836,6 +837,7 @@ document.addEventListener("click", function (e) {
 	}
 	const card = e.target.closest("[data-product]");
 	if (card) {
+		e.preventDefault();   // карточка — это тоже ссылка href="#"
 		location.hash = "product-" + card.getAttribute("data-product");
 	}
 });

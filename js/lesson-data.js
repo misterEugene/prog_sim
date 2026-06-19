@@ -839,6 +839,30 @@ document.addEventListener("click", function (e) {
 const footerEl = document.getElementById("contacts");
 if (footerEl) document.body.appendChild(footerEl);
 
+// Оборачиваем все страницы-секции в <main> (всё, кроме шапки и подвала)
+let mainEl = document.getElementById("main-content");
+if (!mainEl) {
+	mainEl = document.createElement("main");
+	mainEl.id = "main-content";
+	const headerEl = document.querySelector(".site-header");
+	if (headerEl) headerEl.after(mainEl);            // <main> сразу после шапки
+	else document.body.insertBefore(mainEl, document.body.firstChild);
+}
+ALL_SECTIONS.forEach(function (id) {
+	const el = document.getElementById(id);
+	if (el && el.parentNode !== mainEl) mainEl.appendChild(el); // переносим в <main>
+});
+
+// Раскладка: шапка сверху, подвал снизу, а контент в <main> — по центру по
+// вертикали, когда его не хватает на весь экран (отступы сверху и снизу равны).
+document.body.style.display = "flex";
+document.body.style.flexDirection = "column";
+document.body.style.minHeight = "100vh";
+mainEl.style.flex = "1";
+mainEl.style.display = "flex";
+mainEl.style.flexDirection = "column";
+mainEl.style.justifyContent = "center";
+
 renderUserBox();
 history.replaceState({ page: "home" }, "", ""); // стартовая запись истории
 showPage("home", false); // при загрузке показываем Главную (без новой записи)`,

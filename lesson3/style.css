@@ -1,0 +1,119 @@
+/* ============================================================
+   Урок 3 «Аналитик данных и ИИ» — стили.
+   Тёмная тема, неоновые акценты, крупные адаптивные кнопки.
+   ============================================================ */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: #12151e;
+  color: #e6e9f2;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+}
+
+/* ---- Шапка и гид ---- */
+.topbar { text-align: center; margin-bottom: 16px; }
+.topbar h1 { margin: 0 0 6px; font-size: 26px; color: #00d4ff; text-shadow: 0 0 14px rgba(0, 212, 255, 0.45); }
+.subtitle { margin: 0; color: #aab2c8; font-size: 16px; }
+
+.guide {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 12px; list-style: none; margin: 0 auto 22px; padding: 0; max-width: 900px;
+}
+.guide li {
+  display: flex; align-items: center; gap: 8px;
+  background: #1b2030; border: 1px solid #2a3148; border-radius: 10px;
+  padding: 8px 14px; font-size: 16px;
+}
+.guide .num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #00d4ff; color: #0b0d14; font-weight: bold;
+}
+
+/* ---- Рабочая область ---- */
+.workspace {
+  display: flex; flex-wrap: wrap; gap: 24px;
+  justify-content: center; align-items: flex-start;
+}
+
+.field-wrap { display: flex; flex-direction: column; align-items: center; }
+#field {
+  width: 600px; height: 600px; max-width: 90vw; max-height: 90vw;
+  background: #12151e; border: 2px solid #2a3148; border-radius: 12px;
+  cursor: crosshair; touch-action: none;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+}
+.hint { color: #8b92a8; font-size: 14px; margin: 10px 0 0; }
+
+/* ---- Панель управления ---- */
+.panel { display: flex; flex-direction: column; gap: 12px; width: 260px; }
+
+.control {
+  background: #1b2030; border: 1px solid #2a3148; border-radius: 10px;
+  padding: 12px 14px;
+}
+.control label { display: block; margin-bottom: 8px; font-size: 16px; }
+.control b { color: #00d4ff; }
+input[type="range"] { width: 100%; accent-color: #00d4ff; }
+
+/* ---- Кнопки ---- */
+.btn {
+  display: inline-block; text-align: center;
+  font-size: 16px; padding: 12px 18px;
+  border: 1px solid #2a3148; border-radius: 10px;
+  background: #222840; color: #e6e9f2; cursor: pointer;
+  transition: transform .08s ease, box-shadow .15s ease, background .15s ease;
+}
+.btn:hover { background: #2c3457; transform: translateY(-1px); }
+.btn:active { transform: translateY(1px); }
+
+.btn.neon {
+  background: #00d4ff; color: #0b0d14; font-weight: bold; border-color: #00d4ff;
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.5);
+}
+.btn.neon:hover { background: #4ce2ff; }
+
+.toggle-blue { border-color: #00d4ff; box-shadow: 0 0 14px rgba(0, 212, 255, 0.4); }
+.toggle-red { border-color: #ff4757; box-shadow: 0 0 14px rgba(255, 71, 87, 0.4); }
+
+.import-label { margin: 0; }
+
+/* ---- Статистика и статус ---- */
+.stats {
+  background: #1b2030; border: 1px solid #2a3148; border-radius: 10px;
+  padding: 12px 14px; font-size: 15px;
+}
+.stats b { color: #00d4ff; }
+.status {
+  text-align: center; min-height: 22px; margin: 18px 0;
+  color: #ffd86b; font-size: 16px;
+}
+
+/* ---- Панель секретного теста ---- */
+.test-panel { display: none; max-width: 720px; margin: 0 auto; text-align: center; }
+.test-panel.active { display: block; }
+.test-panel h2 { color: #ff4757; font-size: 20px; }
+
+.answers {
+  display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 16px 0;
+}
+.answer-row {
+  display: flex; align-items: center; gap: 8px;
+  background: #1b2030; border: 1px solid #2a3148; border-radius: 10px; padding: 8px 12px;
+}
+.answer-row select {
+  font-size: 15px; padding: 6px 8px; border-radius: 8px;
+  background: #12151e; color: #e6e9f2; border: 1px solid #2a3148;
+}
+.answer-row select.correct { border-color: #2ecc71; box-shadow: 0 0 10px rgba(46, 204, 113, 0.6); }
+.answer-row select.wrong { border-color: #ff4757; box-shadow: 0 0 10px rgba(255, 71, 87, 0.6); }
+
+/* ---- Адаптив ---- */
+@media (max-width: 760px) {
+  .panel { width: 90vw; max-width: 600px; }
+  .topbar h1 { font-size: 22px; }
+}

@@ -12,13 +12,11 @@
     <p class="subtitle">Квест: научи искусственный интеллект отличать 🔵 синих от 🔴 красных по алгоритму <b>KNN</b></p>
   </header>
 
-  <!-- Гид из 4 шагов -->
-  <ol class="guide">
-    <li><span class="num">1</span> Нанеси точки</li>
-    <li><span class="num">2</span> Настрой <b>k</b> и обучи</li>
-    <li><span class="num">3</span> Проверь на тесте</li>
-    <li><span class="num">4</span> Экспортируй результат</li>
-  </ol>
+  <!-- Рабочая область: слева колонка-гид с пошаговой инструкцией, по центру поле,
+       справа панель управления. Содержимое #guide строит js/guide.js. -->
+  <div class="page">
+    <aside class="guide-col" id="guide"><!-- шаги строит js/guide.js --></aside>
+    <div class="work-col">
 
   <main class="workspace">
     <!-- Поле -->
@@ -61,11 +59,16 @@
     <button id="btn-reveal" class="btn neon">✅ Показать ответы</button>
   </section>
 
-  <!-- Скрипты: классические, по порядку. config → knn → tests → rendering → app -->
+    </div><!-- /.work-col -->
+  </div><!-- /.page -->
+
+  <!-- Скрипты: классические, по порядку. config → knn → tests → rendering → app,
+       guide.js (панель шагов) — последним, он самодостаточен. -->
   <script src="js/config.js"></script>
   <script src="js/knn.js"></script>
   <script src="js/tests.js"></script>
   <script src="js/rendering.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/guide.js"></script>
 </body>
 </html>

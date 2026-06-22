@@ -117,3 +117,155 @@ input[type="range"] { width: 100%; accent-color: #00d4ff; }
   .panel { width: 90vw; max-width: 600px; }
   .topbar h1 { font-size: 22px; }
 }
+
+/* ============================================================
+   Пошаговая инструкция (колонка-гид #guide). Стили панели шагов,
+   прогресса и состояний (активна / выполнена / заблокирована).
+   ============================================================ */
+
+/* Раскладка: гид слева, рабочая область справа; на узком — в столбик. */
+.page {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+.work-col { flex: 1 1 640px; min-width: 0; }
+
+.guide-col {
+  flex: 0 0 380px;
+  width: 380px;
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Текстовое оформление внутри гида */
+.guide-col h2 { font-size: 19px; color: #00d4ff; margin: 0 0 8px; }
+.guide-col h3 { font-size: 16px; color: #8fd3ff; margin: 14px 0 6px; }
+.guide-col h4 { font-size: 15px; color: #aab2c8; margin: 10px 0 4px; }
+.guide-col p { margin: 8px 0; font-size: 15px; color: #d7dcec; }
+.guide-col ul { margin: 8px 0; padding-left: 20px; }
+.guide-col li { margin: 4px 0; font-size: 15px; color: #d7dcec; }
+.guide-col strong { color: #fff; }
+.guide-col code {
+  font-family: "Consolas", "Courier New", monospace;
+  background: #0a0d16; color: #ffd86b;
+  padding: 1px 5px; border-radius: 5px; font-size: 13px;
+}
+
+/* Вступление */
+.g-intro {
+  background: #1b2030; border: 1px solid #2a3148; border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 14px;
+}
+.g-intro h2 { margin-top: 0; }
+
+/* Прогресс-бар */
+.g-progress {
+  height: 10px; background: #1b2030; border: 1px solid #2a3148;
+  border-radius: 999px; overflow: hidden; margin: 6px 0 4px;
+}
+.g-progress-fill {
+  height: 100%; background: linear-gradient(90deg, #00d4ff, #4ce2ff);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.6); transition: width .3s ease;
+}
+.g-progress-text {
+  text-align: center; font-size: 13px; color: #aab2c8; margin-bottom: 14px;
+}
+
+/* Карточка шага */
+.g-step {
+  background: #161b29; border: 1px solid #2a3148; border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 12px; transition: opacity .2s ease;
+}
+.g-step--active {
+  border-color: #00d4ff;
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.25);
+}
+.g-step--done { opacity: 0.75; }
+.g-step--locked { opacity: 0.5; }
+
+.g-step-head { display: flex; align-items: center; gap: 10px; }
+.g-step-num {
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #00d4ff; color: #0b0d14; font-weight: bold; font-size: 15px;
+}
+.g-step--done .g-step-num { background: #2ecc71; color: #07210f; }
+.g-step--locked .g-step-num { background: #3a4158; color: #aab2c8; }
+.g-step-title { flex: 1 1 auto; font-weight: bold; font-size: 16px; color: #fff; }
+.g-step-time { flex: 0 0 auto; font-size: 12px; color: #8b92a8; }
+
+.g-step-goal { margin-top: 8px; }
+.g-step-task { margin-top: 4px; }
+
+/* Блок-заметка «📌 Главное правило» и т.п. внутри задания выделяется отступом */
+.g-step-task p:first-child { margin-top: 4px; }
+
+/* Подсказка (раскрывающаяся) */
+.g-step-hint { margin: 10px 0; }
+.g-step-hint summary {
+  cursor: pointer; color: #ffd86b; font-size: 14px; user-select: none;
+}
+.g-step-hint summary:hover { text-decoration: underline; }
+.g-step-hint > div {
+  margin-top: 6px; padding: 8px 12px;
+  background: #0f1320; border: 1px solid #2a3148; border-radius: 8px;
+}
+.g-step-hint p { font-size: 14px; margin: 4px 0; }
+
+/* Критерий «готово» */
+.g-step-done-note {
+  margin: 10px 0; padding: 8px 12px;
+  background: rgba(46, 204, 113, 0.08);
+  border-left: 3px solid #2ecc71; border-radius: 6px;
+}
+.g-step-done-note p { margin: 0; font-size: 14px; color: #cfead8; }
+
+/* Кнопка «Я выполнил этот шаг» */
+.g-done-btn {
+  display: block; width: 100%; margin-top: 8px;
+  padding: 12px 16px; font-size: 16px; font-weight: bold;
+  color: #07210f; background: #2ecc71; border: none; border-radius: 10px;
+  cursor: pointer; box-shadow: 0 0 14px rgba(46, 204, 113, 0.45);
+  transition: transform .08s ease, background .15s ease;
+}
+.g-done-btn:hover { background: #43d984; }
+.g-done-btn:active { transform: translateY(1px); }
+
+.g-step-badge {
+  margin-top: 8px; text-align: center; font-weight: bold;
+  color: #2ecc71; font-size: 14px;
+}
+.g-step-locked { font-size: 14px; color: #8b92a8; padding: 4px 0; }
+
+/* Финал */
+.g-outro {
+  background: #15241b; border: 1px solid #2ecc71; border-radius: 12px;
+  padding: 14px 16px; margin: 14px 0; box-shadow: 0 0 18px rgba(46, 204, 113, 0.2);
+}
+.g-outro h2 { color: #2ecc71; }
+.g-outro h3 { color: #7fe6a6; }
+
+/* Сброс прогресса */
+.g-reset {
+  display: block; margin: 6px auto 24px; padding: 8px 14px;
+  font-size: 13px; color: #aab2c8; background: transparent;
+  border: 1px solid #2a3148; border-radius: 8px; cursor: pointer;
+}
+.g-reset:hover { background: #1b2030; color: #e6e9f2; }
+
+/* Адаптив: на узком экране гид сверху, на всю ширину (не залипает) */
+@media (max-width: 1000px) {
+  .guide-col {
+    flex-basis: 100%; width: 100%;
+    position: static; max-height: none; overflow: visible;
+    order: -1;
+  }
+}

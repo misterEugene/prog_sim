@@ -36,6 +36,26 @@ function confirmReset() {
   resetToTemplate();
 }
 
+// Данные, которые САЙТ РЕБЁНКА пишет в localStorage (он делит origin с платформой
+// через srcdoc-iframe): пользователи, вход, права, флаги и комментарии по товарам
+// (ключи вида comments_<id>). При «Начать заново» их тоже нужно стереть, иначе
+// старые комментарии/аккаунты остаются на свежесобранном сайте.
+function clearSiteData() {
+  const exact = ["users", "isLoggedIn", "currentUser", "is_admin", "secret_flag"];
+  try {
+    exact.forEach(function (k) { localStorage.removeItem(k); });
+    // comments_<id> — id заранее неизвестны, поэтому собираем ключи и чистим по префиксу.
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.indexOf("comments_") === 0) toRemove.push(key);
+    }
+    toRemove.forEach(function (k) { localStorage.removeItem(k); });
+  } catch (e) {
+    /* недоступный storage — не критично */
+  }
+}
+
 function resetToTemplate() {
   els.htmlEditor.value = lesson.initialHTML;
   els.cssEditor.value = lesson.initialCSS;
@@ -46,6 +66,7 @@ function resetToTemplate() {
   } catch (e) {
     /* недоступный storage — не критично */
   }
+  clearSiteData(); // стираем данные, записанные самим сайтом ребёнка
   els.editors.forEach(updateHighlight);
   els.editors.forEach(histInit); // история начинается заново с чистого шаблона
   saveHistoryNow();

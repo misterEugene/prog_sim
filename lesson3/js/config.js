@@ -17,6 +17,7 @@ const CONFIG = {
 
   // Точки
   POINT_RADIUS: 7,
+  ERASE_RADIUS: 18,        // радиус «попадания» ластика по точке (px поля)
   TEST_RADIUS: 9,
   GLOW_BLUR: 12,           // свечение точек (shadowBlur)
 

@@ -16,7 +16,8 @@
     testRevealed: false,
     trained: false,
     lastAccuracy: null,
-    history: []   // снимки points для отмены (Ctrl+Z / кнопка «Отменить»)
+    history: [],  // снимки points для отмены (Ctrl+Z / кнопка «Отменить»)
+    eraser: false // режим ластика: клик по точке удаляет её
   };
 
   // ---- История для отмены ----
@@ -80,6 +81,29 @@
     state.points.push({ x: pos.x, y: pos.y, label: label });
     state.trained = false; // данные изменились — нужно переобучить
     render();
+  }
+
+  // ---- Удаление точки кликом (режим ластика) ----
+  // Находит ближайшую точку в радиусе ERASE_RADIUS и удаляет её.
+  function eraseAt(e) {
+    const pos = canvasPos(e);
+    let bestI = -1, bestD = CONFIG.ERASE_RADIUS;
+    for (let i = 0; i < state.points.length; i++) {
+      const d = Math.hypot(state.points[i].x - pos.x, state.points[i].y - pos.y);
+      if (d <= bestD) { bestD = d; bestI = i; }
+    }
+    if (bestI === -1) { setStatus('Тут нет точки — наведись точнее на кружок 🧽'); return; }
+    pushHistory();
+    state.points.splice(bestI, 1);
+    state.trained = false; // данные изменились — нужно переобучить
+    render();
+  }
+
+  function updateEraser() {
+    const btn = document.getElementById('eraser-toggle');
+    btn.textContent = state.eraser ? '🧽 Ластик: ВКЛ' : '🧽 Ластик: выкл';
+    btn.classList.toggle('eraser-on', state.eraser);
+    canvas.classList.toggle('erasing', state.eraser);
   }
 
   function other(c) { return c === 'blue' ? 'red' : 'blue'; }
@@ -186,8 +210,15 @@
   }
 
   // ---- Привязка событий ----
-  canvas.addEventListener('click', function (e) { addPoint(e, state.activeColor); });
-  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); addPoint(e, other(state.activeColor)); });
+  canvas.addEventListener('click', function (e) {
+    if (state.eraser) { eraseAt(e); return; }
+    addPoint(e, state.activeColor);
+  });
+  canvas.addEventListener('contextmenu', function (e) {
+    e.preventDefault();
+    if (state.eraser) { eraseAt(e); return; }
+    addPoint(e, other(state.activeColor));
+  });
 
   slider.addEventListener('input', function () {
     state.k = +slider.value;
@@ -197,6 +228,12 @@
 
   document.getElementById('color-toggle').onclick = function () {
     state.activeColor = other(state.activeColor); updateToggle();
+  };
+  document.getElementById('eraser-toggle').onclick = function () {
+    state.eraser = !state.eraser; updateEraser();
+    setStatus(state.eraser
+      ? 'Режим ластика 🧽 — кликай по точкам, чтобы удалять их. Выключи кнопку, чтобы снова рисовать.'
+      : 'Ластик выключен — снова рисуем точки 🔵🔴');
   };
   document.getElementById('btn-train').onclick = function () {
     if (!state.points.length) { setStatus('Сначала нанеси точки!'); return; }
@@ -242,6 +279,7 @@
   slider.value = CONFIG.DEFAULT_K;
   kValue.textContent = CONFIG.DEFAULT_K;
   updateToggle();
+  updateEraser();
   updateUndoBtn();
   setStatus('Привет! Нанеси точки или загрузи стартовый датасет 👇');
   render();

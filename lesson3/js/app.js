@@ -31,6 +31,7 @@
   function pushHistory() {
     state.history.push(snapshot());
     if (state.history.length > CONFIG.UNDO_LIMIT) state.history.shift();
+    saveHistory();
     updateUndoBtn();
   }
 
@@ -42,6 +43,7 @@
     if (!state.history.length) { setStatus('Отменять нечего ↩'); return; }
     state.points = state.history.pop();
     state.trained = false; // данные изменились — нужно переобучить
+    saveHistory();
     updateUndoBtn();
     setStatus('Последнее действие отменено ↩');
     render();
@@ -51,6 +53,15 @@
   // Храним точки, число k и факт обучения (тепловую карту). Тестовые точки —
   // временные, их не сохраняем.
   var FIELD_KEY = 'lesson3Field';
+  var HISTORY_KEY = 'lesson3History';
+
+  // Очистить список точек от мусора (валидные x/y и цвет).
+  function sanitizePoints(arr) {
+    return (Array.isArray(arr) ? arr : []).filter(function (p) {
+      return p && typeof p.x === 'number' && typeof p.y === 'number' &&
+        (p.label === 'blue' || p.label === 'red');
+    });
+  }
 
   function saveField() {
     try {
@@ -64,13 +75,28 @@
     try {
       var data = JSON.parse(localStorage.getItem(FIELD_KEY) || 'null');
       if (!data || !Array.isArray(data.points)) return;
-      state.points = data.points.filter(function (p) {
-        return p && typeof p.x === 'number' && typeof p.y === 'number' &&
-          (p.label === 'blue' || p.label === 'red');
-      });
+      state.points = sanitizePoints(data.points);
       if (typeof data.k === 'number' && data.k >= CONFIG.MIN_K && data.k <= CONFIG.MAX_K) state.k = data.k;
       state.trained = data.trained === true && state.points.length > 0;
     } catch (e) { /* битые данные — начинаем с пустого поля */ }
+  }
+
+  // История отмен переживает перезагрузку: храним стек снимков отдельным ключом,
+  // пишем только при изменении истории (не на каждый render).
+  function saveHistory() {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(state.history)); }
+    catch (e) { /* приватный режим / переполнение квоты */ }
+  }
+
+  function loadHistory() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+      if (!Array.isArray(raw)) return;
+      state.history = raw.map(sanitizePoints);
+      if (state.history.length > CONFIG.UNDO_LIMIT) {
+        state.history = state.history.slice(state.history.length - CONFIG.UNDO_LIMIT);
+      }
+    } catch (e) { state.history = []; }
   }
 
   // ---- Отрисовка всего поля ----
@@ -282,6 +308,7 @@
     state.points = []; state.testPoints = [];
     state.trained = false; state.testRevealed = false; state.lastAccuracy = null;
     state.history = [];
+    saveHistory();
     document.getElementById('answers').innerHTML = '';
     document.getElementById('test-panel').classList.remove('active');
     updateUndoBtn();
@@ -304,7 +331,8 @@
   });
 
   // ---- Старт ----
-  loadField(); // восстановить точки/k/обучение из прошлой сессии
+  loadField();   // восстановить точки/k/обучение из прошлой сессии
+  loadHistory(); // восстановить стек отмены — Ctrl+Z работает и после F5
   slider.value = state.k;
   kValue.textContent = state.k;
   updateToggle();

@@ -49,17 +49,37 @@ function histRecord(ta) {
   saveHistorySoon();
 }
 
+// Куда поставить курсор после отмены/повтора: по МЕСТУ изменения, а не по
+// абсолютной позиции из снимка. Сохранённая позиция (особенно у базового снимка
+// histInit — конец документа) не обязана совпадать с местом правки, из-за чего
+// курсор «прыгал» в конец кода. Считаем общий префикс/суффикс old↔new и ставим
+// курсор в конец изменённого участка в новом тексте.
+function diffCaret(oldStr, newStr) {
+  if (oldStr === newStr) return newStr.length;
+  const max = Math.min(oldStr.length, newStr.length);
+  let p = 0;
+  while (p < max && oldStr[p] === newStr[p]) p++;
+  let suf = 0;
+  while (
+    suf < max - p &&
+    oldStr[oldStr.length - 1 - suf] === newStr[newStr.length - 1 - suf]
+  ) suf++;
+  return newStr.length - suf;
+}
+
 function histApply(ta, snap) {
   restoring = true;
+  const old = ta.value;
   ta.value = snap.v;
-  ta.setSelectionRange(snap.s, snap.e);
+  const caret = diffCaret(old, snap.v);
+  ta.setSelectionRange(caret, caret);
   restoring = false;
   ta._histTime = 0; // следующая правка — отдельный шаг (без коалесинга)
   updateHighlight(ta);
   autosave();
   // Прокрутить к курсору, чтобы было видно, что откатилось
   if (ta.offsetParent !== null) {
-    const c = caretCoords(ta, snap.e);
+    const c = caretCoords(ta, caret);
     ta.scrollTop = Math.max(0, c.top - ta.clientHeight / 2);
     syncScroll(ta);
   }

@@ -38,6 +38,7 @@
     var frame = document.getElementById("frame");
     var empty = document.getElementById("empty");
     var currentDoc = null; // последний документ, полученный напрямую (приоритетный)
+    var renderedDoc = null; // что РЕАЛЬНО загружено в iframe (чтобы не перезагружать тем же)
 
     // Название вкладки браузера берётся из <title> ЭТОЙ страницы, а не из <title>
     // внутри iframe (стандарт). Поэтому достаём <title> ученика из документа и
@@ -52,11 +53,17 @@
       var doc = currentDoc;
       if (doc == null) { try { doc = localStorage.getItem(KEY); } catch (e) {} }
       if (doc) {
+        // Тот же документ уже показан - НЕ переустанавливаем srcdoc. Иначе iframe
+        // перезагрузился бы на каждый возврат фокуса (askOpener → тот же doc), заново
+        // применяя #welcome=… - и «отражённый XSS» зацикливал бы alert после OK.
+        if (doc === renderedDoc) return;
+        renderedDoc = doc;
         empty.classList.remove("show");
         frame.classList.remove("hide");
         frame.srcdoc = doc;
         applyTitle(doc);
       } else {
+        renderedDoc = null;
         frame.classList.add("hide");
         empty.classList.add("show");
         document.title = DEFAULT_TITLE;

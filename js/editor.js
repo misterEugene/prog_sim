@@ -74,6 +74,36 @@ function caretCoords(ta, pos) {
   return { left, top, lineHeight };
 }
 
+// Подкрутить вертикальную прокрутку так, чтобы каретка в позиции pos была видна
+// (нативная автопрокрутка не срабатывает, когда мы сами двигаем выделение).
+function scrollCaretIntoView(editor, pos) {
+  const c = caretCoords(editor, pos);
+  if (c.top < editor.scrollTop) {
+    editor.scrollTop = Math.max(0, c.top - c.lineHeight);
+  } else if (c.top + c.lineHeight > editor.scrollTop + editor.clientHeight) {
+    editor.scrollTop = c.top + c.lineHeight - editor.clientHeight;
+  }
+  syncScroll(editor);
+}
+
+// В режиме переноса (Alt+Z) расширить выделение «вниз» до начала СЛЕДУЮЩЕЙ
+// логической (нумерованной) строки, а не следующей визуальной. Без этого приём
+// из уроков «щёлкни в начало строки → Shift+↓ → Delete» за одно нажатие
+// захватывал лишь часть длинной перенесённой строки. Когда перенос выключен,
+// нативное поведение уже совпадает (1 визуальная строка = 1 логическая), поэтому
+// перехватываем только при wordWrap (см. обработчик keydown в main.js).
+function selectToNextLine(editor) {
+  const v = editor.value;
+  const back = editor.selectionDirection === "backward";
+  const active = back ? editor.selectionStart : editor.selectionEnd; // конец, что двигаем
+  const anchor = back ? editor.selectionEnd : editor.selectionStart;  // неподвижный конец
+  const nl = v.indexOf("\n", active);
+  const target = nl < 0 ? v.length : nl + 1; // начало следующей логической строки
+  if (target >= anchor) editor.setSelectionRange(anchor, target, "forward");
+  else editor.setSelectionRange(target, anchor, "backward");
+  scrollCaretIntoView(editor, target);
+}
+
 function syncScroll(editor) {
   const pre = editor._preEl;
   if (pre) {

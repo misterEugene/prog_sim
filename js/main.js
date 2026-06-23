@@ -125,6 +125,16 @@ function init() {
         setWordWrap(!wordWrap);
         return;
       }
+      // В режиме переноса (Alt+Z) Shift+↓ выделяет до начала СЛЕДУЮЩЕЙ
+      // нумерованной строки, а не следующей визуальной — чтобы приём из уроков
+      // «щёлкни в начало строки → Shift+↓ → Delete» работал за одно нажатие
+      // даже на длинных перенесённых строках (см. selectToNextLine).
+      if (wordWrap && e.shiftKey && e.key === "ArrowDown" &&
+          !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        selectToNextLine(ta);
+        return;
+      }
       // Своя отмена/повтор (работает и после перезагрузки): Ctrl+Z / Ctrl+Shift+Z,
       // Ctrl+Y. Перехватываем до нативной, чтобы источник истины — наш стек.
       const mod = e.ctrlKey || e.metaKey;

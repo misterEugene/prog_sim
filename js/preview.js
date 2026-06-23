@@ -121,6 +121,17 @@ function handlePreviewTabMessage(e) {
   } catch (err) {}
 }
 
+// Прокинуть #hash ВЕРХНЕГО окна платформы в iframe превью. Сайт живёт внутри iframe,
+// а консоль/адресная строка меняют хэш у обёртки. Без этой проброски команда
+// location.hash = "welcome=…" в консоли платформы не доходила бы до сайта (поэтому
+// «отражённый XSS» из урока 2 не срабатывал в консоли платформы).
+function forwardHashToPreview() {
+  try {
+    const w = els.preview && els.preview.contentWindow;
+    if (w) w.location.hash = location.hash;
+  } catch (e) { /* iframe ещё не готов или недоступен — не страшно */ }
+}
+
 function updateIframe() {
   clearConsole(); // новый запуск — чистим вывод прошлого
   const doc = buildDocument();

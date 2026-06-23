@@ -87,6 +87,8 @@ function init() {
   window.addEventListener("message", handleConsoleMessage);
   // Запрос документа от вкладки просмотра (preview.html) → отдаём напрямую
   window.addEventListener("message", handlePreviewTabMessage);
+  // #hash платформы (например, из консоли: location.hash="welcome=…") → в iframe сайта
+  window.addEventListener("hashchange", forwardHashToPreview);
 
   // Перед закрытием/перезагрузкой — дописать историю отмены (вдруг дебаунс не успел)
   window.addEventListener("beforeunload", saveHistoryNow);

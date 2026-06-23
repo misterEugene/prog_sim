@@ -78,6 +78,16 @@
       if (e.key === KEY || e.key === null) render();
     });
 
+    // Сайт показывается внутри iframe, поэтому #hash этой вкладки прокидываем ему —
+    // тогда «отражённый XSS» из урока 2 работает по-настоящему: добавил в адресную
+    // строку #welcome=… (или выполнил location.hash=… в консоли этой вкладки) — и сайт
+    // реагирует. Применяем при смене хэша и после каждой перезагрузки iframe (srcdoc).
+    function syncHashToFrame() {
+      try { if (location.hash) frame.contentWindow.location.hash = location.hash; } catch (e) {}
+    }
+    window.addEventListener("hashchange", syncHashToFrame);
+    frame.addEventListener("load", syncHashToFrame);
+
     // Попросить платформу (окно-родитель) прислать актуальный документ. Вызываем
     // при загрузке и при возврате фокуса (вдруг платформу перезагрузили).
     function askOpener() {

@@ -410,6 +410,40 @@
 
   var done = loadDone();
 
+  // ---------------------------------------------------------- админ-режим (чит)
+  // Как в уроках 1–2: секретный адрес включает «режим разработчика».
+  //   lesson3/index.html#mega-admin      — включить (флаг в localStorage)
+  //   lesson3/index.html#mega-admin-off  — выключить (проверяется РАНЬШЕ включения,
+  //                                        т.к. «mega-admin» — подстрока «mega-admin-off»)
+  //   из консоли:  disableMegaAdmin()
+  // В режиме на каждом шаге появляется кнопка «🗝 Пройти по этот шаг» — отмечает
+  // выбранный шаг и ВСЕ предыдущие выполненными одним кликом.
+  var DEV_FLAG_KEY = "lesson3DevAdmin";
+  var DEV_SECRET = "mega-admin";
+  var DEV_SECRET_OFF = "mega-admin-off";
+
+  function isDevUnlocked() {
+    try { return localStorage.getItem(DEV_FLAG_KEY) === "true"; } catch (e) { return false; }
+  }
+  (function checkSecretUnlock() {
+    var where = (location.hash + " " + location.search).toLowerCase();
+    try {
+      if (where.indexOf(DEV_SECRET_OFF) !== -1) {
+        localStorage.removeItem(DEV_FLAG_KEY);
+        history.replaceState(null, "", location.pathname);
+      } else if (where.indexOf(DEV_SECRET) !== -1) {
+        localStorage.setItem(DEV_FLAG_KEY, "true");
+        history.replaceState(null, "", location.pathname);
+      }
+    } catch (e) { /* приватный режим / file:// */ }
+  })();
+  if (typeof window !== "undefined") {
+    window.disableMegaAdmin = function () {
+      try { localStorage.removeItem(DEV_FLAG_KEY); } catch (e) {}
+      render();
+    };
+  }
+
   function isDone(i) { return done.indexOf(i) !== -1; }
   function firstUndone() {
     for (var i = 0; i < steps.length; i++) { if (!isDone(i)) return i; }
@@ -425,11 +459,21 @@
     var total = steps.length;
     var doneCount = done.length;
     var pct = Math.round((doneCount / total) * 100);
+    var devUnlocked = isDevUnlocked();
 
     var parts = [];
 
     // Вступление
     parts.push('<div class="g-intro">' + mdToHtml(LESSON3.introMd) + "</div>");
+
+    // Заметка админ-режима
+    if (devUnlocked) {
+      parts.push(
+        '<div class="g-admin-note">🛠 <b>Режим разработчика.</b> На каждом шаге есть ' +
+        'кнопка «🗝 Пройти по этот шаг» — отмечает его и все предыдущие. ' +
+        'Выключить: адрес <code>#mega-admin-off</code> или <code>disableMegaAdmin()</code> в консоли.</div>'
+      );
+    }
 
     // Прогресс
     var progLabel = doneCount >= total
@@ -464,6 +508,11 @@
         }
       }
 
+      // Админ-кнопка: пройти этот шаг и все до него (видна на любом шаге).
+      if (devUnlocked) {
+        body += '<button class="g-cheat-btn" type="button" data-cheat="' + i + '">🗝 Пройти по этот шаг</button>';
+      }
+
       var timeTag = step.time ? '<span class="g-step-time">' + escapeHtml(step.time) + "</span>" : "";
       parts.push(
         '<section class="g-step g-step--' + state + '" id="g-step-' + i + '">' +
@@ -482,8 +531,8 @@
       parts.push('<div class="g-outro">' + mdToHtml(LESSON3.outroMd) + "</div>");
     }
 
-    // Сброс прогресса
-    parts.push('<button class="g-reset" type="button">↺ Сбросить прогресс урока</button>');
+    // Начать заново (сброс прогресса + очистка поля)
+    parts.push('<button class="g-reset" type="button">↺ Начать заново</button>');
 
     container.innerHTML = parts.join("");
   }
@@ -504,10 +553,29 @@
       }
       return;
     }
+
+    // Админ-чит: пройти выбранный шаг и все предыдущие одним кликом.
+    var cheat = e.target.closest ? e.target.closest(".g-cheat-btn") : null;
+    if (cheat) {
+      var ci = +cheat.getAttribute("data-cheat");
+      done = [];
+      for (var k = 0; k <= ci; k++) done.push(k);
+      saveDone(done);
+      render();
+      var aId = firstUndone() < steps.length ? "g-step-" + firstUndone() : null;
+      var tgt = aId ? document.getElementById(aId) : container.querySelector(".g-outro");
+      if (tgt && tgt.scrollIntoView) tgt.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
     if (e.target.classList && e.target.classList.contains("g-reset")) {
-      if (window.confirm("Сбросить прогресс урока? Точки на поле останутся.")) {
+      if (window.confirm("Начать урок заново? Прогресс сбросится, и поле очистится.")) {
         done = [];
         saveDone(done);
+        // Очистить поле (точки) — этим заведует app.js, шлём ему событие.
+        if (typeof document !== "undefined" && typeof CustomEvent === "function") {
+          document.dispatchEvent(new CustomEvent("lesson3:restart"));
+        }
         render();
         container.scrollIntoView ? container.scrollIntoView({ behavior: "smooth", block: "start" }) : null;
       }

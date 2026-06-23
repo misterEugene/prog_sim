@@ -212,6 +212,18 @@
   document.getElementById('btn-clear').onclick = clearAll;
   document.getElementById('btn-undo').onclick = undo;
 
+  // «Начать заново» из колонки-гида (guide.js): полный сброс поля и истории.
+  document.addEventListener('lesson3:restart', function () {
+    state.points = []; state.testPoints = [];
+    state.trained = false; state.testRevealed = false; state.lastAccuracy = null;
+    state.history = [];
+    document.getElementById('answers').innerHTML = '';
+    document.getElementById('test-panel').classList.remove('active');
+    updateUndoBtn();
+    setStatus('Урок начат заново — поле очищено! 👇');
+    render();
+  });
+
   // Ctrl+Z (или ⌘+Z) — отмена. e.code === 'KeyZ' срабатывает и в русской
   // раскладке (где физическая клавиша Z даёт «я»). Shift+Ctrl+Z не трогаем.
   document.addEventListener('keydown', function (e) {

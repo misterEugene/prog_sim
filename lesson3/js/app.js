@@ -47,6 +47,32 @@
     render();
   }
 
+  // ---- Сохранение поля между перезагрузками ----
+  // Храним точки, число k и факт обучения (тепловую карту). Тестовые точки —
+  // временные, их не сохраняем.
+  var FIELD_KEY = 'lesson3Field';
+
+  function saveField() {
+    try {
+      localStorage.setItem(FIELD_KEY, JSON.stringify({
+        points: state.points, k: state.k, trained: state.trained
+      }));
+    } catch (e) { /* приватный режим / file:// */ }
+  }
+
+  function loadField() {
+    try {
+      var data = JSON.parse(localStorage.getItem(FIELD_KEY) || 'null');
+      if (!data || !Array.isArray(data.points)) return;
+      state.points = data.points.filter(function (p) {
+        return p && typeof p.x === 'number' && typeof p.y === 'number' &&
+          (p.label === 'blue' || p.label === 'red');
+      });
+      if (typeof data.k === 'number' && data.k >= CONFIG.MIN_K && data.k <= CONFIG.MAX_K) state.k = data.k;
+      state.trained = data.trained === true && state.points.length > 0;
+    } catch (e) { /* битые данные — начинаем с пустого поля */ }
+  }
+
   // ---- Отрисовка всего поля ----
   function render() {
     clearCanvas(ctx);
@@ -55,6 +81,7 @@
     drawPoints(ctx, state.points);
     drawTestPoints(ctx, state.testPoints, state.testRevealed);
     updateStats();
+    saveField();
   }
 
   function setStatus(msg) { document.getElementById('status').textContent = msg; }
@@ -224,6 +251,7 @@
     state.k = +slider.value;
     kValue.textContent = slider.value;
     if (state.trained) render(); // тепловая карта зависит от k — обновим вживую
+    else saveField();            // без обучения render не зовём — сохраним k отдельно
   });
 
   document.getElementById('color-toggle').onclick = function () {
@@ -276,11 +304,14 @@
   });
 
   // ---- Старт ----
-  slider.value = CONFIG.DEFAULT_K;
-  kValue.textContent = CONFIG.DEFAULT_K;
+  loadField(); // восстановить точки/k/обучение из прошлой сессии
+  slider.value = state.k;
+  kValue.textContent = state.k;
   updateToggle();
   updateEraser();
   updateUndoBtn();
-  setStatus('Привет! Нанеси точки или загрузи стартовый датасет 👇');
+  setStatus(state.points.length
+    ? 'С возвращением! Твои точки на месте (' + state.points.length + '). Продолжай 👇'
+    : 'Привет! Нанеси точки или загрузи стартовый датасет 👇');
   render();
 })();

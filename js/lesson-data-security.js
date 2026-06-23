@@ -1311,8 +1311,40 @@ loginBtn.addEventListener("click", async function () {
 Теперь снова загляни в «кладовку»: **F12 → Application → Local Storage** → строка с
 адресом сайта → ключ \`users\`. 🎉 На месте пароля теперь длинная строка из 64 непонятных
 символов — это **хэш**, по нему настоящий пароль не узнать! А войти под \`dasha\` /
-\`solnyshko12\` по-прежнему получается. 🛡️`,
-      hintMd: `Функцию \`hashPassword\` добавь ОДИН раз (рядом с \`getUsers\`), а обработчики \`regBtn\` и \`loginBtn\` замени целиком на async-версии. \`crypto.subtle\` работает только на http(s) или localhost — открывай сайт через \`python3 -m http.server\`, а не как файл с диска. Старые аккаунты, заведённые ДО починки, остаются с открытым паролем и под новый вход не подойдут — заведи новый.`,
+\`solnyshko12\` по-прежнему получается. 🛡️
+
+---
+
+🔧 **ℹ️ Бонус: перенеси старые пароли в хэш.** Аккаунты, которые ты завёл **до** этой
+починки, всё ещё лежат с открытым паролем — и под новый вход (он теперь сверяет хэши)
+они не подойдут. Чтобы не регистрировать их заново, перехэшируем их **один раз**. Так
+делают и на настоящих сайтах, когда переходят на хранение хэшей. Открой консоль
+(**F12 → Console**), вставь этот код и нажми **Enter**:
+
+\`\`\`
+(async function () {
+	const users = JSON.parse(localStorage.getItem("users") || "[]");
+	async function hashPassword(str) {
+		const data = new TextEncoder().encode(str);
+		const buf = await crypto.subtle.digest("SHA-256", data);
+		return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+	}
+	let changed = 0;
+	for (const u of users) {
+		if (u.password !== undefined && u.passwordHash === undefined) {
+			u.passwordHash = await hashPassword(u.password);   // считаем хэш
+			delete u.password;                                  // убираем открытый пароль
+			changed++;
+		}
+	}
+	localStorage.setItem("users", JSON.stringify(users));
+	console.log("Перехэшировано паролей:", changed);
+})();
+\`\`\`
+
+В консоли появится, сколько паролей перенесли. Теперь старые аккаунты тоже входят, а
+открытых паролей в \`users\` не осталось совсем. 🛡️`,
+      hintMd: `Функцию \`hashPassword\` добавь ОДИН раз (рядом с \`getUsers\`), а обработчики \`regBtn\` и \`loginBtn\` замени целиком на async-версии. \`crypto.subtle\` работает только на http(s) или localhost — открывай сайт через \`python3 -m http.server\`, а не как файл с диска. Старые аккаунты, заведённые ДО починки, остаются с открытым паролем — их можно разом перехэшировать бонус-командой в конце шага.`,
       doneMd: `✅ **Готово, когда** при регистрации в \`users\` сохраняется ХЭШ (длинная строка), а не сам пароль, и вход по-прежнему работает.`,
     },
     {

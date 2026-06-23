@@ -11,7 +11,7 @@ buttons.forEach(function (button) {
 	});
 });
 
-// CTF-бонус: спрятанные «флаги» (намеренно — пригодятся на уроке 2 «Этичный хакер»)
+// CTF-бонус: спрятанные «флаги» (намеренно - пригодятся на уроке 2 «Этичный хакер»)
 var hiddenFlag = "FLAG{секрет_в_коде_джаваскрипт}";
 localStorage.setItem("secret_flag", "FLAG{секрет_в_local_storage}");
 
@@ -40,11 +40,11 @@ function showPage(name) {
 	window.scrollTo(0, 0);
 }
 
-// Показать страницу по текущему адресу (часть после # — это «адрес» страницы).
+// Показать страницу по текущему адресу (часть после # - это «адрес» страницы).
 // Хэш меняется при навигации и сам пишется в историю браузера, поэтому работают
 // встроенные кнопки браузера «Назад» и «Вперёд».
 // Приветствие из адреса: ссылка вида #welcome=Имя показывает «С возвращением».
-// ⚠ имя берётся из адреса и вставляется через innerHTML — отражённый XSS (урок 2).
+// ⚠ имя берётся из адреса и вставляется через innerHTML - отражённый XSS (урок 2).
 function showWelcome(name) {
 	const box = document.getElementById("welcome-box");
 	if (!box) return;
@@ -58,7 +58,7 @@ function applyRoute() {
 		const id = h.slice("product-".length);
 		try {
 			if (typeof openProduct === "function") { openProduct(id); return; }
-		} catch (e) { /* код товара ещё не загрузился — покажем Главную */ }
+		} catch (e) { /* код товара ещё не загрузился - покажем Главную */ }
 	}
 	if (h.indexOf("welcome=") === 0) {             // приветствие из ссылки (#welcome=…)
 		showPage("home");
@@ -86,7 +86,7 @@ function renderUserBox() {
 
 // Один обработчик кликов на всю страницу: меню, ссылки, карточки товара
 document.addEventListener("click", function (e) {
-	// Ссылка-якорь (например, «Купить сейчас») — плавно прокрутить к секции
+	// Ссылка-якорь (например, «Купить сейчас») - плавно прокрутить к секции
 	const scrollLink = e.target.closest("[data-scroll]");
 	if (scrollLink) {
 		e.preventDefault();
@@ -110,13 +110,13 @@ document.addEventListener("click", function (e) {
 	}
 	const card = e.target.closest("[data-product]");
 	if (card) {
-		e.preventDefault();   // карточка — это тоже ссылка href="#"
+		e.preventDefault();   // карточка - это тоже ссылка href="#"
 		location.hash = "product-" + card.getAttribute("data-product");
 	}
 });
 
 // Подвал добавили РАНЬШЕ страниц входа/товара, поэтому в коде он стоит выше них.
-// Перенесём его в самый конец <body> — тогда он всегда ниже любой открытой страницы.
+// Перенесём его в самый конец <body> - тогда он всегда ниже любой открытой страницы.
 const footerEl = document.getElementById("contacts");
 if (footerEl) document.body.appendChild(footerEl);
 
@@ -134,7 +134,7 @@ ALL_SECTIONS.forEach(function (id) {
 	if (el && el.parentNode !== mainEl) mainEl.appendChild(el); // переносим в <main>
 });
 
-// Раскладка: шапка сверху, подвал снизу, а контент в <main> — по центру по
+// Раскладка: шапка сверху, подвал снизу, а контент в <main> - по центру по
 // вертикали, когда его не хватает на весь экран (отступы сверху и снизу равны).
 document.body.style.display = "flex";
 document.body.style.flexDirection = "column";
@@ -145,7 +145,7 @@ mainEl.style.flexDirection = "column";
 mainEl.style.justifyContent = "center";
 
 renderUserBox();
-applyRoute(); // при загрузке показываем страницу по текущему адресу (по умолчанию — Главную)
+applyRoute(); // при загрузке показываем страницу по текущему адресу (по умолчанию - Главную)
 
 // ===== Аккаунты: регистрация и вход =====
 const ADMIN_LOGIN = "admin";
@@ -199,12 +199,12 @@ if (loginBtn) {
 	});
 }
 
-// Если уже входили раньше — обновим уголок пользователя
+// Если уже входили раньше - обновим уголок пользователя
 if (localStorage.getItem("isLoggedIn") === "true") {
 	if (typeof renderUserBox === "function") renderUserBox();
 }
 
-// Секретная админ-панель — если в localStorage is_admin === "true"
+// Секретная админ-панель - если в localStorage is_admin === "true"
 if (localStorage.getItem("is_admin") === "true") {
 	const ap = document.getElementById("admin-panel");
 	if (ap) ap.hidden = false;
@@ -286,12 +286,12 @@ if (burgerHeader && burgerMenu && !burgerHeader.querySelector(".burger")) {
 	if (logo) logo.after(burger);
 	else burgerHeader.appendChild(burger);
 
-	// Клик по бургеру — открыть/закрыть меню (класс menu-open включает анимацию)
+	// Клик по бургеру - открыть/закрыть меню (класс menu-open включает анимацию)
 	burger.addEventListener("click", function () {
 		burgerHeader.classList.toggle("menu-open");
 	});
 
-	// Выбрали пункт меню — меню само закрывается
+	// Выбрали пункт меню - меню само закрывается
 	burgerMenu.addEventListener("click", function (e) {
 		if (e.target.closest("a")) burgerHeader.classList.remove("menu-open");
 	});

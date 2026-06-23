@@ -6,7 +6,7 @@
   <title>Урок 2: Этичный хакер</title>
   <!-- Урок 2 «Этичный хакер». Та же платформа, что и index.html, но подключает
        js/lesson-data-security.js вместо js/lesson-data.js (отдельный набор данных
-       + вшитый уязвимый сайт как стартовый код). Остальные модули — те же. -->
+       + вшитый уязвимый сайт как стартовый код). Остальные модули - те же. -->
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/buttons.css">
@@ -30,7 +30,7 @@
   </header>
 
   <!-- Три колонки: задание | редакторы кода | результат.
-       Между колонками — перетаскиваемые разделители (.splitter), как в VS Code.
+       Между колонками - перетаскиваемые разделители (.splitter), как в VS Code.
        Ширина колонок задаётся через flex-grow (доля от свободного места). -->
   <main class="layout" id="layout">
     <!-- КОЛОНКА 1: Задание (Markdown урока) -->
@@ -148,11 +148,11 @@
     <pre class="emmet-preview-code"><code></code></pre>
   </div>
 
-  <!-- Скрипты — классические (НЕ ES-модули): работают и из file://. Подключаются
+  <!-- Скрипты - классические (НЕ ES-модули): работают и из file://. Подключаются
        с defer (выполняются по порядку, до DOMContentLoaded). Порядок логический;
        все межмодульные вызовы происходят в функциях на DOMContentLoaded, когда
-       загружено уже всё. main.js (точка входа) — последним.
-       ОТЛИЧИЕ от index.html: вместо lesson-data.js — lesson-data-security.js. -->
+       загружено уже всё. main.js (точка входа) - последним.
+       ОТЛИЧИЕ от index.html: вместо lesson-data.js - lesson-data-security.js. -->
   <script src="js/emmet.js" defer></script>
   <script src="js/lesson-data-security.js" defer></script>
   <script src="js/dom.js" defer></script>

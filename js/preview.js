@@ -61,7 +61,7 @@ function buildDocument() {
   let doc;
   if (/<\/body>/i.test(html)) {
     // Ученик создал полный каркас (Emmet «!»). Используем его как документ:
-    // стили вставляем перед </head>, скрипты — перед </body>. Замены через
+    // стили вставляем перед </head>, скрипты - перед </body>. Замены через
     // функцию-replacer, чтобы символы $ в коде ребёнка не толковались как $&/$1.
     doc = html;
     if (/<\/head>/i.test(doc)) {
@@ -71,7 +71,7 @@ function buildDocument() {
     }
     doc = doc.replace(/<\/body>/i, () => `  ${scripts}\n</body>`);
   } else {
-    // Каркаса нет (фрагмент) — оборачиваем сами, как раньше.
+    // Каркаса нет (фрагмент) - оборачиваем сами, как раньше.
     doc = `<!DOCTYPE html>
 <html>
   <head>
@@ -88,12 +88,12 @@ ${html}
 }
 
 // Сохранить готовый документ для вкладки просмотра (preview.html подхватит его
-// по событию storage). Ошибки storage (приватный режим) — молча игнорируем.
+// по событию storage). Ошибки storage (приватный режим) - молча игнорируем.
 function savePreviewDoc(doc) {
   try {
     localStorage.setItem(PREVIEW_DOC_KEY, doc);
   } catch (e) {
-    /* storage недоступен — вкладка просмотра просто не обновится */
+    /* storage недоступен - вкладка просмотра просто не обновится */
   }
 }
 
@@ -103,7 +103,7 @@ let previewWin = null;
 // Передать документ вкладке просмотра НАПРЯМУЮ через postMessage. Нужно потому, что
 // localStorage и событие storage между вкладками НЕ работают, если открыть проект
 // из file:// (особенно в Firefox). postMessage между окном и его «потомком» работает
-// всегда — поэтому это надёжный путь, а localStorage оставляем как запасной.
+// всегда - поэтому это надёжный путь, а localStorage оставляем как запасной.
 function pushPreviewDoc(doc) {
   if (previewWin && !previewWin.closed) {
     try { previewWin.postMessage({ __preview: true, doc: doc }, "*"); } catch (e) {}
@@ -129,20 +129,20 @@ function forwardHashToPreview() {
   try {
     const w = els.preview && els.preview.contentWindow;
     if (w) w.location.hash = location.hash;
-  } catch (e) { /* iframe ещё не готов или недоступен — не страшно */ }
+  } catch (e) { /* iframe ещё не готов или недоступен - не страшно */ }
 }
 
 function updateIframe() {
-  clearConsole(); // новый запуск — чистим вывод прошлого
+  clearConsole(); // новый запуск - чистим вывод прошлого
   const doc = buildDocument();
   els.preview.srcdoc = doc;
   savePreviewDoc(doc);   // запасной путь: зеркало через localStorage (по http)
   pushPreviewDoc(doc);   // основной путь: напрямую в открытую вкладку просмотра
 }
 
-// Открыть сайт ученика в отдельной вкладке. Вкладка (preview.html) — живое
+// Открыть сайт ученика в отдельной вкладке. Вкладка (preview.html) - живое
 // зеркало превью: читает документ из localStorage и обновляется на каждый
-// «Запустить» (через событие storage). Именованная цель — повторный клик
+// «Запустить» (через событие storage). Именованная цель - повторный клик
 // переиспользует ту же вкладку.
 function openInNewTab() {
   savePreviewDoc(buildDocument()); // свежий снимок к моменту открытия (запасной путь)
@@ -154,6 +154,6 @@ function openInNewTab() {
     );
     return;
   }
-  previewWin = win;   // запомним окно — вкладка сама запросит документ при загрузке
+  previewWin = win;   // запомним окно - вкладка сама запросит документ при загрузке
   win.focus();
 }

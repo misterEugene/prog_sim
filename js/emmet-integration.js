@@ -1,10 +1,10 @@
 // ============================================================
-// Emmet: раскрытие HTML-аббревиатур по Tab (движок — в emmet.js)
+// Emmet: раскрытие HTML-аббревиатур по Tab (движок - в emmet.js)
 // ============================================================
 
 // Извлечь аббревиатуру слева от курсора. Скользим влево, учитывая скобки
-// [] {} () (внутри них пробелы — часть аббревиатуры). Останавливаемся на
-// пробеле/начале строки. Если упёрлись в '<' — значит задели готовую
+// [] {} () (внутри них пробелы - часть аббревиатуры). Останавливаемся на
+// пробеле/начале строки. Если упёрлись в '<' - значит задели готовую
 // разметку, аббревиатуры нет (вернём пустую).
 function extractAbbreviation(text, caret) {
   let i = caret;
@@ -26,9 +26,9 @@ function extractAbbreviation(text, caret) {
   return { start, abbr: text.slice(start, caret) };
 }
 
-// Попытка раскрыть аббревиатуру в позиции курсора. true — раскрыли.
+// Попытка раскрыть аббревиатуру в позиции курсора. true - раскрыли.
 function tryExpandEmmet(ta) {
-  if (ta.dataset.lang !== "html") return false; // Emmet — только для HTML
+  if (ta.dataset.lang !== "html") return false; // Emmet - только для HTML
   if (!global_Emmet()) return false;
   if (ta.selectionStart !== ta.selectionEnd) return false; // есть выделение → обычный Tab
 
@@ -39,7 +39,7 @@ function tryExpandEmmet(ta) {
   const res = window.Emmet.expand(abbr);
   if (!res || !res.text) return false;
 
-  // Отступ текущей строки — добавляем его к каждой новой строке раскрытия
+  // Отступ текущей строки - добавляем его к каждой новой строке раскрытия
   const lineStart = ta.value.lastIndexOf("\n", start - 1) + 1;
   const pad = (/^[\t ]*/.exec(ta.value.slice(lineStart, start)) || [""])[0];
   const text = res.text.replace(/\n/g, "\n" + pad);
@@ -48,7 +48,7 @@ function tryExpandEmmet(ta) {
   const newlinesBefore = res.text.slice(0, res.caret).split("\n").length - 1;
   const caretOffset = res.caret + newlinesBefore * pad.length;
 
-  // Заменяем аббревиатуру на раскрытие (через execCommand — с историей отмены)
+  // Заменяем аббревиатуру на раскрытие (через execCommand - с историей отмены)
   ta.selectionStart = start;
   ta.selectionEnd = caret;
   const ok =
@@ -72,7 +72,7 @@ function hideEmmetPreview() {
 }
 
 // Показать (или обновить/скрыть) подсказку для текущей позиции в редакторе.
-// Использует те же extractAbbreviation/isExpandable/expand, что и Tab —
+// Использует те же extractAbbreviation/isExpandable/expand, что и Tab -
 // поэтому превью точно совпадает с тем, что реально вставится.
 function updateEmmetPreview(ta) {
   if (ta.dataset.lang !== "html") return hideEmmetPreview();
@@ -97,7 +97,7 @@ function updateEmmetPreview(ta) {
   let x = taRect.left + c.left - ta.scrollLeft;
   let y = taRect.top + c.top - ta.scrollTop + c.lineHeight + 4;
 
-  // Клампим в пределах окна; если не влезает вниз — показываем над строкой.
+  // Клампим в пределах окна; если не влезает вниз - показываем над строкой.
   const bw = box.offsetWidth;
   const bh = box.offsetHeight;
   if (x + bw > window.innerWidth - 8) x = window.innerWidth - 8 - bw;

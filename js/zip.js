@@ -118,7 +118,7 @@ function downloadBlob(blob, filename) {
 }
 
 // В редакторе HTML стили и скрипт лежат в отдельных файлах, а превью подключает
-// их инъекцией. Чтобы скачанный index.html работал сам по себе (открыли файл —
+// их инъекцией. Чтобы скачанный index.html работал сам по себе (открыли файл -
 // и стили со скриптами на месте), добавляем в него <link> на style.css и
 // <script> на main.js. Каркас от Emmet «!» этих ссылок не содержит.
 function linkAssets(html) {
@@ -130,14 +130,14 @@ function linkAssets(html) {
     if (/<\/head>/i.test(doc)) {
       doc = doc.replace(/([ \t]*)<\/head>/i, (m, pad) => `${pad}\t${linkTag}\n${pad}</head>`);
     } else {
-      doc = `${linkTag}\n${doc}`; // нет <head> — кладём ссылку в начало
+      doc = `${linkTag}\n${doc}`; // нет <head> - кладём ссылку в начало
     }
   }
   if (!/src=["']main\.js["']/i.test(doc)) {
     if (/<\/body>/i.test(doc)) {
       doc = doc.replace(/([ \t]*)<\/body>/i, (m, pad) => `${pad}\t${scriptTag}\n${pad}</body>`);
     } else {
-      doc = `${doc}\n${scriptTag}`; // нет <body> — дописываем в конец
+      doc = `${doc}\n${scriptTag}`; // нет <body> - дописываем в конец
     }
   }
   return doc;

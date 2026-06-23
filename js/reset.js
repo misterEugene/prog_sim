@@ -2,7 +2,7 @@
 // Сброс к шаблону
 // ============================================================
 // Фраза, которую ребёнок должен ввести ВРУЧНУЮ, чтобы подтвердить сброс.
-// Защита от случайного нажатия: одного клика «Да» недостаточно — нужно
+// Защита от случайного нажатия: одного клика «Да» недостаточно - нужно
 // осознанно перепечатать фразу целиком.
 const RESET_CONFIRM_PHRASE =
   "Да, я уверен, что хочу начать заново и знаю, что это необратимо";
@@ -44,7 +44,7 @@ function clearSiteData() {
   const exact = ["users", "isLoggedIn", "currentUser", "is_admin", "secret_flag"];
   try {
     exact.forEach(function (k) { localStorage.removeItem(k); });
-    // comments_<id> — id заранее неизвестны, поэтому собираем ключи и чистим по префиксу.
+    // comments_<id> - id заранее неизвестны, поэтому собираем ключи и чистим по префиксу.
     const toRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -52,7 +52,7 @@ function clearSiteData() {
     }
     toRemove.forEach(function (k) { localStorage.removeItem(k); });
   } catch (e) {
-    /* недоступный storage — не критично */
+    /* недоступный storage - не критично */
   }
 }
 
@@ -64,7 +64,7 @@ function resetToTemplate() {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (e) {
-    /* недоступный storage — не критично */
+    /* недоступный storage - не критично */
   }
   clearSiteData(); // стираем данные, записанные самим сайтом ребёнка
   els.editors.forEach(updateHighlight);

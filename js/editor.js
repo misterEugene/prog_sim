@@ -18,11 +18,11 @@ function setWordWrap(on) {
   try {
     localStorage.setItem(WORD_WRAP_KEY, wordWrap ? "1" : "0");
   } catch (e) {
-    /* storage недоступен — настройка просто не сохранится */
+    /* storage недоступен - настройка просто не сохранится */
   }
 }
 
-// Свойства, влияющие на раскладку текста — копируем в «зеркало», чтобы
+// Свойства, влияющие на раскладку текста - копируем в «зеркало», чтобы
 // вычислить пиксельные координаты курсора внутри textarea.
 const MIRROR_PROPS = [
   "boxSizing", "width", "paddingTop", "paddingRight", "paddingBottom",
@@ -65,7 +65,7 @@ function caretCoords(ta, pos) {
 
   div.textContent = ta.value.slice(0, pos);
   const marker = document.createElement("span");
-  marker.textContent = "​"; // нулевой пробел — место курсора
+  marker.textContent = "​"; // нулевой пробел - место курсора
   div.appendChild(marker);
 
   const left = marker.offsetLeft;
@@ -113,10 +113,10 @@ function syncScroll(editor) {
   if (editor._gutterEl) editor._gutterEl.scrollTop = editor.scrollTop;
 }
 
-// Перерисовать колонку с номерами строк. Без переноса — по одному номеру на
+// Перерисовать колонку с номерами строк. Без переноса - по одному номеру на
 // строку. С переносом (Alt+Z) логическая строка может занимать несколько
 // визуальных: номер ставим у первой визуальной строки, а на строки-продолжения
-// добавляем ПУСТЫЕ записи — так номера остаются вровень с кодом.
+// добавляем ПУСТЫЕ записи - так номера остаются вровень с кодом.
 function updateGutter(editor) {
   const gutter = editor._gutterEl;
   if (!gutter) return;
@@ -142,7 +142,7 @@ function updateGutter(editor) {
 let wrapMirror = null;
 function wrappedRowCounts(editor, lines) {
   if (editor.offsetParent === null) return null;
-  // Меряем по слою подсветки <pre> — именно он показывает перенесённый код,
+  // Меряем по слою подсветки <pre> - именно он показывает перенесённый код,
   // рядом с которым стоят номера (у него те же метрики, что у textarea).
   const target = editor._preEl || editor;
   const cs = getComputedStyle(target);
@@ -188,7 +188,7 @@ function wrappedRowCounts(editor, lines) {
 
 // Вставка символа табуляции в позицию курсора (заменяя выделение, если есть).
 // execCommand('insertText') сохраняет нативную историю отмены (Ctrl+Z) и сам
-// диспатчит событие 'input' (→ подсветка + автосохранение). Если он недоступен —
+// диспатчит событие 'input' (→ подсветка + автосохранение). Если он недоступен -
 // откатываемся на ручную вставку с эмуляцией 'input'.
 function insertTab(editor) {
   const ok =
@@ -208,7 +208,7 @@ function insertTab(editor) {
 // диапазона [start, end) + execCommand('insertText'). Это кладёт вставку в
 // нативную историю отмены (Ctrl+Z убирает её одним шагом, как свой ввод) и
 // само диспатчит 'input' (→ подсветка + автосохранение). Редактор должен быть
-// видим (см. switchTab перед вызовом) — скрытый textarea не фокусируется.
+// видим (см. switchTab перед вызовом) - скрытый textarea не фокусируется.
 function insertAsUserInput(editor, start, end, text) {
   editor.focus();
   editor.setSelectionRange(start, end);
@@ -231,7 +231,7 @@ function insertAsUserInput(editor, start, end, text) {
 
 // Умный Enter (как в VS Code): сохраняет отступ строки, углубляет его после
 // открывающего тега/скобки, а если курсор стоит МЕЖДУ открытым и закрытым
-// (`<p>|</p>`, `{|}`, `(|)`, `[|]`) — раскрывает на три строки: открытие на
+// (`<p>|</p>`, `{|}`, `(|)`, `[|]`) - раскрывает на три строки: открытие на
 // месте, курсор на средней строке с отступом на уровень глубже, закрытие на
 // своей строке на исходном уровне. Возвращает true, если Enter обработан сам.
 function smartEnter(editor) {
@@ -245,7 +245,7 @@ function smartEnter(editor) {
   const before = v[s - 1];
   const isHtml = editor.dataset.lang === "html";
 
-  // Курсор между парой «открыли — сразу закрыли»?
+  // Курсор между парой «открыли - сразу закрыли»?
   const tagPair = isHtml && before === ">" && v.slice(s, s + 2) === "</";
   const bracePair =
     (before === "{" && v[s] === "}") ||
@@ -260,7 +260,7 @@ function smartEnter(editor) {
     return true;
   }
 
-  // Иначе — перенос с сохранением отступа (+уровень после открывающего)
+  // Иначе - перенос с сохранением отступа (+уровень после открывающего)
   const opensBlock =
     before === "{" ||
     before === "(" ||
@@ -271,7 +271,7 @@ function smartEnter(editor) {
   return true;
 }
 
-// Перед позицией `s` стоит «>» — это конец ОТКРЫВАЮЩЕГО тега (не закрывающего,
+// Перед позицией `s` стоит «>» - это конец ОТКРЫВАЮЩЕГО тега (не закрывающего,
 // не самозакрывающегося, не комментария/доктайпа)?
 function endsWithOpenTag(v, s) {
   const open = v.lastIndexOf("<", s - 1);

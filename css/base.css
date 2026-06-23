@@ -30,7 +30,7 @@ body {
   font-size: 15px;
   display: flex;            /* верхняя панель + раскладка колонок */
   flex-direction: column;
-  overflow: hidden;         /* прокрутка — внутри колонок */
+  overflow: hidden;         /* прокрутка - внутри колонок */
 }
 
 /* ===== Верхняя панель управления ===== */

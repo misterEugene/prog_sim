@@ -2,7 +2,7 @@
 // Рендер урока: вступление + карточки шагов + финал, вставка частей блока.
 // ============================================================
 
-// Части блока (сниппеты) вставляются ОТДЕЛЬНЫМИ кнопками — по одной на язык.
+// Части блока (сниппеты) вставляются ОТДЕЛЬНЫМИ кнопками - по одной на язык.
 // Куда вставляется каждая часть и как она называется в UI:
 const PART_INFO = {
   html: { file: "index.html", label: "HTML", editor: () => els.htmlEditor },
@@ -11,7 +11,7 @@ const PART_INFO = {
 };
 const PART_ORDER = ["html", "css", "js"];
 
-// Какие части блоков уже вставлены. Ключ — "индексШага:язык" (см. partKey).
+// Какие части блоков уже вставлены. Ключ - "индексШага:язык" (см. partKey).
 const doneParts = new Set();
 
 function partKey(index, lang) {
@@ -23,14 +23,14 @@ function stepRealLangs(step) {
   return PART_ORDER.filter((lang) => step.snippets && step.snippets[lang]);
 }
 
-// «Ручной» шаг — без сниппетов (ребёнок печатает код руками). Завершается
-// кнопкой «✓ Я выполнил этот шаг»; его единственная «часть» — псевдо-язык "done".
+// «Ручной» шаг - без сниппетов (ребёнок печатает код руками). Завершается
+// кнопкой «✓ Я выполнил этот шаг»; его единственная «часть» - псевдо-язык "done".
 function isManualStep(step) {
   return step.manual === true || stepRealLangs(step).length === 0;
 }
 
-// «Части», из которых складывается готовность шага: для обычного шага — реальные
-// языки сниппетов, для ручного — единственная псевдо-часть "done".
+// «Части», из которых складывается готовность шага: для обычного шага - реальные
+// языки сниппетов, для ручного - единственная псевдо-часть "done".
 function stepLangs(step) {
   return isManualStep(step) ? ["done"] : stepRealLangs(step);
 }
@@ -43,7 +43,7 @@ function isStepDone(index) {
 }
 
 // Первый ещё не вставленный реальный язык шага (для поочерёдной разблокировки
-// html → css → js ВНУТРИ шага). undefined — если все части уже вставлены.
+// html → css → js ВНУТРИ шага). undefined - если все части уже вставлены.
 function firstUndonePartOfStep(index) {
   return stepRealLangs(lesson.steps[index]).find(
     (lang) => !doneParts.has(partKey(index, lang))
@@ -84,7 +84,7 @@ function buildStepCard(step, index) {
   card.appendChild(action);
 
   if (isManualStep(step)) {
-    // Ручной шаг: сначала инструкция, под ней — одна кнопка «✓ Я сделал».
+    // Ручной шаг: сначала инструкция, под ней - одна кнопка «✓ Я сделал».
     const task = document.createElement("div");
     task.className = "step-task";
     task.innerHTML = markdownToHtml(step.taskMd);
@@ -96,7 +96,7 @@ function buildStepCard(step, index) {
     card.appendChild(buttons);
   } else {
     // Шаг с кнопками: кнопки вставки идут ВНУТРИ инструкции, по местам меток
-    // [[btn:html|css|js]] — сначала кнопка нужной части, потом её кусок задания.
+    // [[btn:html|css|js]] - сначала кнопка нужной части, потом её кусок задания.
     appendTaskWithInlineButtons(card, step, index);
   }
 
@@ -116,7 +116,7 @@ function buildStepCard(step, index) {
   card.appendChild(done);
 
   // Секретная кнопка для админа (только в дев-режиме): заполнить код шагов 1…N
-  // одним кликом — чтобы быстро «дойти» до нужного места урока.
+  // одним кликом - чтобы быстро «дойти» до нужного места урока.
   if (typeof isDevUnlocked === "function" && isDevUnlocked()) {
     const adminBtn = document.createElement("button");
     adminBtn.type = "button";
@@ -155,7 +155,7 @@ function makeManualDoneButton(index) {
 }
 
 // Разложить инструкцию шага, чередуя её куски с кнопками вставки по местам меток
-// [[btn:html]] / [[btn:css]] / [[btn:js]]. Если меток нет (шаг ещё не размечен) —
+// [[btn:html]] / [[btn:css]] / [[btn:js]]. Если меток нет (шаг ещё не размечен) -
 // откатываемся к старому виду: вся инструкция, под ней все кнопки разом.
 function appendTaskWithInlineButtons(card, step, index) {
   const taskMd = String(step.taskMd || "");
@@ -318,7 +318,7 @@ function insertPart(index, lang) {
   const key = partKey(index, lang);
   const isReinsert = doneParts.has(key);
   // Новые части вставляем только в текущем блоке и только по порядку html→css→js;
-  // добавленную — повторно в любой момент.
+  // добавленную - повторно в любой момент.
   if (!isReinsert) {
     if (index !== firstUndoneStep()) return;
     if (lang !== firstUndonePartOfStep(index)) return;
@@ -335,19 +335,19 @@ function insertPart(index, lang) {
 
   let start, end, text;
   if (lang === "html") {
-    // HTML — внутрь каркаса, перед </body> (с отступом на уровень глубже).
-    // Каркаса нет — ничего не вставляем (иначе блок попал бы после </body></html>).
+    // HTML - внутрь каркаса, перед </body> (с отступом на уровень глубже).
+    // Каркаса нет - ничего не вставляем (иначе блок попал бы после </body></html>).
     const m = /([ \t]*)<\/body>/i.exec(v);
     if (!m) {
       showToast(
         "⚠ Сначала создай каркас сайта",
-        "Открой вкладку index.html, напечатай ! и нажми Tab — появится основа страницы. Потом снова нажми кнопку вставки."
+        "Открой вкладку index.html, напечатай ! и нажми Tab - появится основа страницы. Потом снова нажми кнопку вставки."
       );
       return;
     }
-    const indent = (m[1] || "") + "\t"; // содержимое body — на уровень глубже </body>
+    const indent = (m[1] || "") + "\t"; // содержимое body - на уровень глубже </body>
     start = end = m.index;
-    // Если в body уже есть вставленный блок — отбиваем новый пустой строкой,
+    // Если в body уже есть вставленный блок - отбиваем новый пустой строкой,
     // чтобы между «КОНЕЦ» прошлого и «НАЧАЛО» нового была пустая строка.
     const hasPrev = /НАЧАЛО:/.test(v);
     text =
@@ -357,14 +357,14 @@ function insertPart(index, lang) {
         .map((line) => (line ? indent + line : line))
         .join("\n") + "\n";
   } else {
-    // CSS/JS — отдельные файлы, дописываем в конец: выделяем хвостовые пустые
+    // CSS/JS - отдельные файлы, дописываем в конец: выделяем хвостовые пустые
     // строки и заменяем их отбивкой \n\n + блок (одним шагом отмены).
     start = v.search(/\s*$/);
     end = v.length;
     text = start > 0 ? "\n\n" + block : block;
   }
 
-  switchTab(info.file); // показать файл: ребёнок видит вставку, а фокус — возможен
+  switchTab(info.file); // показать файл: ребёнок видит вставку, а фокус - возможен
   insertAsUserInput(editor, start, end, text);
 
   doneParts.add(key);

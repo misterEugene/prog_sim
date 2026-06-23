@@ -190,7 +190,7 @@ body { margin: 0; }
 	.logo { order: 1; }
 	.burger { display: flex; order: 2; margin-left: auto; } /* бургер справа */
 
-	/* Меню — на всю ширину, плавно раскрывается под шапкой */
+	/* Меню - на всю ширину, плавно раскрывается под шапкой */
 	.menu {
 		order: 3;
 		flex-basis: 100%;
@@ -206,7 +206,7 @@ body { margin: 0; }
 
 	.header-right { order: 4; flex-basis: 100%; justify-content: center; margin-top: 8px; }
 
-	/* Меню открыто (класс menu-open на шапке) — плавно показываем */
+	/* Меню открыто (класс menu-open на шапке) - плавно показываем */
 	.site-header.menu-open .menu { max-height: 220px; opacity: 1; }
 
 	/* Анимация: три полоски красиво превращаются в крестик ✕ */

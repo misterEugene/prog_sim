@@ -9,9 +9,9 @@
 // 7+ цифрах он исчезает. Перед «#» держим место под чип (см. ensureColorSpacing).
 const COLOR_RE = /#[0-9a-fA-F]+/g; // «#» + любое число hex-цифр (длину считаем сами)
 const CHIP_MIN = 3; // минимум цифр, при котором показываем чип
-const CHIP_MAX = 6; // максимум цифр (больше — это уже не похоже на цвет)
+const CHIP_MAX = 6; // максимум цифр (больше - это уже не похоже на цвет)
 const SWATCH_SIZE = 13;
-let pickerTarget = null; // {editor, start, len} — что заменяем выбранным цветом
+let pickerTarget = null; // {editor, start, len} - что заменяем выбранным цветом
 
 // Любой hex (3/4/5/6 цифр) → валидный #rrggbb для нативного input и фона чипа.
 function normalizeHex(hex) {
@@ -21,7 +21,7 @@ function normalizeHex(hex) {
   return "#000000";
 }
 
-// Это hex-цвет (а не ID-селектор)? ID-селектор обычно в начале строки —
+// Это hex-цвет (а не ID-селектор)? ID-селектор обычно в начале строки -
 // такие «#» пропускаем; цвет стоит внутри значения, после отступа.
 function isColorHash(val, hashPos) {
   let sp = 0;
@@ -30,7 +30,7 @@ function isColorHash(val, hashPos) {
   return before >= 0 && val[before] !== "\n";
 }
 
-// Пересобрать чипы (только CSS). Чип — СЛЕВА от «#», на пробелах перед ним
+// Пересобрать чипы (только CSS). Чип - СЛЕВА от «#», на пробелах перед ним
 // (ensureColorSpacing держит там 2 пробела, пока чип показан), поэтому он не
 // закрывает «:» и текст. Рисуем только при 3–6 hex-цифрах.
 function refreshSwatches(editor) {
@@ -38,7 +38,7 @@ function refreshSwatches(editor) {
   if (!layer) return;
   layer.textContent = "";
   if (editor.dataset.lang !== "css") return; // цвета меняем только в CSS
-  // Скрытый/несфокусированный редактор имеет нулевые метрики — координаты
+  // Скрытый/несфокусированный редактор имеет нулевые метрики - координаты
   // посчитаем при показе вкладки (switchTab вызывает refreshSwatches снова).
   if (editor.offsetParent === null) return;
 
@@ -74,8 +74,8 @@ function refreshSwatches(editor) {
 }
 
 // Держать перед «#hex» в CSS нужное число пробелов: 2 пока показан чип (3–6
-// цифр) — место под квадрат, иначе 1. Так лишний пробел появляется ВМЕСТЕ с
-// чипом и убирается, когда чип исчезает (>6 цифр). Правки — через execCommand
+// цифр) - место под квадрат, иначе 1. Так лишний пробел появляется ВМЕСТЕ с
+// чипом и убирается, когда чип исчезает (>6 цифр). Правки - через execCommand
 // (сохраняют Undo); повторный вход через событие input гасим флагом.
 let adjustingSpacing = false;
 
@@ -107,7 +107,7 @@ function ensureColorSpacing(editor) {
 // Привести длину пробельного «зазора» (начинается на runStart, длиной runLen)
 // к target: дописать или удалить пробелы, сохранив позицию каретки.
 function applyGap(editor, runStart, runLen, target) {
-  const delta = target - runLen; // >0 — добавить, <0 — убрать
+  const delta = target - runLen; // >0 - добавить, <0 - убрать
   if (delta === 0) return;
   const caret = editor.selectionStart;
   const caretEnd = editor.selectionEnd;
@@ -153,7 +153,7 @@ function openColorPicker(editor, start, hex, swatch) {
   if (!input) return;
   input.value = normalizeHex(hex);
   pickerTarget = { editor, start, len: hex.length };
-  // Ставим скрытый input у чипа — диалог ОС откроется рядом
+  // Ставим скрытый input у чипа - диалог ОС откроется рядом
   const r = swatch.getBoundingClientRect();
   input.style.left = r.left + "px";
   input.style.top = r.bottom + "px";

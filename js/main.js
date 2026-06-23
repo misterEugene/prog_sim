@@ -25,7 +25,7 @@ function init() {
   doneParts.clear();
   if (saved && Array.isArray(saved.done)) {
     saved.done.forEach((entry) => {
-      // Старый формат — номер шага: считаем вставленными все его части
+      // Старый формат - номер шага: считаем вставленными все его части
       if (typeof entry === "number") {
         if (entry >= 0 && entry < lesson.steps.length) {
           stepLangs(lesson.steps[entry]).forEach((lang) =>
@@ -49,7 +49,7 @@ function init() {
 
   renderLesson();
   initLayout();                  // ширины колонок, разделители, сворачивание задания
-  switchTab("index.html");       // активная вкладка редактора (задание — отдельная колонка)
+  switchTab("index.html");       // активная вкладка редактора (задание - отдельная колонка)
   els.editors.forEach(updateHighlight); // первичная отрисовка подсветки
   clearConsole(); // плейсхолдер в консоли
   updateIframe();
@@ -64,7 +64,7 @@ function init() {
   els.resetModalInput.addEventListener("input", validateResetPhrase);
   els.resetModalCancel.addEventListener("click", closeResetModal);
   els.resetModalConfirm.addEventListener("click", confirmReset);
-  // Enter в поле подтверждает (если фраза верна), Escape — закрывает окно
+  // Enter в поле подтверждает (если фраза верна), Escape - закрывает окно
   els.resetModalInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -74,7 +74,7 @@ function init() {
       closeResetModal();
     }
   });
-  // Клик по затемнённому фону (вне самого окна) — закрыть без сброса
+  // Клик по затемнённому фону (вне самого окна) - закрыть без сброса
   els.resetModal.addEventListener("click", (e) => {
     if (e.target === els.resetModal) closeResetModal();
   });
@@ -90,7 +90,7 @@ function init() {
   // #hash платформы (например, из консоли: location.hash="welcome=…") → в iframe сайта
   window.addEventListener("hashchange", forwardHashToPreview);
 
-  // Перед закрытием/перезагрузкой — дописать историю отмены (вдруг дебаунс не успел)
+  // Перед закрытием/перезагрузкой - дописать историю отмены (вдруг дебаунс не успел)
   window.addEventListener("beforeunload", saveHistoryNow);
 
   // Изменение размера окна меняет ширину редактора → пересчитать перенос строк
@@ -120,17 +120,17 @@ function init() {
     ta.addEventListener("click", () => updateEmmetPreview(ta));
     ta.addEventListener("blur", hideEmmetPreview);
     // Tab: сначала пробуем раскрыть Emmet-аббревиатуру (только HTML),
-    // иначе вставляем символ табуляции. Shift+Tab — всегда таб.
+    // иначе вставляем символ табуляции. Shift+Tab - всегда таб.
     ta.addEventListener("keydown", (e) => {
       if (e.key === "Escape") return hideEmmetPreview();
-      // Alt+Z — переключить перенос строк (как в VS Code)
+      // Alt+Z - переключить перенос строк (как в VS Code)
       if (e.altKey && e.code === "KeyZ" && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         setWordWrap(!wordWrap);
         return;
       }
       // В режиме переноса (Alt+Z) Shift+↓ расширяет выделение до начала
-      // СЛЕДУЮЩЕЙ нумерованной (логической) строки, а не визуальной — чтобы
+      // СЛЕДУЮЩЕЙ нумерованной (логической) строки, а не визуальной - чтобы
       // выделить длинную перенесённую строку целиком за одно нажатие. Обычные
       // ↑/↓ оставляем нативными (по визуальным строкам).
       if (wordWrap && e.shiftKey && e.key === "ArrowDown" &&
@@ -140,7 +140,7 @@ function init() {
         return;
       }
       // Своя отмена/повтор (работает и после перезагрузки): Ctrl+Z / Ctrl+Shift+Z,
-      // Ctrl+Y. Перехватываем до нативной, чтобы источник истины — наш стек.
+      // Ctrl+Y. Перехватываем до нативной, чтобы источник истины - наш стек.
       const mod = e.ctrlKey || e.metaKey;
       if (mod && !e.altKey && e.code === "KeyZ") {
         e.preventDefault();
@@ -160,7 +160,7 @@ function init() {
         insertTab(ta);
         return;
       }
-      // Enter — умный отступ (как в VS Code): сохраняет уровень, раскрывает пары
+      // Enter - умный отступ (как в VS Code): сохраняет уровень, раскрывает пары
       if (e.key === "Enter" && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
         hideEmmetPreview();
         if (smartEnter(ta)) e.preventDefault();

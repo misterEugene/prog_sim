@@ -17,7 +17,7 @@ function loadFromLocalStorage() {
     }
     return null;
   } catch (e) {
-    // Повреждённые данные или недоступный storage — ведём себя как «нет данных»
+    // Повреждённые данные или недоступный storage - ведём себя как «нет данных»
     return null;
   }
 }
@@ -26,7 +26,7 @@ function saveToLocalStorage(html, css, js, done) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ html, css, js, done }));
   } catch (e) {
-    // Запись недоступна (приватный режим и т.п.) — молча игнорируем
+    // Запись недоступна (приватный режим и т.п.) - молча игнорируем
   }
 }
 

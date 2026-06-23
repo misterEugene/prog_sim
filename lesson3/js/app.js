@@ -1,5 +1,5 @@
 // ============================================================
-// app.js — главный контроллер: состояние, события, связь модулей.
+// app.js - главный контроллер: состояние, события, связь модулей.
 // ============================================================
 
 (function () {
@@ -42,7 +42,7 @@
   function undo() {
     if (!state.history.length) { setStatus('Отменять нечего ↩'); return; }
     state.points = state.history.pop();
-    state.trained = false; // данные изменились — нужно переобучить
+    state.trained = false; // данные изменились - нужно переобучить
     saveHistory();
     updateUndoBtn();
     setStatus('Последнее действие отменено ↩');
@@ -50,7 +50,7 @@
   }
 
   // ---- Сохранение поля между перезагрузками ----
-  // Храним точки, число k и факт обучения (тепловую карту). Тестовые точки —
+  // Храним точки, число k и факт обучения (тепловую карту). Тестовые точки -
   // временные, их не сохраняем.
   var FIELD_KEY = 'lesson3Field';
   var HISTORY_KEY = 'lesson3History';
@@ -78,7 +78,7 @@
       state.points = sanitizePoints(data.points);
       if (typeof data.k === 'number' && data.k >= CONFIG.MIN_K && data.k <= CONFIG.MAX_K) state.k = data.k;
       state.trained = data.trained === true && state.points.length > 0;
-    } catch (e) { /* битые данные — начинаем с пустого поля */ }
+    } catch (e) { /* битые данные - начинаем с пустого поля */ }
   }
 
   // История отмен переживает перезагрузку: храним стек снимков отдельным ключом,
@@ -118,7 +118,7 @@
     document.getElementById('stat-points').textContent =
       state.points.length + ' (🔵 ' + blue + ' / 🔴 ' + red + ')';
     document.getElementById('stat-acc').textContent =
-      state.lastAccuracy === null ? '—' : state.lastAccuracy + ' / ' + CONFIG.TEST_COUNT;
+      state.lastAccuracy === null ? '-' : state.lastAccuracy + ' / ' + CONFIG.TEST_COUNT;
   }
 
   // ---- Добавление точек кликом ----
@@ -132,7 +132,7 @@
     pushHistory();
     const pos = canvasPos(e);
     state.points.push({ x: pos.x, y: pos.y, label: label });
-    state.trained = false; // данные изменились — нужно переобучить
+    state.trained = false; // данные изменились - нужно переобучить
     render();
   }
 
@@ -145,10 +145,10 @@
       const d = Math.hypot(state.points[i].x - pos.x, state.points[i].y - pos.y);
       if (d <= bestD) { bestD = d; bestI = i; }
     }
-    if (bestI === -1) { setStatus('Тут нет точки — наведись точнее на кружок 🧽'); return; }
+    if (bestI === -1) { setStatus('Тут нет точки - наведись точнее на кружок 🧽'); return; }
     pushHistory();
     state.points.splice(bestI, 1);
-    state.trained = false; // данные изменились — нужно переобучить
+    state.trained = false; // данные изменились - нужно переобучить
     render();
   }
 
@@ -226,7 +226,7 @@
     state.trained = false; state.testRevealed = false; state.lastAccuracy = null;
     document.getElementById('answers').innerHTML = '';
     document.getElementById('test-panel').classList.remove('active');
-    setStatus('Поле очищено — начни заново!');
+    setStatus('Поле очищено - начни заново!');
     render();
   }
 
@@ -276,8 +276,8 @@
   slider.addEventListener('input', function () {
     state.k = +slider.value;
     kValue.textContent = slider.value;
-    if (state.trained) render(); // тепловая карта зависит от k — обновим вживую
-    else saveField();            // без обучения render не зовём — сохраним k отдельно
+    if (state.trained) render(); // тепловая карта зависит от k - обновим вживую
+    else saveField();            // без обучения render не зовём - сохраним k отдельно
   });
 
   document.getElementById('color-toggle').onclick = function () {
@@ -286,12 +286,12 @@
   document.getElementById('eraser-toggle').onclick = function () {
     state.eraser = !state.eraser; updateEraser();
     setStatus(state.eraser
-      ? 'Режим ластика 🧽 — кликай по точкам, чтобы удалять их. Выключи кнопку, чтобы снова рисовать.'
-      : 'Ластик выключен — снова рисуем точки 🔵🔴');
+      ? 'Режим ластика 🧽 - кликай по точкам, чтобы удалять их. Выключи кнопку, чтобы снова рисовать.'
+      : 'Ластик выключен - снова рисуем точки 🔵🔴');
   };
   document.getElementById('btn-train').onclick = function () {
     if (!state.points.length) { setStatus('Сначала нанеси точки!'); return; }
-    state.trained = true; setStatus('Модель обучена — смотри тепловую карту! 🧠'); render();
+    state.trained = true; setStatus('Модель обучена - смотри тепловую карту! 🧠'); render();
   };
   document.getElementById('btn-starter').onclick = function () {
     pushHistory();
@@ -312,11 +312,11 @@
     document.getElementById('answers').innerHTML = '';
     document.getElementById('test-panel').classList.remove('active');
     updateUndoBtn();
-    setStatus('Урок начат заново — поле очищено! 👇');
+    setStatus('Урок начат заново - поле очищено! 👇');
     render();
   });
 
-  // Ctrl+Z (или ⌘+Z) — отмена. e.code === 'KeyZ' срабатывает и в русской
+  // Ctrl+Z (или ⌘+Z) - отмена. e.code === 'KeyZ' срабатывает и в русской
   // раскладке (где физическая клавиша Z даёт «я»). Shift+Ctrl+Z не трогаем.
   document.addEventListener('keydown', function (e) {
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.code === 'KeyZ') {
@@ -332,7 +332,7 @@
 
   // ---- Старт ----
   loadField();   // восстановить точки/k/обучение из прошлой сессии
-  loadHistory(); // восстановить стек отмены — Ctrl+Z работает и после F5
+  loadHistory(); // восстановить стек отмены - Ctrl+Z работает и после F5
   slider.value = state.k;
   kValue.textContent = state.k;
   updateToggle();

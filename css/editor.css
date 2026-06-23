@@ -54,7 +54,7 @@
   background: var(--bg-editor);
 }
 
-/* Общие метрики обоих слоёв — ОБЯЗАНЫ совпадать до пикселя,
+/* Общие метрики обоих слоёв - ОБЯЗАНЫ совпадать до пикселя,
    иначе текст и подсветка «разъедутся». */
 .editor,
 .highlight {
@@ -138,7 +138,7 @@
   border-color: #fff;
 }
 
-/* Скрытый нативный input type=color — открывается программно по клику на чип */
+/* Скрытый нативный input type=color - открывается программно по клику на чип */
 #color-input {
   position: fixed;
   width: 1px;
@@ -193,8 +193,8 @@ body.word-wrap .editor {
 .tok-tag      { color: #f07178; }
 .tok-attr     { color: #ffcb6b; }
 .tok-punct    { color: #89ddff; }
-/* Метка-пропуск [ВПИШИ …] — ярко-жёлтый фон, чтобы ученик сразу её находил.
-   ВАЖНО: меняем только color/background (и border-radius) — никаких padding,
+/* Метка-пропуск [ВПИШИ …] - ярко-жёлтый фон, чтобы ученик сразу её находил.
+   ВАЖНО: меняем только color/background (и border-radius) - никаких padding,
    border или font-weight: они изменили бы ширину текста и «разъехали» бы слой
    подсветки с textarea (см. PITFALLS про метрики слоёв). */
 .tok-todo     { color: #1a1300; background: #ffe066; border-radius: 3px; }

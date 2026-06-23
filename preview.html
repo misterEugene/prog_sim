@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Мой интернет-магазин — просмотр</title>
+  <title>Мой интернет-магазин - просмотр</title>
   <style>
     html, body { margin: 0; height: 100%; }
     /* Сайт ученика занимает всю вкладку */
@@ -25,23 +25,23 @@
   <iframe id="frame" title="Просмотр сайта"></iframe>
   <div id="empty">
     <h1>Тут появится твой сайт 🛍️</h1>
-    <p>Вернись на платформу и нажми «▶ Запустить» — эта вкладка обновится сама.</p>
+    <p>Вернись на платформу и нажми «▶ Запустить» - эта вкладка обновится сама.</p>
   </div>
 
   <script>
     // Документ сайта платформа присылает двумя путями:
-    //  1) НАПРЯМУЮ через postMessage (основной путь — работает даже из file://
+    //  1) НАПРЯМУЮ через postMessage (основной путь - работает даже из file://
     //     и в Firefox, где localStorage между вкладками не делится);
-    //  2) через localStorage[KEY] + событие storage (запасной путь — по http).
+    //  2) через localStorage[KEY] + событие storage (запасной путь - по http).
     var KEY = "previewDoc";
-    var DEFAULT_TITLE = "Мой интернет-магазин — просмотр";
+    var DEFAULT_TITLE = "Мой интернет-магазин - просмотр";
     var frame = document.getElementById("frame");
     var empty = document.getElementById("empty");
     var currentDoc = null; // последний документ, полученный напрямую (приоритетный)
 
     // Название вкладки браузера берётся из <title> ЭТОЙ страницы, а не из <title>
     // внутри iframe (стандарт). Поэтому достаём <title> ученика из документа и
-    // присваиваем его document.title — тогда во вкладке виден заголовок сайта.
+    // присваиваем его document.title - тогда во вкладке виден заголовок сайта.
     function applyTitle(doc) {
       var m = /<title>([\s\S]*?)<\/title>/i.exec(doc || "");
       var t = m ? m[1].trim() : "";
@@ -78,9 +78,9 @@
       if (e.key === KEY || e.key === null) render();
     });
 
-    // Сайт показывается внутри iframe, поэтому #hash этой вкладки прокидываем ему —
+    // Сайт показывается внутри iframe, поэтому #hash этой вкладки прокидываем ему -
     // тогда «отражённый XSS» из урока 2 работает по-настоящему: добавил в адресную
-    // строку #welcome=… (или выполнил location.hash=… в консоли этой вкладки) — и сайт
+    // строку #welcome=… (или выполнил location.hash=… в консоли этой вкладки) - и сайт
     // реагирует. Применяем при смене хэша и после каждой перезагрузки iframe (srcdoc).
     function syncHashToFrame() {
       try { if (location.hash) frame.contentWindow.location.hash = location.hash; } catch (e) {}

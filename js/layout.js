@@ -5,7 +5,7 @@ const LAYOUT_KEY = "layoutPrefs";
 const COL_MIN_PX = 140;        // минимальная ширина колонки при перетаскивании
 
 // Делает разделитель `splitter` перетаскиваемым: перенос ширины между
-// соседними колонками `left`/`right`. Доля каждой колонки — её flex-grow при
+// соседними колонками `left`/`right`. Доля каждой колонки - её flex-grow при
 // flex-basis:0, поэтому grow ≡ ширина; перетаскивание перераспределяет grow
 // только между двумя соседями (как в VS Code), остальные колонки не трогаем.
 function makeResizable(splitter, left, right) {
@@ -81,7 +81,7 @@ function updateSplitters() {
 }
 
 function toggleCol(col, collapsed) {
-  // Не даём свернуть последнюю развёрнутую колонку — иначе экран пуст.
+  // Не даём свернуть последнюю развёрнутую колонку - иначе экран пуст.
   if (collapsed) {
     const expanded = [els.colTask, els.colEditors, els.colPreview].filter(
       (c) => !c.classList.contains("collapsed")
@@ -113,7 +113,7 @@ function saveLayout() {
       })
     );
   } catch (e) {
-    /* приватный режим / storage недоступен — раскладка просто не сохранится */
+    /* приватный режим / storage недоступен - раскладка просто не сохранится */
   }
 }
 

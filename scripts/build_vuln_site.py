@@ -7,7 +7,7 @@
 
 Логика повторяет dev-cheat.js (fillCode / solvedParts / adminInsertHtml /
 adminAppend / fillUpToStep), но БЕЗ комментариев-границ wrapBlock и с очисткой
-авторских маркеров 👇/👆 — чтобы вшитый сайт урока 2 был чистым и читаемым.
+авторских маркеров 👇/👆 - чтобы вшитый сайт урока 2 был чистым и читаемым.
 """
 import re, os, sys
 
@@ -18,7 +18,7 @@ dev = open(os.path.join(ROOT, "js/dev-cheat.js"), encoding="utf-8").read()
 # ---------- helpers ----------
 def extract_tl(text, backtick_idx):
     """Содержимое шаблонного литерала, начинающегося в backtick_idx (символ `).
-    В сниппетах нет вложенных backtick и ${} — поэтому ищем следующий `."""
+    В сниппетах нет вложенных backtick и ${} - поэтому ищем следующий `."""
     assert text[backtick_idx] == "`", repr(text[backtick_idx:backtick_idx+20])
     end = text.index("`", backtick_idx + 1)
     return text[backtick_idx + 1:end], end
@@ -29,7 +29,7 @@ text = src[steps_start:]
 
 title_re = re.compile(r"\n {6}title:\s*\"([^\"]*)\"")
 snip_re  = re.compile(r"\n {8}(html|css|js):\s*`")
-task_re  = re.compile(r"\n {6}taskMd:\s*`")   # многострочный TL — пропускаем целиком
+task_re  = re.compile(r"\n {6}taskMd:\s*`")   # многострочный TL - пропускаем целиком
 
 steps = []
 cur = None
@@ -51,14 +51,14 @@ while True:
         content, end = extract_tl(text, ms.end() - 1)
         cur["snippets"][lang] = content
         pos = end + 1
-    else:  # taskMd — пропустить его шаблонный литерал
+    else:  # taskMd - пропустить его шаблонный литерал
         _, end = extract_tl(text, mk.end() - 1)
         pos = end + 1
 
 print("Шагов распознано:", len(steps))
 
 # ---------- 2. STEP_FILL из dev-cheat.js ----------
-# 2a. FILL_* константы (шаблонные литералы) — извлекаем из dev-cheat.js
+# 2a. FILL_* константы (шаблонные литералы) - извлекаем из dev-cheat.js
 def tl_const(name):
     i = dev.index("const %s =" % name)
     bt = dev.index("`", i)
@@ -74,10 +74,10 @@ FILL = {
 # 2b. STEP_FILL (транскрипция; ниже сверяется с dev-cheat.js на отсутствие дрейфа)
 STEP_FILL = {
   "Каркас сайта и название во вкладке": {"html": FILL["FILL_SKELETON"]},
-  "Первый текст на странице — руками": {
+  "Первый текст на странице - руками": {
     "html": "<h1>Добро пожаловать в МегаМагазин</h1>\n<p>Тут будут самые крутые товары!</p>",
   },
-  "Первый стиль — раскрась заголовок": {
+  "Первый стиль - раскрась заголовок": {
     "cssRaw": "h1 { color: #5b3df5; text-align: center; }",
   },
   "Шапка магазина и меню навигации": {"answers": {
@@ -92,7 +92,7 @@ STEP_FILL = {
   "Баннер со скидкой": {
     "answers": {
       "[ВПИШИ ЗАГОЛОВОК СКИДКИ]": "Скидки до 50% на технику!",
-      "[ВПИШИ ПОДЗАГОЛОВОК]": "Только до конца недели — успей купить!",
+      "[ВПИШИ ПОДЗАГОЛОВОК]": "Только до конца недели - успей купить!",
       "[ВПИШИ ТЕКСТ КНОПКИ]": "Купить сейчас",
       "[ВПИШИ РАЗМЕР]": "44px",
       "[ВПИШИ ЦВЕТ]": "#ff5722",
@@ -119,7 +119,7 @@ STEP_FILL = {
   },
   "Отзывы покупателей": {
     "answers": {
-      "[ВПИШИ ТЕКСТ ОТЗЫВА 1]": "Заказал смартфон — привезли на следующий день. Всё работает отлично!",
+      "[ВПИШИ ТЕКСТ ОТЗЫВА 1]": "Заказал смартфон - привезли на следующий день. Всё работает отлично!",
       "[ВПИШИ ИМЯ 1]": "Артём",
       "[ВПИШИ ТЕКСТ ОТЗЫВА 2]": "Купила наушники, звук супер. Спасибо за быструю доставку!",
       "[ВПИШИ ИМЯ 2]": "Мария",
@@ -161,7 +161,7 @@ if drift:
     print("!!! ДРЕЙФ значений STEP_FILL (нет в dev-cheat.js):")
     for t, v in drift: print("   ", t, "->", repr(v))
     sys.exit(1)
-print("STEP_FILL сверен с dev-cheat.js — дрейфа нет.")
+print("STEP_FILL сверен с dev-cheat.js - дрейфа нет.")
 
 # ---------- 3. Сборка (порт dev-cheat.js) ----------
 def fillCode(code, f, lang):
@@ -194,7 +194,7 @@ js_doc = ""
 def insert_html(code):
     global html_doc
     m = re.search(r"([ \t]*)</body>", html_doc, re.I)
-    if not m:                      # каркаса ещё нет — это и есть скелет
+    if not m:                      # каркаса ещё нет - это и есть скелет
         html_doc = code
         return
     indent = (m.group(1) or "") + "\t"

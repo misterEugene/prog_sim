@@ -207,6 +207,11 @@ function adminAppend(lang, title, code, raw) {
 // Заполнить редакторы кодом шагов 1…targetIndex, отметить их и запустить превью.
 function fillUpToStep(targetIndex) {
   if (typeof els === "undefined" || !els.htmlEditor) return;
+  // Урок 2 не вставляет блоки, а ПРАВИТ стартовый код → отдельный режим.
+  if (typeof lesson !== "undefined" && lesson && lesson.adminFixMode) {
+    fillUpToStepFix(targetIndex);
+    return;
+  }
   els.htmlEditor.value = "";
   els.cssEditor.value = "";
   els.jsEditor.value = "";
@@ -233,6 +238,104 @@ function fillUpToStep(targetIndex) {
   }
 }
 if (typeof window !== "undefined") window.fillUpToStep = fillUpToStep;
+
+// ============================================================
+// Админ-автопрохождение для урока с ПРАВКОЙ кода (урок 2).
+// «Заполнить по шаг N» = стартовый (уязвимый) код + правки шагов 1..N.
+// Сами правки лежат в lesson.stepFixes (см. lesson-data-security.js).
+// ============================================================
+function fillUpToStepFix(targetIndex) {
+  let html = lesson.initialHTML;
+  let css = lesson.initialCSS;
+  let js = lesson.initialJS;
+  doneParts.clear();
+  for (let i = 0; i <= targetIndex; i++) {
+    const ops = (lesson.stepFixes && lesson.stepFixes[i]) || [];
+    ops.forEach(function (op) {
+      if (op.file === "html") html = applyCodeFix(html, op, i);
+      else if (op.file === "css") css = applyCodeFix(css, op, i);
+      else js = applyCodeFix(js, op, i);
+    });
+    stepLangs(lesson.steps[i]).forEach(function (lang) {
+      doneParts.add(partKey(i, lang));
+    });
+  }
+  els.htmlEditor.value = html;
+  els.cssEditor.value = css;
+  els.jsEditor.value = js;
+  if (typeof ensureColorSpacing === "function") ensureColorSpacing(els.cssEditor);
+  els.editors.forEach(function (ta) { updateHighlight(ta); histInit(ta); });
+  autosave();
+  updateProgress();
+  switchTab("main.js");
+  updateIframe();
+  if (typeof showToast === "function") {
+    showToast(
+      "🗝 Заполнено по шаг " + (targetIndex + 1),
+      "Готовый код шагов 1–" + (targetIndex + 1) + " подставлен, прогресс отмечен."
+    );
+  }
+}
+
+// Применить одну правку к тексту кода. Если цель не нашлась — предупреждаем в
+// консоли и возвращаем текст без изменений (чтобы не сломать остальное).
+function applyCodeFix(src, op, stepIndex) {
+  try {
+    switch (op.op) {
+      case "replaceStr":   return replaceCodeStr(src, op.find, op.replace);
+      case "removeLine":   return removeCodeLine(src, op.find);
+      case "replaceBlock": return replaceBraceBlock(src, op.anchor, op.code);
+      case "replaceTag":   return replaceTagBlock(src, op.anchor, op.code);
+      default:             return src;
+    }
+  } catch (e) {
+    if (typeof console !== "undefined") {
+      console.warn("Админ-правка не применилась (шаг " + (stepIndex + 1) + "):", op, e.message);
+    }
+    return src;
+  }
+}
+
+function replaceCodeStr(src, find, replace) {
+  if (src.indexOf(find) === -1) throw new Error("не найдено: " + find);
+  return src.split(find).join(replace);
+}
+
+// Удалить целиком строку, содержащую подстроку sub (вместе с переводом строки).
+function removeCodeLine(src, sub) {
+  const at = src.indexOf(sub);
+  if (at === -1) throw new Error("строка не найдена: " + sub);
+  let ls = src.lastIndexOf("\n", at);
+  ls = ls === -1 ? 0 : ls + 1;
+  let le = src.indexOf("\n", at);
+  le = le === -1 ? src.length : le + 1;
+  return src.slice(0, ls) + src.slice(le);
+}
+
+// Заменить блок «<anchor> … { … }» от anchor до ПАРНОЙ } (учёт вложенных {}).
+function replaceBraceBlock(src, anchor, code) {
+  const start = src.indexOf(anchor);
+  if (start === -1) throw new Error("якорь не найден: " + anchor);
+  const open = src.indexOf("{", start);
+  if (open === -1) throw new Error("нет { после якоря: " + anchor);
+  let depth = 0, end = -1;
+  for (let i = open; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === "{") depth++;
+    else if (ch === "}") { depth--; if (depth === 0) { end = i + 1; break; } }
+  }
+  if (end === -1) throw new Error("несбалансированные {} у: " + anchor);
+  return src.slice(0, start) + code + src.slice(end);
+}
+
+// Заменить HTML-блок от anchor до ближайшего </div> включительно.
+function replaceTagBlock(src, anchor, code) {
+  const start = src.indexOf(anchor);
+  if (start === -1) throw new Error("якорь не найден: " + anchor);
+  const close = src.indexOf("</div>", start);
+  if (close === -1) throw new Error("нет </div> после якоря: " + anchor);
+  return src.slice(0, start) + code + src.slice(close + "</div>".length);
+}
 
 // ============================================================
 // Секретная разблокировка «режима разработчика».

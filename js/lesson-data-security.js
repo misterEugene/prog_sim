@@ -1608,3 +1608,167 @@ function showWelcome(name) {
 const STORAGE_KEY = "savedLessonCodeSecurity";
 const PREVIEW_DOC_KEY = "previewDoc"; // вкладку просмотра делим — preview.html читает этот ключ
 const LESSON_KEY_SUFFIX = "Security";
+
+
+// ============================================================
+// АДМИН-РЕЖИМ урока 2: пройти любой шаг одной кнопкой.
+// Урок 2 не вставляет новые блоки, а ПРАВИТ стартовый (уязвимый) код, поэтому для
+// каждого шага храним список правок. «Заполнить по шаг N» = стартовый код + правки
+// шагов 1..N. Движок и кнопка — в dev-cheat.js (общий модуль с уроком 1).
+// ============================================================
+const FIX_RENDER_COMMENTS = `function renderComments(id) {
+	const box = document.getElementById("pd-comments");
+	const list = loadComments(id);
+	box.innerHTML = "";
+	list.forEach(function (c) {
+		const div = document.createElement("div");
+		div.className = "cmt";
+		const author = document.createElement("span");
+		author.className = "cmt-author";
+		author.textContent = c.author + ":";
+		div.appendChild(author);
+		div.appendChild(document.createTextNode(" " + c.text));
+		box.appendChild(div);
+	});
+}`;
+
+const FIX_RENDER_USERBOX = `function renderUserBox() {
+	const box = document.getElementById("user-box");
+	if (!box) return;
+	box.innerHTML = "";
+	if (localStorage.getItem("isLoggedIn") === "true") {
+		const userName = localStorage.getItem("currentUser") || "гость";
+		box.appendChild(document.createTextNode("👤 " + userName + " "));
+		const out = document.createElement("a");
+		out.href = "#"; out.setAttribute("data-link", "logout");
+		out.className = "logout-link"; out.textContent = "Выйти";
+		box.appendChild(out);
+	} else {
+		const a = document.createElement("a");
+		a.href = "#"; a.setAttribute("data-link", "login");
+		a.textContent = "Войти";
+		box.appendChild(a);
+	}
+}`;
+
+const FIX_LOGIN_CLEAN = `loginBtn.addEventListener("click", function () {
+	const name = document.getElementById("login-name").value;
+	const pass = document.getElementById("login-pass").value;
+	const users = getUsers();
+	const ok = users.some(function (u) {
+		return u.login === name && u.password === pass;
+	});
+	if (ok) {
+		localStorage.setItem("isLoggedIn", "true");
+		localStorage.setItem("currentUser", name);
+		loginMsg.textContent = "Привет, " + name + "!";
+		if (typeof renderUserBox === "function") renderUserBox();
+	} else {
+		loginMsg.textContent = "Неверный логин или пароль";
+	}
+}`;
+
+const FIX_GETUSERS_HASH = `function getUsers() {
+	return JSON.parse(localStorage.getItem("users") || "[]");
+}
+
+async function hashPassword(str) {
+	const data = new TextEncoder().encode(str);
+	const buf = await crypto.subtle.digest("SHA-256", data);
+	return Array.from(new Uint8Array(buf))
+		.map(function (b) { return b.toString(16).padStart(2, "0"); })
+		.join("");
+}`;
+
+const FIX_REG_HASH = `regBtn.addEventListener("click", async function () {
+	const name = document.getElementById("reg-name").value;
+	const pass = document.getElementById("reg-pass").value;
+	const pass2 = document.getElementById("reg-pass2").value;
+	const msg = document.getElementById("reg-msg");
+	if (!name || !pass) { msg.textContent = "Заполни логин и пароль"; return; }
+	if (pass !== pass2) { msg.textContent = "Пароли не совпадают"; return; }
+	const users = getUsers();
+	if (users.some(function (u) { return u.login === name; })) {
+		msg.textContent = "Такой логин уже занят"; return;
+	}
+	users.push({ login: name, passwordHash: await hashPassword(pass) });
+	localStorage.setItem("users", JSON.stringify(users));
+	msg.textContent = "Готово! Теперь войди на странице «Вход».";
+}`;
+
+const FIX_REG_HASH_LEN = `regBtn.addEventListener("click", async function () {
+	const name = document.getElementById("reg-name").value;
+	const pass = document.getElementById("reg-pass").value;
+	const pass2 = document.getElementById("reg-pass2").value;
+	const msg = document.getElementById("reg-msg");
+	if (!name || !pass) { msg.textContent = "Заполни логин и пароль"; return; }
+	if (pass !== pass2) { msg.textContent = "Пароли не совпадают"; return; }
+	if (pass.length < 8) {
+		msg.textContent = "Пароль слишком короткий — минимум 8 символов";
+		return;
+	}
+	const users = getUsers();
+	if (users.some(function (u) { return u.login === name; })) {
+		msg.textContent = "Такой логин уже занят"; return;
+	}
+	users.push({ login: name, passwordHash: await hashPassword(pass) });
+	localStorage.setItem("users", JSON.stringify(users));
+	msg.textContent = "Готово! Теперь войди на странице «Вход».";
+}`;
+
+const FIX_LOGIN_HASH = `loginBtn.addEventListener("click", async function () {
+	const name = document.getElementById("login-name").value;
+	const pass = document.getElementById("login-pass").value;
+	const hash = await hashPassword(pass);
+	const users = getUsers();
+	const ok = users.some(function (u) {
+		return u.login === name && u.passwordHash === hash;
+	});
+	if (ok) {
+		localStorage.setItem("isLoggedIn", "true");
+		localStorage.setItem("currentUser", name);
+		loginMsg.textContent = "Привет, " + name + "!";
+		if (typeof renderUserBox === "function") renderUserBox();
+	} else {
+		loginMsg.textContent = "Неверный логин или пароль";
+	}
+}`;
+
+const FIX_SHOWWELCOME = `function showWelcome(name) {
+	const box = document.getElementById("welcome-box");
+	if (!box) return;
+	box.hidden = false;
+	box.textContent = "С возвращением, " + name + "!";
+}`;
+
+lesson.adminFixMode = true;
+lesson.stepFixes = [
+	/* 0. Инструменты */ [],
+	/* 1. Дыра №1: XSS */ [
+		{ file: "js", op: "replaceBlock", anchor: "function renderComments(", code: FIX_RENDER_COMMENTS },
+		{ file: "js", op: "replaceBlock", anchor: "function renderUserBox(", code: FIX_RENDER_USERBOX },
+		{ file: "js", op: "replaceStr", find: 'loginMsg.innerHTML = "Привет, " + name + "!";', replace: 'loginMsg.textContent = "Привет, " + name + "!";' },
+	],
+	/* 2. Дыра №2: пароль в коде + бэкдор */ [
+		{ file: "html", op: "removeLine", find: "TODO для входа в админку" },
+		{ file: "js", op: "removeLine", find: 'const ADMIN_LOGIN = "admin";' },
+		{ file: "js", op: "removeLine", find: 'const ADMIN_PASS = "megapass123";' },
+		{ file: "js", op: "replaceBlock", anchor: 'loginBtn.addEventListener("click"', code: FIX_LOGIN_CLEAN },
+	],
+	/* 3. Дыра №3: хэширование */ [
+		{ file: "js", op: "replaceBlock", anchor: "function getUsers(", code: FIX_GETUSERS_HASH },
+		{ file: "js", op: "replaceBlock", anchor: 'regBtn.addEventListener("click"', code: FIX_REG_HASH },
+		{ file: "js", op: "replaceBlock", anchor: 'loginBtn.addEventListener("click"', code: FIX_LOGIN_HASH },
+	],
+	/* 4. Дыра №4: брутфорс (длина пароля) */ [
+		{ file: "js", op: "replaceBlock", anchor: 'regBtn.addEventListener("click"', code: FIX_REG_HASH_LEN },
+	],
+	/* 5. Дыра №5: фальшивый админ */ [
+		{ file: "html", op: "replaceTag", anchor: '<div id="admin-panel"', code: '<div id="admin-panel" class="admin-panel" hidden></div>' },
+	],
+	/* 6. Дыра №6: отражённый XSS */ [
+		{ file: "js", op: "replaceBlock", anchor: "function showWelcome(", code: FIX_SHOWWELCOME },
+	],
+	/* 7. Флаги */ [],
+	/* 8. Финал */ [],
+];

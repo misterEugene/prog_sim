@@ -85,6 +85,8 @@ function init() {
 
   // Сообщения из iframe (console.* и ошибки) → встроенная консоль
   window.addEventListener("message", handleConsoleMessage);
+  // Запрос документа от вкладки просмотра (preview.html) → отдаём напрямую
+  window.addEventListener("message", handlePreviewTabMessage);
 
   // Перед закрытием/перезагрузкой — дописать историю отмены (вдруг дебаунс не успел)
   window.addEventListener("beforeunload", saveHistoryNow);

@@ -29,13 +29,15 @@
   </div>
 
   <script>
-    // Ключ совпадает с PREVIEW_DOC_KEY в main.js: платформа кладёт сюда готовый
-    // документ на каждый «Запустить», а мы его показываем и переотображаем при
-    // изменении (событие storage приходит из другой вкладки того же origin).
+    // Документ сайта платформа присылает двумя путями:
+    //  1) НАПРЯМУЮ через postMessage (основной путь — работает даже из file://
+    //     и в Firefox, где localStorage между вкладками не делится);
+    //  2) через localStorage[KEY] + событие storage (запасной путь — по http).
     var KEY = "previewDoc";
     var DEFAULT_TITLE = "Мой интернет-магазин — просмотр";
     var frame = document.getElementById("frame");
     var empty = document.getElementById("empty");
+    var currentDoc = null; // последний документ, полученный напрямую (приоритетный)
 
     // Название вкладки браузера берётся из <title> ЭТОЙ страницы, а не из <title>
     // внутри iframe (стандарт). Поэтому достаём <title> ученика из документа и
@@ -47,8 +49,8 @@
     }
 
     function render() {
-      var doc = null;
-      try { doc = localStorage.getItem(KEY); } catch (e) {}
+      var doc = currentDoc;
+      if (doc == null) { try { doc = localStorage.getItem(KEY); } catch (e) {} }
       if (doc) {
         empty.classList.remove("show");
         frame.classList.remove("hide");
@@ -61,11 +63,28 @@
       }
     }
 
-    // Платформа нажала «Запустить» → обновился ключ → перерисовываем.
+    // Основной путь: платформа прислала документ напрямую (на открытие и на каждый
+    // «Запустить»). Берём его как приоритетный и перерисовываем.
+    window.addEventListener("message", function (e) {
+      var data = e.data;
+      if (data && data.__preview === true && typeof data.doc === "string") {
+        currentDoc = data.doc;
+        render();
+      }
+    });
+
+    // Запасной путь: по http событие storage прилетает при изменении ключа.
     window.addEventListener("storage", function (e) {
       if (e.key === KEY || e.key === null) render();
     });
 
+    // Попросить платформу (окно-родитель) прислать актуальный документ. Вызываем
+    // при загрузке и при возврате фокуса (вдруг платформу перезагрузили).
+    function askOpener() {
+      try { if (window.opener) window.opener.postMessage({ __previewRequest: true }, "*"); } catch (e) {}
+    }
+    window.addEventListener("focus", askOpener);
+    askOpener();
     render();
   </script>
 </body>

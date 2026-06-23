@@ -97,11 +97,36 @@ function savePreviewDoc(doc) {
   }
 }
 
+// Окно открытой вкладки просмотра (если открыта кнопкой «🔗 Открыть в новой вкладке»).
+let previewWin = null;
+
+// Передать документ вкладке просмотра НАПРЯМУЮ через postMessage. Нужно потому, что
+// localStorage и событие storage между вкладками НЕ работают, если открыть проект
+// из file:// (особенно в Firefox). postMessage между окном и его «потомком» работает
+// всегда — поэтому это надёжный путь, а localStorage оставляем как запасной.
+function pushPreviewDoc(doc) {
+  if (previewWin && !previewWin.closed) {
+    try { previewWin.postMessage({ __preview: true, doc: doc }, "*"); } catch (e) {}
+  }
+}
+
+// Вкладка просмотра при загрузке (и при возврате фокуса) просит актуальный документ.
+// Отвечаем ей и запоминаем её окно, чтобы слать обновления на каждый «Запустить».
+function handlePreviewTabMessage(e) {
+  const data = e.data;
+  if (!data || data.__previewRequest !== true) return;
+  if (e.source) previewWin = e.source;
+  try {
+    (e.source || previewWin).postMessage({ __preview: true, doc: buildDocument() }, "*");
+  } catch (err) {}
+}
+
 function updateIframe() {
   clearConsole(); // новый запуск — чистим вывод прошлого
   const doc = buildDocument();
   els.preview.srcdoc = doc;
-  savePreviewDoc(doc); // зеркалим в отдельную вкладку (если открыта)
+  savePreviewDoc(doc);   // запасной путь: зеркало через localStorage (по http)
+  pushPreviewDoc(doc);   // основной путь: напрямую в открытую вкладку просмотра
 }
 
 // Открыть сайт ученика в отдельной вкладке. Вкладка (preview.html) — живое
@@ -109,7 +134,7 @@ function updateIframe() {
 // «Запустить» (через событие storage). Именованная цель — повторный клик
 // переиспользует ту же вкладку.
 function openInNewTab() {
-  savePreviewDoc(buildDocument()); // свежий снимок к моменту открытия
+  savePreviewDoc(buildDocument()); // свежий снимок к моменту открытия (запасной путь)
   const win = window.open("preview.html", "shopPreview");
   if (!win) {
     showToast(
@@ -118,5 +143,6 @@ function openInNewTab() {
     );
     return;
   }
+  previewWin = win;   // запомним окно — вкладка сама запросит документ при загрузке
   win.focus();
 }

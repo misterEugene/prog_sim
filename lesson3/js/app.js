@@ -15,8 +15,36 @@
     testPoints: [],
     testRevealed: false,
     trained: false,
-    lastAccuracy: null
+    lastAccuracy: null,
+    history: []   // снимки points для отмены (Ctrl+Z / кнопка «Отменить»)
   };
+
+  // ---- История для отмены ----
+  // Перед каждым изменением набора точек сохраняем его копию. undo() возвращает
+  // предыдущее состояние: отменяется и постановка точки, и очистка/стартовый
+  // набор/импорт.
+  function snapshot() {
+    return state.points.map(function (p) { return { x: p.x, y: p.y, label: p.label }; });
+  }
+
+  function pushHistory() {
+    state.history.push(snapshot());
+    if (state.history.length > CONFIG.UNDO_LIMIT) state.history.shift();
+    updateUndoBtn();
+  }
+
+  function updateUndoBtn() {
+    document.getElementById('btn-undo').disabled = state.history.length === 0;
+  }
+
+  function undo() {
+    if (!state.history.length) { setStatus('Отменять нечего ↩'); return; }
+    state.points = state.history.pop();
+    state.trained = false; // данные изменились — нужно переобучить
+    updateUndoBtn();
+    setStatus('Последнее действие отменено ↩');
+    render();
+  }
 
   // ---- Отрисовка всего поля ----
   function render() {
@@ -47,6 +75,7 @@
   }
 
   function addPoint(e, label) {
+    pushHistory();
     const pos = canvasPos(e);
     state.points.push({ x: pos.x, y: pos.y, label: label });
     state.trained = false; // данные изменились — нужно переобучить
@@ -115,6 +144,7 @@
 
   // ---- Очистка / экспорт / импорт ----
   function clearAll() {
+    pushHistory();
     state.points = []; state.testPoints = [];
     state.trained = false; state.testRevealed = false; state.lastAccuracy = null;
     document.getElementById('answers').innerHTML = '';
@@ -141,6 +171,7 @@
         const data = JSON.parse(reader.result);
         const raw = Array.isArray(data) ? data : data.points;
         if (!Array.isArray(raw)) throw new Error('bad');
+        pushHistory();
         state.points = raw.filter(function (p) {
           return typeof p.x === 'number' && typeof p.y === 'number' &&
             (p.label === 'blue' || p.label === 'red');
@@ -172,12 +203,23 @@
     state.trained = true; setStatus('Модель обучена — смотри тепловую карту! 🧠'); render();
   };
   document.getElementById('btn-starter').onclick = function () {
+    pushHistory();
     state.points = makeStarter(); state.trained = false;
     setStatus('Загружен стартовый датасет (30 точек). Нажми «Обучить»!'); render();
   };
   document.getElementById('btn-test').onclick = startTest;
   document.getElementById('btn-reveal').onclick = revealAnswers;
   document.getElementById('btn-clear').onclick = clearAll;
+  document.getElementById('btn-undo').onclick = undo;
+
+  // Ctrl+Z (или ⌘+Z) — отмена. e.code === 'KeyZ' срабатывает и в русской
+  // раскладке (где физическая клавиша Z даёт «я»). Shift+Ctrl+Z не трогаем.
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.code === 'KeyZ') {
+      e.preventDefault();
+      undo();
+    }
+  });
   document.getElementById('btn-export').onclick = exportJson;
   document.getElementById('file-import').addEventListener('change', function (e) {
     if (e.target.files[0]) importJson(e.target.files[0]);
@@ -188,6 +230,7 @@
   slider.value = CONFIG.DEFAULT_K;
   kValue.textContent = CONFIG.DEFAULT_K;
   updateToggle();
+  updateUndoBtn();
   setStatus('Привет! Нанеси точки или загрузи стартовый датасет 👇');
   render();
 })();

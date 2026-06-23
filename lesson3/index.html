@@ -21,6 +21,10 @@
   <main class="workspace">
     <!-- Поле -->
     <section class="field-wrap">
+      <!-- Панель над полем (слева): отмена последнего действия -->
+      <div class="field-toolbar">
+        <button id="btn-undo" class="btn btn-undo" title="Отменить последнее действие (Ctrl+Z)" disabled>↩ Отменить</button>
+      </div>
       <canvas id="field" width="600" height="600"></canvas>
       <p class="hint">Левая кнопка мыши — точка активного цвета, правая — другого цвета.</p>
     </section>

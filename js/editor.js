@@ -86,20 +86,36 @@ function scrollCaretIntoView(editor, pos) {
   syncScroll(editor);
 }
 
-// В режиме переноса (Alt+Z) расширить выделение «вниз» до начала СЛЕДУЮЩЕЙ
-// логической (нумерованной) строки, а не следующей визуальной. Без этого приём
-// из уроков «щёлкни в начало строки → Shift+↓ → Delete» за одно нажатие
-// захватывал лишь часть длинной перенесённой строки. Когда перенос выключен,
-// нативное поведение уже совпадает (1 визуальная строка = 1 логическая), поэтому
-// перехватываем только при wordWrap (см. обработчик keydown в main.js).
-function selectToNextLine(editor) {
+// В режиме переноса (Alt+Z) одна логическая (нумерованная) строка занимает
+// несколько ВИЗУАЛЬНЫХ, и нативные ↑/↓ шагают по визуальным строкам — курсор
+// «застревает» внутри длинной строки. Чтобы и навигация, и приём из уроков
+// «щёлкни в начало строки → Shift+↓ → Delete» работали по нумерованным строкам,
+// ведём каретку к началу соседней ЛОГИЧЕСКОЙ строки (dir: +1 вниз, −1 вверх;
+// extend=true — с Shift, расширяя выделение). Когда перенос выключен, нативное
+// поведение уже совпадает (1 визуальная = 1 логическая), поэтому перехватываем
+// только при wordWrap (см. обработчик keydown в main.js).
+function navByLogicalLine(editor, dir, extend) {
   const v = editor.value;
-  const back = editor.selectionDirection === "backward";
-  const active = back ? editor.selectionStart : editor.selectionEnd; // конец, что двигаем
-  const anchor = back ? editor.selectionEnd : editor.selectionStart;  // неподвижный конец
-  const nl = v.indexOf("\n", active);
-  const target = nl < 0 ? v.length : nl + 1; // начало следующей логической строки
-  if (target >= anchor) editor.setSelectionRange(anchor, target, "forward");
+  const backSel = editor.selectionDirection === "backward";
+  // активный конец каретки (который двигаем) и неподвижный «якорь»
+  let active, anchor;
+  if (extend) {
+    active = backSel ? editor.selectionStart : editor.selectionEnd;
+    anchor = backSel ? editor.selectionEnd : editor.selectionStart;
+  } else {
+    active = dir > 0 ? editor.selectionEnd : editor.selectionStart;
+    anchor = active;
+  }
+  let target;
+  if (dir > 0) {
+    const nl = v.indexOf("\n", active);
+    target = nl < 0 ? v.length : nl + 1; // начало следующей логической строки
+  } else {
+    const curStart = v.lastIndexOf("\n", active - 1) + 1; // начало текущей строки
+    target = curStart === 0 ? 0 : v.lastIndexOf("\n", curStart - 2) + 1; // предыдущей
+  }
+  if (!extend) editor.setSelectionRange(target, target);
+  else if (target >= anchor) editor.setSelectionRange(anchor, target, "forward");
   else editor.setSelectionRange(target, anchor, "backward");
   scrollCaretIntoView(editor, target);
 }

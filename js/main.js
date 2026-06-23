@@ -125,14 +125,15 @@ function init() {
         setWordWrap(!wordWrap);
         return;
       }
-      // В режиме переноса (Alt+Z) Shift+↓ выделяет до начала СЛЕДУЮЩЕЙ
-      // нумерованной строки, а не следующей визуальной — чтобы приём из уроков
-      // «щёлкни в начало строки → Shift+↓ → Delete» работал за одно нажатие
-      // даже на длинных перенесённых строках (см. selectToNextLine).
-      if (wordWrap && e.shiftKey && e.key === "ArrowDown" &&
+      // В режиме переноса (Alt+Z) ↑/↓ ведут каретку к началу соседней
+      // НУМЕРОВАННОЙ (логической) строки, а не следующей визуальной — иначе на
+      // длинных перенесённых строках курсор «застревает» внутри строки, и приём
+      // из уроков «щёлкни в начало строки → Shift+↓ → Delete» захватывал лишь
+      // часть строки. С Shift выделение расширяется (см. navByLogicalLine).
+      if (wordWrap && (e.key === "ArrowDown" || e.key === "ArrowUp") &&
           !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
-        selectToNextLine(ta);
+        navByLogicalLine(ta, e.key === "ArrowDown" ? 1 : -1, e.shiftKey);
         return;
       }
       // Своя отмена/повтор (работает и после перезагрузки): Ctrl+Z / Ctrl+Shift+Z,

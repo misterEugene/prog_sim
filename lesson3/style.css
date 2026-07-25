@@ -213,7 +213,6 @@ input[type="range"] { width: 100%; accent-color: #00d4ff; }
 .g-step--done .g-step-num { background: #2ecc71; color: #07210f; }
 .g-step--locked .g-step-num { background: #3a4158; color: #aab2c8; }
 .g-step-title { flex: 1 1 auto; font-weight: bold; font-size: 16px; color: #fff; }
-.g-step-time { flex: 0 0 auto; font-size: 12px; color: #8b92a8; }
 
 .g-step-goal { margin-top: 8px; }
 .g-step-task { margin-top: 4px; }

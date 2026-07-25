@@ -17,7 +17,8 @@
     trained: false,
     lastAccuracy: null,
     history: [],  // снимки points для отмены (Ctrl+Z / кнопка «Отменить»)
-    eraser: false // режим ластика: клик по точке удаляет её
+    eraser: false, // режим ластика: клик по точке удаляет её
+    stats: null    // счётчики действий для авто-проверки шагов гида (см. sanitizeStats)
   };
 
   // ---- История для отмены ----
@@ -43,6 +44,7 @@
     if (!state.history.length) { setStatus('Отменять нечего ↩'); return; }
     state.points = state.history.pop();
     state.trained = false; // данные изменились - нужно переобучить
+    state.stats.undo++;
     saveHistory();
     updateUndoBtn();
     setStatus('Последнее действие отменено ↩');
@@ -63,10 +65,39 @@
     });
   }
 
+  // Счётчики действий ребёнка: по ним колонка-гид (guide.js) сама проверяет,
+  // выполнен ли шаг. Хранятся вместе с полем и переживают перезагрузку.
+  var STAT_KEYS = ['added', 'addedRight', 'erased', 'undo', 'trains',
+    'kTo1', 'kTo15', 'kHigh', 'starters', 'clears',
+    'fullReveals', 'perfects', 'exports', 'imports'];
+
+  function sanitizeStats(s) {
+    var clean = {};
+    STAT_KEYS.forEach(function (key) {
+      clean[key] = (s && typeof s[key] === 'number' && s[key] >= 0) ? s[key] : 0;
+    });
+    return clean;
+  }
+
+  // Снимок для guide.js: счётчики + текущее состояние поля. Кладём в глобальную
+  // переменную (guide.js грузится позже и читает её при старте) и шлём событием.
+  function emitStats() {
+    var blue = state.points.filter(function (p) { return p.label === 'blue'; }).length;
+    var snap = {};
+    STAT_KEYS.forEach(function (key) { snap[key] = state.stats[key]; });
+    snap.blue = blue;
+    snap.red = state.points.length - blue;
+    snap.total = state.points.length;
+    snap.trained = state.trained;
+    snap.k = state.k;
+    window.LESSON3_STATS = snap;
+    document.dispatchEvent(new CustomEvent('lesson3:stats', { detail: snap }));
+  }
+
   function saveField() {
     try {
       localStorage.setItem(FIELD_KEY, JSON.stringify({
-        points: state.points, k: state.k, trained: state.trained
+        points: state.points, k: state.k, trained: state.trained, stats: state.stats
       }));
     } catch (e) { /* приватный режим / file:// */ }
   }
@@ -78,6 +109,7 @@
       state.points = sanitizePoints(data.points);
       if (typeof data.k === 'number' && data.k >= CONFIG.MIN_K && data.k <= CONFIG.MAX_K) state.k = data.k;
       state.trained = data.trained === true && state.points.length > 0;
+      state.stats = sanitizeStats(data.stats);
     } catch (e) { /* битые данные - начинаем с пустого поля */ }
   }
 
@@ -108,6 +140,7 @@
     drawTestPoints(ctx, state.testPoints, state.testRevealed);
     updateStats();
     saveField();
+    emitStats();
   }
 
   function setStatus(msg) { document.getElementById('status').textContent = msg; }
@@ -128,11 +161,13 @@
     return { x: (e.clientX - rect.left) * scale, y: (e.clientY - rect.top) * scale };
   }
 
-  function addPoint(e, label) {
+  function addPoint(e, label, viaRightClick) {
     pushHistory();
     const pos = canvasPos(e);
     state.points.push({ x: pos.x, y: pos.y, label: label });
     state.trained = false; // данные изменились - нужно переобучить
+    state.stats.added++;
+    if (viaRightClick) state.stats.addedRight++;
     render();
   }
 
@@ -149,6 +184,7 @@
     pushHistory();
     state.points.splice(bestI, 1);
     state.trained = false; // данные изменились - нужно переобучить
+    state.stats.erased++;
     render();
   }
 
@@ -213,6 +249,12 @@
       s.classList.toggle('correct', s.value === state.testPoints[i].label);
       s.classList.toggle('wrong', !!s.value && s.value !== state.testPoints[i].label);
     });
+    // Для авто-проверки шагов: тест «сдан», если ребёнок ответил на все точки.
+    const filled = answers.filter(function (a) { return a === 'blue' || a === 'red'; }).length;
+    if (filled === CONFIG.TEST_COUNT && !state.testRevealed) {
+      state.stats.fullReveals++;
+      if (correct === CONFIG.TEST_COUNT) state.stats.perfects++;
+    }
     state.lastAccuracy = correct;
     state.testRevealed = true;
     setStatus('🎯 Результат: ' + correct + ' из ' + CONFIG.TEST_COUNT + ' правильно!');
@@ -224,6 +266,7 @@
     pushHistory();
     state.points = []; state.testPoints = [];
     state.trained = false; state.testRevealed = false; state.lastAccuracy = null;
+    state.stats.clears++;
     document.getElementById('answers').innerHTML = '';
     document.getElementById('test-panel').classList.remove('active');
     setStatus('Поле очищено - начни заново!');
@@ -238,6 +281,9 @@
     a.download = 'dataset.json';
     a.click();
     URL.revokeObjectURL(a.href);
+    state.stats.exports++;
+    saveField();
+    emitStats();
     setStatus('Файл dataset.json сохранён 📤');
   }
 
@@ -255,6 +301,7 @@
         });
         if (data && data.k) { state.k = data.k; slider.value = data.k; kValue.textContent = data.k; }
         state.trained = false;
+        state.stats.imports++;
         setStatus('Загружено точек: ' + state.points.length + ' 📥');
         render();
       } catch (err) { setStatus('Не удалось прочитать файл 😕'); }
@@ -270,14 +317,23 @@
   canvas.addEventListener('contextmenu', function (e) {
     e.preventDefault();
     if (state.eraser) { eraseAt(e); return; }
-    addPoint(e, other(state.activeColor));
+    addPoint(e, other(state.activeColor), true);
   });
 
   slider.addEventListener('input', function () {
     state.k = +slider.value;
     kValue.textContent = slider.value;
-    if (state.trained) render(); // тепловая карта зависит от k - обновим вживую
-    else saveField();            // без обучения render не зовём - сохраним k отдельно
+    if (state.trained) {
+      // считаем «крайние» значения k только на обученной модели -
+      // тогда ребёнок видит, как меняется карта (это проверяет гид)
+      if (state.k === CONFIG.MIN_K) state.stats.kTo1++;
+      if (state.k === CONFIG.MAX_K) state.stats.kTo15++;
+      if (state.k >= 12) state.stats.kHigh++;
+      render(); // тепловая карта зависит от k - обновим вживую
+    } else {
+      saveField();  // без обучения render не зовём - сохраним k отдельно
+      emitStats();
+    }
   });
 
   document.getElementById('color-toggle').onclick = function () {
@@ -291,11 +347,13 @@
   };
   document.getElementById('btn-train').onclick = function () {
     if (!state.points.length) { setStatus('Сначала нанеси точки!'); return; }
-    state.trained = true; setStatus('Модель обучена - смотри тепловую карту! 🧠'); render();
+    state.trained = true; state.stats.trains++;
+    setStatus('Модель обучена - смотри тепловую карту! 🧠'); render();
   };
   document.getElementById('btn-starter').onclick = function () {
     pushHistory();
     state.points = makeStarter(); state.trained = false;
+    state.stats.starters++;
     setStatus('Загружен стартовый датасет (30 точек). Нажми «Обучить»!'); render();
   };
   document.getElementById('btn-test').onclick = startTest;
@@ -308,6 +366,7 @@
     state.points = []; state.testPoints = [];
     state.trained = false; state.testRevealed = false; state.lastAccuracy = null;
     state.history = [];
+    state.stats = sanitizeStats(null); // счётчики авто-проверки тоже с нуля
     saveHistory();
     document.getElementById('answers').innerHTML = '';
     document.getElementById('test-panel').classList.remove('active');
@@ -331,6 +390,7 @@
   });
 
   // ---- Старт ----
+  state.stats = sanitizeStats(null); // нули по умолчанию (loadField перезапишет)
   loadField();   // восстановить точки/k/обучение из прошлой сессии
   loadHistory(); // восстановить стек отмены - Ctrl+Z работает и после F5
   slider.value = state.k;

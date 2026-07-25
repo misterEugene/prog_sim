@@ -70,7 +70,7 @@
   var STAT_KEYS = ['added', 'addedRight', 'erased', 'undo', 'trains',
     'kTo1', 'kTo15', 'kHigh', 'starters', 'clears',
     'fullReveals', 'perfects', 'exports', 'imports',
-    'patternVertical', 'patternIsland', 'patternQuads'];
+    'patternVertical', 'patternIsland', 'patternStripes', 'patternQuads'];
 
   function sanitizeStats(s) {
     var clean = {};
@@ -98,6 +98,11 @@
     patternIsland: {
       name: 'Остров',
       target: function (x, y) { return Math.hypot(x - 300, y - 300) < 150 ? 'red' : 'blue'; },
+      minRecall: 0.7
+    },
+    patternStripes: {
+      name: 'Зебра',
+      target: function (x, y) { return (x < 200 || x > 400) ? 'blue' : 'red'; },
       minRecall: 0.7
     },
     patternQuads: {

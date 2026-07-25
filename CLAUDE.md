@@ -9,7 +9,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 «Собери свой интернет-магазин» (кнопки «Вставить блок» → «Запустить» → «измени сам»).
 
 Структура файлов:
-- `index.html` - разметка платформы; подключает все стили и скрипты.
+- `урок_1.html`, `урок_2.html`, `урок_3.html` - точки входа трёх уроков, все в
+  корне проекта. Уроки 1 и 2 - одна и та же платформа (разметка + `css/` + `js/`),
+  отличаются только подключаемым набором данных (`js/lesson-data.js` vs
+  `js/lesson-data-security.js`). Урок 3 - самостоятельная страница, её ресурсы
+  лежат в `lesson3/` (`lesson3/style.css`, `lesson3/js/*`).
 - `css/` - стили, разнесённые по модулям (`base`, `layout`, `buttons`, `editor`,
   `markdown`, `preview`, `components`, `responsive`). Подключаются `<link>`-ами
   по порядку каскада.
@@ -37,7 +41,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Запуск
 
-Сборки и тестов нет. Открыть `index.html` в браузере, либо отдать каталог статикой
+Сборки и тестов нет. Открыть нужный `урок_N.html` в браузере, либо отдать каталог статикой
 (`python3 -m http.server`) - второе предпочтительнее, т.к. `srcdoc` + `sandbox`
 ведут себя стабильнее по HTTP, чем из `file://`.
 

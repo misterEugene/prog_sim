@@ -69,14 +69,68 @@
   // выполнен ли шаг. Хранятся вместе с полем и переживают перезагрузку.
   var STAT_KEYS = ['added', 'addedRight', 'erased', 'undo', 'trains',
     'kTo1', 'kTo15', 'kHigh', 'starters', 'clears',
-    'fullReveals', 'perfects', 'exports', 'imports'];
+    'fullReveals', 'perfects', 'exports', 'imports',
+    'patternVertical', 'patternIsland', 'patternQuads'];
 
   function sanitizeStats(s) {
     var clean = {};
     STAT_KEYS.forEach(function (key) {
       clean[key] = (s && typeof s[key] === 'number' && s[key] >= 0) ? s[key] : 0;
     });
+    // При каких k ребёнок сдавал секретный тест (для шага «найди лучшее k»).
+    clean.revealKList = (s && Array.isArray(s.revealKList))
+      ? s.revealKList.filter(function (k) { return typeof k === 'number'; })
+      : [];
     return clean;
+  }
+
+  // ---- Узоры для главы «Создатель ИИ» ----
+  // Ребёнок должен так расставить точки, чтобы обученная модель выучила заданную
+  // картину. Проверяем честно: опрашиваем модель по сетке и сравниваем с целевой
+  // функцией. Критерий - полнота (recall) ОБОИХ классов, чтобы «залить всё одним
+  // цветом» не засчитывалось (у залитого поля recall второго класса = 0).
+  var PATTERNS = {
+    patternVertical: {
+      name: 'Мир пополам',
+      target: function (x, y) { return x < 300 ? 'blue' : 'red'; },
+      minRecall: 0.75
+    },
+    patternIsland: {
+      name: 'Остров',
+      target: function (x, y) { return Math.hypot(x - 300, y - 300) < 150 ? 'red' : 'blue'; },
+      minRecall: 0.7
+    },
+    patternQuads: {
+      name: 'Шахматные углы',
+      target: function (x, y) { return ((x < 300) === (y < 300)) ? 'blue' : 'red'; },
+      minRecall: 0.65
+    }
+  };
+
+  function evaluatePatterns() {
+    if (!state.trained || !state.points.length) return;
+    var grid = CONFIG.HEATMAP_GRID;
+    var cell = CONFIG.CANVAS_SIZE / grid;
+    Object.keys(PATTERNS).forEach(function (key) {
+      if (state.stats[key] >= 1) return; // уже выучен - не пересчитываем
+      var p = PATTERNS[key];
+      var okB = 0, totB = 0, okR = 0, totR = 0;
+      for (var gx = 0; gx < grid; gx++) {
+        for (var gy = 0; gy < grid; gy++) {
+          var cx = gx * cell + cell / 2;
+          var cy = gy * cell + cell / 2;
+          var want = p.target(cx, cy);
+          var got = knnPredict(cx, cy, state.points, state.k).label;
+          if (want === 'blue') { totB++; if (got === 'blue') okB++; }
+          else { totR++; if (got === 'red') okR++; }
+        }
+      }
+      var recall = Math.min(okB / totB, okR / totR);
+      if (recall >= p.minRecall) {
+        state.stats[key] = 1;
+        setStatus('🏆 Ура! Твой ИИ выучил узор «' + p.name + '»!');
+      }
+    });
   }
 
   // Снимок для guide.js: счётчики + текущее состояние поля. Кладём в глобальную
@@ -90,6 +144,8 @@
     snap.total = state.points.length;
     snap.trained = state.trained;
     snap.k = state.k;
+    snap.revealKCount = state.stats.revealKList.length;
+    snap.lastAcc = state.lastAccuracy === null ? -1 : state.lastAccuracy;
     window.LESSON3_STATS = snap;
     document.dispatchEvent(new CustomEvent('lesson3:stats', { detail: snap }));
   }
@@ -139,6 +195,7 @@
     drawPoints(ctx, state.points);
     drawTestPoints(ctx, state.testPoints, state.testRevealed);
     updateStats();
+    evaluatePatterns(); // глава «Создатель ИИ»: не выучила ли модель целевой узор
     saveField();
     emitStats();
   }
@@ -254,6 +311,8 @@
     if (filled === CONFIG.TEST_COUNT && !state.testRevealed) {
       state.stats.fullReveals++;
       if (correct === CONFIG.TEST_COUNT) state.stats.perfects++;
+      // запомним, при каком k сдан тест (шаг «найди лучшее k»)
+      if (state.stats.revealKList.indexOf(state.k) === -1) state.stats.revealKList.push(state.k);
     }
     state.lastAccuracy = correct;
     state.testRevealed = true;

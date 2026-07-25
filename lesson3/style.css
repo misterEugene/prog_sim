@@ -302,6 +302,33 @@ input[type="range"] { width: 100%; accent-color: #00d4ff; }
 .g-quiz-result { margin-top: 8px; font-size: 14px; color: #ffd86b; min-height: 18px; }
 .g-quiz-result--ok { color: #7fe6a6; font-weight: bold; }
 
+/* «Отчёт аналитика»: числовые поля, сверяемые с панелью */
+.g-report {
+  margin: 10px 0; padding: 10px 12px;
+  background: #0f1320; border: 1px solid #2a3148; border-radius: 10px;
+}
+.g-report-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin: 6px 0; padding: 6px 8px; font-size: 14px; color: #d7dcec;
+  background: #161b29; border: 1px solid #2a3148; border-radius: 8px;
+}
+.g-report-row input {
+  width: 70px; flex: 0 0 auto; padding: 6px 8px; font-size: 15px; text-align: center;
+  background: #12151e; color: #e6e9f2; border: 1px solid #2a3148; border-radius: 8px;
+}
+.g-report-row--wrong { border-color: #ff4757; box-shadow: 0 0 10px rgba(255, 71, 87, 0.35); }
+.g-report-row--right { border-color: #2ecc71; }
+.g-report-check {
+  display: block; width: 100%; margin-top: 6px;
+  padding: 10px 14px; font-size: 15px; font-weight: bold;
+  color: #0b0d14; background: #00d4ff; border: none; border-radius: 10px;
+  cursor: pointer; box-shadow: 0 0 14px rgba(0, 212, 255, 0.4);
+}
+.g-report-check:hover { background: #4ce2ff; }
+.g-report-check:disabled { background: #2a3148; color: #8b92a8; cursor: not-allowed; box-shadow: none; }
+.g-report-result { margin-top: 8px; font-size: 14px; color: #ffd86b; min-height: 18px; }
+.g-report-result--ok { color: #7fe6a6; font-weight: bold; }
+
 .g-step-badge {
   margin-top: 8px; text-align: center; font-weight: bold;
   color: #2ecc71; font-size: 14px;

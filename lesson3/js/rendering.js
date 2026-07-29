@@ -73,6 +73,85 @@ function drawAxes(ctx) {
   }
 }
 
+// ---- Слой-подсказка (отдельный canvas поверх поля) ----
+// Тут рисуется всё, что зависит только от курсора: прицел с координатами и
+// подписи точек в режиме инспектора. Отдельный слой нужен, чтобы движение мыши
+// не заставляло пересчитывать тепловую карту.
+
+// Табличка с текстом (тёмная плашка + светлые буквы), чтобы подписи читались
+// на любом фоне. Сама подгоняется, чтобы не уехать за край поля.
+function drawTag(ctx, text, x, y, color) {
+  ctx.font = 'bold 13px Arial, sans-serif';
+  var padX = 6, padY = 4;
+  var w = ctx.measureText(text).width + padX * 2;
+  var h = 20;
+  var size = CONFIG.CANVAS_SIZE;
+  var left = Math.min(Math.max(x, 2), size - w - 2);
+  var top = Math.min(Math.max(y, 2), size - h - 2);
+  ctx.fillStyle = 'rgba(10, 13, 20, 0.85)';
+  ctx.strokeStyle = color || CONFIG.COLORS.crosshair;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.rect(left + 0.5, top + 0.5, w, h);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = color || CONFIG.COLORS.crosshair;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, left + padX, top + h / 2 + 1);
+}
+
+function clearOverlay(ctx) {
+  ctx.clearRect(0, 0, CONFIG.CANVAS_SIZE, CONFIG.CANVAS_SIZE);
+}
+
+// Прицел под курсором: пунктир до осей + координаты будущей точки у самого курсора.
+function drawCrosshair(ctx, pos, withTag) {
+  var size = CONFIG.CANVAS_SIZE;
+  ctx.save();
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = CONFIG.COLORS.crosshair;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pos.x, 0); ctx.lineTo(pos.x, size);
+  ctx.moveTo(0, pos.y); ctx.lineTo(size, pos.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // маленькое кольцо в самой точке будущего клика
+  ctx.beginPath();
+  ctx.arc(pos.x, pos.y, CONFIG.POINT_RADIUS + 3, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+  // Подпись у курсора не нужна, когда курсор стоит на точке: её координаты уже
+  // подписаны инспектором, и две плашки наложились бы друг на друга.
+  if (withTag !== false) {
+    drawTag(ctx, '(' + pxToUnit(pos.x) + ', ' + pxToUnit(pos.y) + ')',
+      pos.x + 14, pos.y + 14);
+  }
+}
+
+// Инспектор: у каждой точки её координаты; выделенные обведены, точка под
+// курсором - крупная подпись.
+function drawPointLabels(ctx, points, selected, hoverIdx) {
+  for (var i = 0; i < points.length; i++) {
+    var p = points[i];
+    var isSel = selected.indexOf(p) !== -1; // в selected лежат сами точки
+    var color = p.label === 'blue' ? CONFIG.COLORS.blue : CONFIG.COLORS.red;
+    if (isSel || i === hoverIdx) {
+      ctx.save();
+      ctx.strokeStyle = isSel ? CONFIG.COLORS.selected : CONFIG.COLORS.crosshair;
+      ctx.lineWidth = isSel ? 3 : 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, CONFIG.POINT_RADIUS + 6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+    var text = '(' + pxToUnit(p.x) + ', ' + pxToUnit(p.y) + ')';
+    drawTag(ctx, text, p.x + CONFIG.POINT_RADIUS + 4, p.y - 24,
+      isSel ? CONFIG.COLORS.selected : color);
+  }
+}
+
 // Тепловая карта: поле бьётся на сетку, каждая ячейка красится цветом
 // предсказанного класса с прозрачностью по уверенности KNN.
 function drawHeatmap(ctx, points, k) {

@@ -56,13 +56,45 @@ body {
 .btn-undo { padding: 8px 14px; font-size: 14px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
 .btn:disabled:hover { background: #222840; transform: none; }
-#field {
+/* Поле и слой-подсказка лежат друг на друге */
+.field-stack { position: relative; line-height: 0; }
+#field, #overlay {
   width: 600px; height: 600px; max-width: 90vw; max-height: 90vw;
+}
+#field {
   background: #12151e; border: 2px solid #2a3148; border-radius: 12px;
   cursor: crosshair; touch-action: none;
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
 }
+/* Слой прицела/подписей: события мыши уходят сквозь него на #field */
+#overlay {
+  position: absolute; left: 0; top: 0;
+  border: 2px solid transparent; border-radius: 12px;
+  pointer-events: none;
+}
 .hint { color: #8b92a8; font-size: 14px; margin: 10px 0 0; }
+
+/* ---- Инспектор точек ---- */
+.inspector-panel {
+  align-self: stretch; margin-top: 12px;
+  background: #1b2030; border: 1px solid #2a3148; border-radius: 10px;
+  padding: 12px 14px;
+}
+.inspector-panel[hidden] { display: none; }
+.inspector-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.btn-small { padding: 6px 10px; font-size: 13px; }
+.selected-list {
+  list-style: none; margin: 10px 0 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 8px;
+  font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: 14px;
+}
+.selected-list li {
+  background: #12151e; border: 1px solid #3a4468; border-radius: 8px;
+  padding: 5px 9px; color: #e6ebff;
+}
+.selected-list li.empty {
+  border-style: dashed; color: #8b92a8; font-family: inherit;
+}
 
 /* ---- Панель управления ---- */
 .panel { display: flex; flex-direction: column; gap: 12px; width: 260px; }
@@ -102,6 +134,14 @@ input[type="range"] { width: 100%; accent-color: #00d4ff; }
 }
 .btn.eraser-on:hover { background: #f3d176; }
 #field.erasing { cursor: cell; }
+
+/* Инспектор включён - кнопка подсвечена бирюзовым, у поля курсор-«лупа» */
+.btn.inspector-on {
+  background: #6ee7ff; color: #06212b; font-weight: bold;
+  border-color: #6ee7ff; box-shadow: 0 0 14px rgba(110, 231, 255, 0.5);
+}
+.btn.inspector-on:hover { background: #93eeff; }
+#field.inspecting { cursor: help; }
 
 .import-label { margin: 0; }
 

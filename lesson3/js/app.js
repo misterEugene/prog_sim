@@ -5,6 +5,8 @@
 (function () {
   const canvas = document.getElementById('field');
   const ctx = canvas.getContext('2d');
+  const overlay = document.getElementById('overlay');
+  const octx = overlay.getContext('2d');
   const slider = document.getElementById('k-slider');
   const kValue = document.getElementById('k-value');
 
@@ -18,6 +20,9 @@
     lastAccuracy: null,
     history: [],  // снимки points для отмены (Ctrl+Z / кнопка «Отменить»)
     eraser: false, // режим ластика: клик по точке удаляет её
+    inspector: false, // режим инспектора: клик по точке выделяет её (не рисует)
+    selected: [],  // выделенные инспектором точки (ссылки на объекты из points)
+    hover: null,   // позиция курсора над полем в px ({x, y}) или null
     stats: null    // счётчики действий для авто-проверки шагов гида (см. sanitizeStats)
   };
 
@@ -288,6 +293,8 @@
     drawTestPoints(ctx, state.testPoints, state.testRevealed);
     updateStats();
     evaluatePatterns(); // глава «Создатель ИИ»: не выучила ли модель целевой узор
+    if (pruneSelection()) renderSelection(); // выделенные точки могли исчезнуть
+    renderOverlay();    // подписи инспектора зависят от набора точек
     saveField();
     emitStats();
   }
@@ -324,16 +331,108 @@
 
   // ---- Координаты курсора над полем ----
   // Показываем, куда именно попадёт точка: инструкции в гиде говорят координаты
-  // («около (20, 15)»), и ребёнок сверяет их с этим табло.
+  // («около (20, 15)»), и ребёнок сверяет их с прицелом у курсора и табло.
   const coordOut = document.getElementById('coord-readout');
 
   function showCoords(e) {
-    const pos = canvasPos(e);
-    coordOut.textContent = 'x: ' + pxToUnit(pos.x) + '   y: ' + pxToUnit(pos.y);
+    state.hover = canvasPos(e);
+    coordOut.textContent =
+      'x: ' + pxToUnit(state.hover.x) + '   y: ' + pxToUnit(state.hover.y);
+    renderOverlay();
   }
 
   function hideCoords() {
+    state.hover = null;
     coordOut.textContent = 'x: -   y: -';
+    renderOverlay();
+  }
+
+  // ---- Инспектор точек ----
+  // Отдельный режим: клик не рисует, а выделяет точку; у всех точек видны их
+  // координаты. Нужен, чтобы проверить «а куда я на самом деле поставил точку».
+
+  // Индекс точки под курсором (или -1).
+  function pointAt(pos) {
+    let bestI = -1, bestD = CONFIG.POINT_RADIUS + 8;
+    for (let i = 0; i < state.points.length; i++) {
+      const d = Math.hypot(state.points[i].x - pos.x, state.points[i].y - pos.y);
+      if (d <= bestD) { bestD = d; bestI = i; }
+    }
+    return bestI;
+  }
+
+  // Слой поверх поля: прицел под курсором + подписи точек в режиме инспектора.
+  function renderOverlay() {
+    clearOverlay(octx);
+    let hoverIdx = -1;
+    if (state.inspector) {
+      hoverIdx = state.hover ? pointAt(state.hover) : -1;
+      drawPointLabels(octx, state.points, state.selected, hoverIdx);
+    }
+    if (state.hover) drawCrosshair(octx, state.hover, hoverIdx === -1);
+  }
+
+  // Список выделенных точек с координатами (под полем).
+  function renderSelection() {
+    const box = document.getElementById('selected-list');
+    box.innerHTML = '';
+    if (!state.selected.length) {
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = 'Пока ничего не выделено - щёлкни по точке на поле.';
+      box.appendChild(li);
+      return;
+    }
+    state.selected.forEach(function (p, n) {
+      const li = document.createElement('li');
+      li.textContent = (n + 1) + ') ' + (p.label === 'blue' ? '🔵' : '🔴') +
+        ' x: ' + pxToUnit(p.x) + '  y: ' + pxToUnit(p.y);
+      box.appendChild(li);
+    });
+  }
+
+  // Выделяем сами объекты точек, поэтому «уехавшие» точки (стёртые ластиком,
+  // исчезнувшие после отмены/импорта) отваливаются из выделения сами - см.
+  // pruneSelection() в render().
+  function pruneSelection() {
+    const before = state.selected.length;
+    state.selected = state.selected.filter(function (p) {
+      return state.points.indexOf(p) !== -1;
+    });
+    return state.selected.length !== before;
+  }
+
+  function clearSelection() {
+    state.selected = [];
+    renderSelection();
+    renderOverlay();
+  }
+
+  function toggleSelect(e) {
+    const idx = pointAt(canvasPos(e));
+    if (idx === -1) {
+      setStatus('Тут нет точки - наведись прямо на кружок 🔎');
+      return;
+    }
+    const p = state.points[idx];
+    const at = state.selected.indexOf(p);
+    if (at === -1) state.selected.push(p);
+    else state.selected.splice(at, 1);
+    setStatus(at === -1
+      ? '🔎 Точка выделена: x = ' + pxToUnit(p.x) + ', y = ' + pxToUnit(p.y)
+      : 'Выделение снято с точки (' + pxToUnit(p.x) + ', ' + pxToUnit(p.y) + ')');
+    renderSelection();
+    renderOverlay();
+  }
+
+  function updateInspector() {
+    const btn = document.getElementById('inspector-toggle');
+    btn.textContent = state.inspector ? '🔎 Инспектор: ВКЛ' : '🔎 Инспектор: выкл';
+    btn.classList.toggle('inspector-on', state.inspector);
+    canvas.classList.toggle('inspecting', state.inspector);
+    document.getElementById('inspector-panel').hidden = !state.inspector;
+    renderSelection();
+    renderOverlay();
   }
 
   // ---- Удаление точки кликом (режим ластика) ----
@@ -485,6 +584,7 @@
 
   // ---- Привязка событий ----
   canvas.addEventListener('click', function (e) {
+    if (state.inspector) { toggleSelect(e); return; }
     if (state.eraser) { eraseAt(e); return; }
     addPoint(e, state.activeColor);
   });
@@ -492,6 +592,7 @@
   canvas.addEventListener('mouseleave', hideCoords);
   canvas.addEventListener('contextmenu', function (e) {
     e.preventDefault();
+    if (state.inspector) { toggleSelect(e); return; }
     if (state.eraser) { eraseAt(e); return; }
     addPoint(e, other(state.activeColor), true);
   });
@@ -515,8 +616,23 @@
   document.getElementById('color-toggle').onclick = function () {
     state.activeColor = other(state.activeColor); updateToggle();
   };
+  document.getElementById('inspector-toggle').onclick = function () {
+    state.inspector = !state.inspector;
+    // Инспектор и ластик - разные режимы клика, вместе включать нельзя
+    if (state.inspector && state.eraser) { state.eraser = false; updateEraser(); }
+    updateInspector();
+    setStatus(state.inspector
+      ? 'Режим инспектора 🔎 - у точек видны координаты; щёлкай по точкам, чтобы выделять их. Рисование пока выключено.'
+      : 'Инспектор выключен - снова рисуем точки 🔵🔴');
+  };
+  document.getElementById('btn-clear-selection').onclick = function () {
+    clearSelection();
+    setStatus('Выделение снято');
+  };
   document.getElementById('eraser-toggle').onclick = function () {
-    state.eraser = !state.eraser; updateEraser();
+    state.eraser = !state.eraser;
+    if (state.eraser && state.inspector) { state.inspector = false; updateInspector(); }
+    updateEraser();
     setStatus(state.eraser
       ? 'Режим ластика 🧽 - кликай по точкам, чтобы удалять их. Выключи кнопку, чтобы снова рисовать.'
       : 'Ластик выключен - снова рисуем точки 🔵🔴');
@@ -548,6 +664,7 @@
     state.points = []; state.testPoints = [];
     state.trained = false; state.testRevealed = false; state.lastAccuracy = null;
     state.history = [];
+    state.selected = [];
     state.stats = sanitizeStats(null); // счётчики авто-проверки тоже с нуля
     saveHistory();
     document.getElementById('answers').innerHTML = '';
@@ -582,6 +699,7 @@
   kValue.textContent = state.k;
   updateToggle();
   updateEraser();
+  updateInspector();
   updateUndoBtn();
   hideCoords();
   setStatus(state.points.length

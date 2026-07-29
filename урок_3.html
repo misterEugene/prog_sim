@@ -26,15 +26,32 @@
         <button id="btn-undo" class="btn btn-undo" title="Отменить последнее действие (Ctrl+Z, на macOS ⌘+Z или Ctrl+U)" disabled>↩ Отменить</button>
         <span id="coord-readout" class="coord-readout" title="Координаты курсора на поле">x: -   y: -</span>
       </div>
-      <canvas id="field" width="600" height="600"></canvas>
+      <!-- Поле + прозрачный слой поверх него: на нём рисуются прицел с
+           координатами под курсором и подписи точек (инспектор). Отдельный
+           canvas нужен, чтобы движение мыши не пересчитывало тепловую карту. -->
+      <div class="field-stack">
+        <canvas id="field" width="600" height="600"></canvas>
+        <canvas id="overlay" width="600" height="600" aria-hidden="true"></canvas>
+      </div>
       <p class="hint">Левая кнопка мыши - точка активного цвета, правая - другого цвета. Включи 🧽 Ластик, чтобы удалять точки.</p>
-      <p class="hint">📐 По краям поля - <b>координаты</b> от 0 до 100: <b>x</b> считается слева направо, <b>y</b> - сверху вниз. Табло над полем показывает, куда попадёт точка.</p>
+      <p class="hint">📐 По краям поля - <b>координаты</b> от 0 до 100: <b>x</b> считается слева направо, <b>y</b> - сверху вниз. Наведи мышку на поле - прицел покажет координаты будущей точки прямо у курсора.</p>
+
+      <!-- Инспектор: список выделенных точек с их координатами -->
+      <div id="inspector-panel" class="inspector-panel" hidden>
+        <div class="inspector-head">
+          <b>🔎 Выделенные точки</b>
+          <button id="btn-clear-selection" class="btn btn-small">Снять выделение</button>
+        </div>
+        <ul id="selected-list" class="selected-list"></ul>
+        <p class="hint">Щёлкай по точкам, чтобы выделять их и смотреть координаты. Повторный щелчок снимает выделение.</p>
+      </div>
     </section>
 
     <!-- Панель управления -->
     <aside class="panel">
       <button id="color-toggle" class="btn toggle-blue">🔵 Рисую: Синий</button>
       <button id="eraser-toggle" class="btn">🧽 Ластик: выкл</button>
+      <button id="inspector-toggle" class="btn" title="Показать координаты точек и выделять их щелчком">🔎 Инспектор: выкл</button>
 
       <div class="control">
         <label for="k-slider">Соседей <b>k</b>: <span id="k-value">5</span></label>

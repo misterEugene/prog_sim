@@ -94,6 +94,37 @@
     </div><!-- /.work-col -->
   </div><!-- /.page -->
 
+  <!-- Модальное окно подтверждения «Начать заново» (как в уроках 1–2): чтобы
+       случайно не стереть весь прогресс, ребёнок вводит фразу-подтверждение
+       ВРУЧНУЮ. Логика - в lesson3/js/guide.js. -->
+  <div id="reset-modal" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
+      <h2 id="reset-modal-title" class="modal-title">⚠ Начать урок заново?</h2>
+      <p class="modal-text">
+        Ты точно уверен, что хочешь начать заново? Все точки на поле, прогресс по
+        шагам, сданные отчёты и экзамены будут удалены, а это действие
+        <strong>необратимо</strong>.
+      </p>
+      <p class="modal-text">Чтобы подтвердить, введи в поле ниже фразу:</p>
+      <p id="reset-modal-phrase" class="modal-phrase"></p>
+      <input
+        type="text"
+        id="reset-modal-input"
+        class="modal-input"
+        placeholder="Введи фразу точно так же"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false">
+      <div class="modal-actions">
+        <button id="reset-modal-cancel" type="button" class="btn">Отмена</button>
+        <button id="reset-modal-confirm" type="button" class="btn btn-danger" disabled>
+          Да, начать заново
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Скрипты: классические, по порядку. config → knn → tests → rendering → app,
        guide.js (панель шагов) - последним, он самодостаточен. -->
   <script src="lesson3/js/config.js"></script>

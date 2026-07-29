@@ -1761,6 +1761,14 @@
     ].join("\n")
   };
 
+  // Главы урока: по ним футер показывает прогресс отдельно (from/to - индексы
+  // шагов включительно). При добавлении шагов не забудь обновить границы.
+  var CHAPTERS = [
+    { name: "🎓 Ученик", from: 0, to: 15 },
+    { name: "🏗 Создатель ИИ", from: 16, to: 27 },
+    { name: "🔬 Аналитик", from: 28, to: 36 }
+  ];
+
   // ---------------------------------------------------------- мини-Markdown
   function escapeHtml(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -2089,6 +2097,151 @@
     parts.push('<button class="g-reset" type="button">↺ Начать заново</button>');
 
     container.innerHTML = parts.join("");
+    renderFooter();
+  }
+
+  // ------------------------------------------------- «Начать заново» с защитой
+  // Кнопка доступна ВСЕГДА (в футере и в конце списка шагов), поэтому одного
+  // клика недостаточно: как в уроках 1–2, ребёнок вручную перепечатывает фразу.
+  var RESET_CONFIRM_PHRASE =
+    "Да, я уверен, что хочу начать заново и знаю, что это необратимо";
+
+  function resetEls() {
+    return {
+      modal: document.getElementById("reset-modal"),
+      phrase: document.getElementById("reset-modal-phrase"),
+      input: document.getElementById("reset-modal-input"),
+      cancel: document.getElementById("reset-modal-cancel"),
+      confirm: document.getElementById("reset-modal-confirm")
+    };
+  }
+
+  function openResetModal() {
+    var r = resetEls();
+    if (!r.modal) return;
+    r.phrase.textContent = RESET_CONFIRM_PHRASE;
+    r.input.value = "";
+    r.confirm.disabled = true;
+    r.modal.hidden = false;
+    r.input.focus();
+  }
+
+  function closeResetModal() {
+    var r = resetEls();
+    if (r.modal) r.modal.hidden = true;
+  }
+
+  function validateResetPhrase() {
+    var r = resetEls();
+    r.confirm.disabled = r.input.value.trim() !== RESET_CONFIRM_PHRASE;
+  }
+
+  // Полный сброс: прогресс шагов, базовые значения счётчиков, сданные викторины
+  // и отчёты + поле (его чистит app.js по событию lesson3:restart).
+  function doRestart() {
+    done = [];
+    saveDone(done);
+    baselines = {};
+    saveBaselines();
+    quizDone = {};
+    reportDone = {};
+    try { localStorage.removeItem(QUIZ_KEY); } catch (e) { /* приватный режим */ }
+    try { localStorage.removeItem(REPORT_KEY); } catch (e) { /* приватный режим */ }
+    if (typeof CustomEvent === "function") {
+      document.dispatchEvent(new CustomEvent("lesson3:restart"));
+    }
+    render();
+    if (container.scrollIntoView) container.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function confirmReset() {
+    var r = resetEls();
+    if (r.input.value.trim() !== RESET_CONFIRM_PHRASE) return;
+    closeResetModal();
+    doRestart();
+  }
+
+  (function bindResetModal() {
+    var r = resetEls();
+    if (!r.modal) return;
+    r.input.addEventListener("input", validateResetPhrase);
+    r.cancel.addEventListener("click", closeResetModal);
+    r.confirm.addEventListener("click", confirmReset);
+    // Enter подтверждает (если фраза верна), Escape закрывает окно
+    r.input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); confirmReset(); }
+      else if (e.key === "Escape") { e.preventDefault(); closeResetModal(); }
+    });
+    // клик по затемнённому фону - закрыть без сброса
+    r.modal.addEventListener("click", function (e) {
+      if (e.target === r.modal) closeResetModal();
+    });
+  })();
+
+  // ---------------------------------------------------------- прилипающий футер
+  // Всегда виден внизу окна: общий прогресс урока + прогресс по главам + кнопка
+  // «к активному шагу». Гид - длинная колонка, поэтому «сколько всего осталось»
+  // иначе приходится искать прокруткой.
+  var footer = null;
+
+  function ensureFooter() {
+    if (footer) return footer;
+    footer = document.createElement("div");
+    footer.className = "g-footer";
+    footer.innerHTML =
+      '<div class="g-footer-main">' +
+        '<span class="g-footer-title">🧠 Урок 3</span>' +
+        '<div class="g-footer-bar"><div class="g-footer-fill"></div></div>' +
+        '<span class="g-footer-text"></span>' +
+      "</div>" +
+      '<div class="g-footer-chapters"></div>' +
+      '<button class="g-footer-jump" type="button">↓ К текущему шагу</button>' +
+      '<button class="g-footer-reset" type="button">↺ Начать заново</button>';
+    document.body.appendChild(footer);
+    footer.querySelector(".g-footer-jump").addEventListener("click", scrollToActive);
+    footer.querySelector(".g-footer-reset").addEventListener("click", openResetModal);
+    return footer;
+  }
+
+  function scrollToActive() {
+    var active = firstUndone();
+    var target = active < steps.length
+      ? document.getElementById("g-step-" + active)
+      : container.querySelector(".g-outro");
+    if (target && target.scrollIntoView) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  function renderFooter() {
+    var f = ensureFooter();
+    var total = steps.length;
+    var doneCount = done.length;
+    var active = firstUndone();
+    var pct = Math.round((doneCount / total) * 100);
+
+    f.querySelector(".g-footer-fill").style.width = pct + "%";
+    f.querySelector(".g-footer-text").innerHTML = doneCount >= total
+      ? "🎉 Урок пройден полностью: <b>" + total + " из " + total + "</b>"
+      : "Шаг <b>" + (active + 1) + "</b> из " + total +
+        " · выполнено <b>" + doneCount + "</b> (" + pct + "%)";
+
+    var chapters = CHAPTERS.map(function (ch) {
+      var count = ch.to - ch.from + 1;
+      var doneHere = 0;
+      for (var i = ch.from; i <= ch.to; i++) if (isDone(i)) doneHere++;
+      var chPct = Math.round((doneHere / count) * 100);
+      var cls = doneHere >= count ? " g-chapter--done"
+        : (active >= ch.from && active <= ch.to ? " g-chapter--active" : "");
+      return '<div class="g-chapter' + cls + '">' +
+        '<span class="g-chapter-name">' + ch.name + ": <b>" + doneHere + " / " + count + "</b></span>" +
+        '<span class="g-chapter-bar"><span class="g-chapter-fill" style="width:' + chPct + '%"></span></span>' +
+        "</div>";
+    }).join("");
+    f.querySelector(".g-footer-chapters").innerHTML = chapters;
+
+    var jump = f.querySelector(".g-footer-jump");
+    jump.textContent = doneCount >= total ? "↓ К поздравлению" : "↓ К текущему шагу";
   }
 
   // Точечное обновление чек-листа активного шага (без перерисовки всего гида -
@@ -2250,23 +2403,10 @@
       return;
     }
 
+    // «Начать заново» в конце списка шагов - та же защита, что и в футере:
+    // модальное окно с ручным вводом фразы (см. openResetModal).
     if (e.target.classList && e.target.classList.contains("g-reset")) {
-      if (window.confirm("Начать урок заново? Прогресс сбросится, и поле очистится.")) {
-        done = [];
-        saveDone(done);
-        baselines = {};
-        saveBaselines();
-        quizDone = {};
-        reportDone = {};
-        try { localStorage.removeItem(QUIZ_KEY); } catch (err) { }
-        try { localStorage.removeItem(REPORT_KEY); } catch (err) { }
-        // Очистить поле (точки) - этим заведует app.js, шлём ему событие.
-        if (typeof document !== "undefined" && typeof CustomEvent === "function") {
-          document.dispatchEvent(new CustomEvent("lesson3:restart"));
-        }
-        render();
-        container.scrollIntoView ? container.scrollIntoView({ behavior: "smooth", block: "start" }) : null;
-      }
+      openResetModal();
     }
   });
 

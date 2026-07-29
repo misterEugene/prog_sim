@@ -462,3 +462,100 @@ input[type="range"] { width: 100%; accent-color: #00d4ff; }
     order: -1;
   }
 }
+
+/* ---- Прилипающий футер прогресса (виден всегда, на всю ширину окна) ---- */
+body { padding-bottom: 92px; }   /* место под футер, чтобы он ничего не закрывал */
+
+.g-footer {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 10px 20px;
+  background: rgba(18, 21, 30, 0.96);
+  border-top: 1px solid #2a3148;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+}
+.g-footer-main { display: flex; align-items: center; gap: 12px; flex: 1 1 320px; min-width: 260px; }
+.g-footer-title { font-weight: bold; color: #00d4ff; font-size: 15px; white-space: nowrap; }
+.g-footer-bar {
+  flex: 1 1 auto; height: 12px; min-width: 120px;
+  background: #1b2030; border: 1px solid #2a3148; border-radius: 999px; overflow: hidden;
+}
+.g-footer-fill {
+  height: 100%; width: 0;
+  background: linear-gradient(90deg, #00d4ff, #4ce2ff);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.6); transition: width .3s ease;
+}
+.g-footer-text { font-size: 14px; color: #d7dcec; white-space: nowrap; }
+.g-footer-text b { color: #ffd86b; }
+
+/* Главы: по чипу на главу, у каждой своя мини-полоска */
+.g-footer-chapters { display: flex; gap: 10px; flex-wrap: wrap; }
+.g-chapter {
+  display: flex; flex-direction: column; gap: 4px;
+  background: #1b2030; border: 1px solid #2a3148; border-radius: 9px;
+  padding: 5px 10px; min-width: 132px;
+}
+.g-chapter--active { border-color: #00d4ff; }
+.g-chapter--done { border-color: #2ecc71; }
+.g-chapter-name { font-size: 12px; color: #aab2c8; white-space: nowrap; }
+.g-chapter-name b { color: #e6ebff; }
+.g-chapter-bar { height: 6px; background: #0f1320; border-radius: 999px; overflow: hidden; }
+.g-chapter-fill { height: 100%; width: 0; background: #4ce2ff; transition: width .3s ease; }
+.g-chapter--done .g-chapter-fill { background: #2ecc71; }
+
+.g-footer-jump {
+  border: 1px solid #00d4ff; background: transparent; color: #00d4ff;
+  border-radius: 9px; padding: 8px 12px; font-size: 14px; cursor: pointer;
+  white-space: nowrap;
+}
+.g-footer-jump:hover { background: rgba(0, 212, 255, 0.12); }
+
+@media (max-width: 900px) {
+  body { padding-bottom: 150px; }
+  .g-footer-chapters { width: 100%; }
+}
+
+/* Колонка-гид не должна прятаться под футером */
+.guide-col { max-height: calc(100vh - 120px); }
+
+/* ---- Модальное окно «Начать заново» (защита вводом фразы, как в уроках 1-2) ---- */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+}
+.modal-overlay[hidden] { display: none; }
+.modal {
+  background: #1b2030; border: 1px solid #2a3148; border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  padding: 22px; width: 100%; max-width: 520px;
+}
+.modal-title { margin: 0 0 10px; font-size: 20px; color: #ff9f43; }
+.modal-text { margin: 8px 0; font-size: 15px; color: #d7dcec; }
+.modal-phrase {
+  margin: 10px 0; padding: 10px 12px;
+  background: #0f1320; border: 1px dashed #3a4468; border-radius: 8px;
+  font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: 14px;
+  color: #ffd86b; user-select: all;
+}
+.modal-input {
+  width: 100%; padding: 10px 12px; font-size: 15px;
+  background: #12151e; color: #e6e9f2;
+  border: 1px solid #2a3148; border-radius: 8px;
+}
+.modal-input:focus { outline: none; border-color: #00d4ff; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.btn-danger {
+  border-color: #ff4757; color: #fff;
+  background: #b3202c;
+}
+.btn-danger:hover:not(:disabled) { background: #d9303d; }
+
+/* Кнопка «Начать заново» в футере - красная рамка, чтобы не путать с прогрессом */
+.g-footer-reset {
+  border: 1px solid #ff4757; background: transparent; color: #ff8a94;
+  border-radius: 9px; padding: 8px 12px; font-size: 14px; cursor: pointer;
+  white-space: nowrap;
+}
+.g-footer-reset:hover { background: rgba(255, 71, 87, 0.14); color: #fff; }

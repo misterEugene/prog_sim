@@ -563,6 +563,17 @@
     render();
   }
 
+  // Закрыть панель теста: серые точки убираем с поля, панель прячем. Результат
+  // последнего теста («Точность теста») сохраняем - он нужен для отчётов.
+  function closeTest() {
+    state.testPoints = [];
+    state.testRevealed = false;
+    document.getElementById('answers').innerHTML = '';
+    document.getElementById('test-panel').classList.remove('active');
+    setStatus('Тест закрыт. Можно снова рисовать точки и обучать модель 🔵🔴');
+    render();
+  }
+
   // ---- Очистка / экспорт / импорт ----
   function clearAll() {
     pushHistory();
@@ -685,6 +696,7 @@
   };
   document.getElementById('btn-test').onclick = startTest;
   document.getElementById('btn-reveal').onclick = revealAnswers;
+  document.getElementById('btn-close-test').onclick = closeTest;
   document.getElementById('btn-clear').onclick = clearAll;
   document.getElementById('btn-undo').onclick = undo;
 

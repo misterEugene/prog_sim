@@ -196,6 +196,7 @@ input[type="range"] { width: 100%; accent-color: #00d4ff; }
 .test-panel { display: none; max-width: 720px; margin: 0 auto; text-align: center; }
 .test-panel.active { display: block; }
 .test-panel h2 { color: #ff4757; font-size: 20px; }
+.test-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
 .answers {
   display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 16px 0;

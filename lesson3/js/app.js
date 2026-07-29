@@ -197,6 +197,7 @@
     clearCanvas(ctx);
     if (state.trained) drawHeatmap(ctx, state.points, state.k);
     drawGrid(ctx);
+    drawAxes(ctx); // координатные «десятки» и подписи 0..100 по краям
     drawPoints(ctx, state.points);
     drawTestPoints(ctx, state.testPoints, state.testRevealed);
     updateStats();
@@ -230,7 +231,23 @@
     state.trained = false; // данные изменились - нужно переобучить
     state.stats.added++;
     if (viaRightClick) state.stats.addedRight++;
+    setStatus((label === 'blue' ? '🔵' : '🔴') + ' Точка поставлена в координатах (' +
+      pxToUnit(pos.x) + ', ' + pxToUnit(pos.y) + ')');
     render();
+  }
+
+  // ---- Координаты курсора над полем ----
+  // Показываем, куда именно попадёт точка: инструкции в гиде говорят координаты
+  // («около (20, 15)»), и ребёнок сверяет их с этим табло.
+  const coordOut = document.getElementById('coord-readout');
+
+  function showCoords(e) {
+    const pos = canvasPos(e);
+    coordOut.textContent = 'x: ' + pxToUnit(pos.x) + '   y: ' + pxToUnit(pos.y);
+  }
+
+  function hideCoords() {
+    coordOut.textContent = 'x: -   y: -';
   }
 
   // ---- Удаление точки кликом (режим ластика) ----
@@ -378,6 +395,8 @@
     if (state.eraser) { eraseAt(e); return; }
     addPoint(e, state.activeColor);
   });
+  canvas.addEventListener('mousemove', showCoords);
+  canvas.addEventListener('mouseleave', hideCoords);
   canvas.addEventListener('contextmenu', function (e) {
     e.preventDefault();
     if (state.eraser) { eraseAt(e); return; }
@@ -441,8 +460,11 @@
 
   // Ctrl+Z (или ⌘+Z) - отмена. e.code === 'KeyZ' срабатывает и в русской
   // раскладке (где физическая клавиша Z даёт «я»). Shift+Ctrl+Z не трогаем.
+  // Ctrl+U - запасное сочетание: на macOS ⌘+Z иногда перехватывает браузер
+  // (страница «уходит» вместо отмены), а Ctrl (не ⌘) там свободен.
   document.addEventListener('keydown', function (e) {
-    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.code === 'KeyZ') {
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey &&
+        (e.code === 'KeyZ' || e.code === 'KeyU')) {
       e.preventDefault();
       undo();
     }
@@ -462,6 +484,7 @@
   updateToggle();
   updateEraser();
   updateUndoBtn();
+  hideCoords();
   setStatus(state.points.length
     ? 'С возвращением! Твои точки на месте (' + state.points.length + '). Продолжай 👇'
     : 'Привет! Нанеси точки или загрузи стартовый датасет 👇');

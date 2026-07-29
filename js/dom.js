@@ -30,6 +30,9 @@ function cacheDom() {
   els.resetBtn = document.getElementById("reset-btn");
   els.hintBtn = document.getElementById("hint-btn");
   els.downloadBtn = document.getElementById("download-btn");
+  // Стрелки отмены/повтора в ряду вкладок (альтернатива Ctrl+Z)
+  els.undoBtn = document.getElementById("undo-btn");
+  els.redoBtn = document.getElementById("redo-btn");
   // Раскладка: колонки и разделители (перетаскивание ширины, сворачивание)
   els.layout = document.getElementById("layout");
   els.colTask = document.getElementById("col-task");

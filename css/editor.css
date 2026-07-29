@@ -27,6 +27,34 @@
   background: var(--bg-elevated);
 }
 
+/* Кнопки-стрелки «отменить / вернуть» в ряду вкладок. Нужны как надёжная
+   альтернатива Ctrl+Z: на macOS ⌘+Z иногда перехватывает браузер. */
+.hist-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;        /* прижать группу к правому краю ряда вкладок */
+  padding-left: 8px;
+}
+
+.hist-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.hist-btn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.hist-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 /* ===== Область содержимого ===== */
 .content {
   flex: 1;

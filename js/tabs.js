@@ -17,6 +17,7 @@ function switchTab(tabId) {
     updateGutter(shown);
     refreshSwatches(shown);
   }
+  updateHistButtons(); // стрелки ↩/↪ относятся к активному редактору
 }
 
 // Пересчитать перенос (нумерацию строк-продолжений и чипы) для видимого

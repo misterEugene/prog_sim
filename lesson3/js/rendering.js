@@ -29,6 +29,50 @@ function drawGrid(ctx) {
   ctx.stroke();
 }
 
+// Перевод пикселей canvas в «клетки» 0..100, которые видит ребёнок, и обратно.
+function pxToUnit(px) {
+  return Math.round(px / CONFIG.CANVAS_SIZE * CONFIG.AXIS_UNITS);
+}
+
+function unitToPx(u) {
+  return u / CONFIG.AXIS_UNITS * CONFIG.CANVAS_SIZE;
+}
+
+// Координатные оси: более заметные линии на «десятках» и подписи чисел по
+// верхнему и левому краю. Нужны, чтобы в инструкции можно было честно сказать
+// «поставь точку около (20, 15)», а ребёнок нашёл это место глазами.
+function drawAxes(ctx) {
+  const size = CONFIG.CANVAS_SIZE;
+  const step = CONFIG.AXIS_LABEL_STEP;
+
+  // Линии-«десятки» поверх обычной сетки
+  ctx.strokeStyle = CONFIG.COLORS.gridMajor;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let u = step; u < CONFIG.AXIS_UNITS; u += step) {
+    const p = Math.round(unitToPx(u)) + 0.5;
+    ctx.moveTo(p, 0); ctx.lineTo(p, size);
+    ctx.moveTo(0, p); ctx.lineTo(size, p);
+  }
+  ctx.stroke();
+
+  // Подписи чисел: X - по верхнему краю, Y - по левому
+  ctx.fillStyle = CONFIG.COLORS.axisText;
+  ctx.font = 'bold 11px Arial, sans-serif';
+  for (let u = 0; u <= CONFIG.AXIS_UNITS; u += step) {
+    const p = unitToPx(u);
+    // X сверху
+    ctx.textBaseline = 'top';
+    ctx.textAlign = u === 0 ? 'left' : (u === CONFIG.AXIS_UNITS ? 'right' : 'center');
+    ctx.fillText(String(u), Math.min(Math.max(p, 2), size - 2), 4);
+    // Y слева (нуль не дублируем - он уже подписан в углу)
+    if (u === 0) continue;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = u === CONFIG.AXIS_UNITS ? 'bottom' : 'middle';
+    ctx.fillText(String(u), 4, Math.min(p, size - 2));
+  }
+}
+
 // Тепловая карта: поле бьётся на сетку, каждая ячейка красится цветом
 // предсказанного класса с прозрачностью по уверенности KNN.
 function drawHeatmap(ctx, points, k) {

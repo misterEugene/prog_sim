@@ -54,6 +54,14 @@
         <button class="tab active" data-tab="index.html" role="tab">index.html</button>
         <button class="tab"        data-tab="style.css"  role="tab">style.css</button>
         <button class="tab"        data-tab="main.js"    role="tab">main.js</button>
+        <!-- Стрелки отмены/повтора: работают на любой ОС (на macOS ⌘+Z может
+             перехватить браузер). Действуют на активный редактор. -->
+        <div class="hist-actions">
+          <button id="undo-btn" class="hist-btn" type="button"
+                  title="Отменить: Ctrl+Z (на Mac ⌘+Z или Ctrl+U)" aria-label="Отменить">↩</button>
+          <button id="redo-btn" class="hist-btn" type="button"
+                  title="Вернуть: Ctrl+Shift+Z (или Ctrl+Y)" aria-label="Вернуть">↪</button>
+        </div>
         <button class="col-collapse" type="button" title="Свернуть колонку" aria-label="Свернуть">⟨⟩</button>
       </div>
       <div class="content">

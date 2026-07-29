@@ -46,6 +46,7 @@ function histRecord(ta) {
     ta._histIdx = h.length - 1;
   }
   ta._histTime = now;
+  updateHistButtons();
   saveHistorySoon();
 }
 
@@ -83,6 +84,7 @@ function histApply(ta, snap) {
     ta.scrollTop = Math.max(0, c.top - ta.clientHeight / 2);
     syncScroll(ta);
   }
+  updateHistButtons();
   saveHistorySoon();
 }
 
@@ -96,6 +98,20 @@ function histRedo(ta) {
   if (!ta._hist || ta._histIdx >= ta._hist.length - 1) return;
   ta._histIdx++;
   histApply(ta, ta._hist[ta._histIdx]);
+}
+
+// Редактор активной вкладки (у скрытых panes offsetParent === null).
+function visibleEditor() {
+  return els.editors.find((ta) => ta.offsetParent !== null) || els.editors[0];
+}
+
+// Кнопки-стрелки ↩ / ↪ в ряду вкладок: гасим, когда откатывать/возвращать нечего.
+function updateHistButtons() {
+  if (!els.undoBtn || !els.redoBtn) return;
+  const ta = visibleEditor();
+  const h = ta && ta._hist;
+  els.undoBtn.disabled = !h || ta._histIdx <= 0;
+  els.redoBtn.disabled = !h || ta._histIdx >= h.length - 1;
 }
 
 // Сохранение истории в localStorage (с дебаунсом и обрезкой при переполнении).

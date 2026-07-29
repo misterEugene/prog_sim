@@ -60,6 +60,24 @@ function init() {
   els.resetBtn.addEventListener("click", openResetModal);
   els.hintBtn.addEventListener("click", showHint);
 
+  // Стрелки ↩ / ↪ - отмена и повтор в активном редакторе. mousedown с
+  // preventDefault, чтобы кнопка не забирала фокус у textarea (иначе после
+  // клика курсор уходит из кода).
+  [els.undoBtn, els.redoBtn].forEach((btn) => {
+    btn.addEventListener("mousedown", (e) => e.preventDefault());
+  });
+  els.undoBtn.addEventListener("click", () => {
+    const ta = visibleEditor();
+    histUndo(ta);
+    ta.focus();
+  });
+  els.redoBtn.addEventListener("click", () => {
+    const ta = visibleEditor();
+    histRedo(ta);
+    ta.focus();
+  });
+  updateHistButtons();
+
   // Модальное окно подтверждения сброса
   els.resetModalInput.addEventListener("input", validateResetPhrase);
   els.resetModalCancel.addEventListener("click", closeResetModal);
@@ -151,6 +169,14 @@ function init() {
       if (mod && !e.altKey && !e.shiftKey && e.code === "KeyY") {
         e.preventDefault();
         histRedo(ta);
+        return;
+      }
+      // Запасное сочетание для macOS: ⌘+Z там иногда перехватывает браузер
+      // (страница «уезжает» вместо отмены). Ctrl+U / Ctrl+Shift+U свободны.
+      if (mod && !e.altKey && e.code === "KeyU") {
+        e.preventDefault();
+        if (e.shiftKey) histRedo(ta);
+        else histUndo(ta);
         return;
       }
       if (e.key === "Tab" && !e.altKey && !e.ctrlKey && !e.metaKey) {

@@ -21,12 +21,14 @@
   <main class="workspace">
     <!-- Поле -->
     <section class="field-wrap">
-      <!-- Панель над полем (слева): отмена последнего действия -->
+      <!-- Панель над полем: отмена последнего действия + координаты курсора -->
       <div class="field-toolbar">
-        <button id="btn-undo" class="btn btn-undo" title="Отменить последнее действие (Ctrl+Z)" disabled>↩ Отменить</button>
+        <button id="btn-undo" class="btn btn-undo" title="Отменить последнее действие (Ctrl+Z, на macOS ⌘+Z или Ctrl+U)" disabled>↩ Отменить</button>
+        <span id="coord-readout" class="coord-readout" title="Координаты курсора на поле">x: -   y: -</span>
       </div>
       <canvas id="field" width="600" height="600"></canvas>
       <p class="hint">Левая кнопка мыши - точка активного цвета, правая - другого цвета. Включи 🧽 Ластик, чтобы удалять точки.</p>
+      <p class="hint">📐 По краям поля - <b>координаты</b> от 0 до 100: <b>x</b> считается слева направо, <b>y</b> - сверху вниз. Табло над полем показывает, куда попадёт точка.</p>
     </section>
 
     <!-- Панель управления -->

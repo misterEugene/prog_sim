@@ -70,7 +70,15 @@
   var STAT_KEYS = ['added', 'addedRight', 'erased', 'undo', 'trains',
     'kTo1', 'kTo15', 'kHigh', 'starters', 'clears',
     'fullReveals', 'perfects', 'exports', 'imports',
-    'patternVertical', 'patternIsland', 'patternStripes', 'patternQuads'];
+    // сколько тестов сдано на «маленьких» и «больших» данных и при конкретных k
+    // (шаги «сколько данных нужно?» и «повторяемость эксперимента»)
+    'revealSmall', 'revealBig', 'revealK5', 'revealK7', 'revealK15',
+    // выученные узоры главы «Создатель ИИ»
+    'patternVertical', 'patternIsland', 'patternStripes', 'patternQuads',
+    'patternDiag', 'patternRing', 'patternBands4', 'patternCross',
+    'patternSpots3', 'patternTshape',
+    // карта поделена между классами по-честному (для шага «свой узор»)
+    'balancedMap'];
 
   function sanitizeStats(s) {
     var clean = {};
@@ -109,33 +117,106 @@
       name: 'Шахматные углы',
       target: function (x, y) { return ((x < 300) === (y < 300)) ? 'blue' : 'red'; },
       minRecall: 0.65
+    },
+    patternDiag: {
+      name: 'Диагональ',
+      target: function (x, y) { return x < y ? 'blue' : 'red'; },
+      minRecall: 0.75
+    },
+    patternRing: {
+      name: 'Бублик',
+      target: function (x, y) {
+        var d = Math.hypot(x - 300, y - 300);
+        return (d > 120 && d < 215) ? 'red' : 'blue';
+      },
+      minRecall: 0.6
+    },
+    patternBands4: {
+      name: 'Четыре полосы',
+      target: function (x, y) { return Math.floor(x / 150) % 2 === 0 ? 'blue' : 'red'; },
+      minRecall: 0.65
+    },
+    patternCross: {
+      name: 'Крест',
+      target: function (x, y) {
+        return (Math.abs(x - 300) < 90 || Math.abs(y - 300) < 90) ? 'red' : 'blue';
+      },
+      minRecall: 0.6
+    },
+    patternSpots3: {
+      name: 'Три острова',
+      target: function (x, y) {
+        var spots = [[150, 150], [450, 150], [300, 450]];
+        for (var i = 0; i < spots.length; i++) {
+          if (Math.hypot(x - spots[i][0], y - spots[i][1]) < 95) return 'red';
+        }
+        return 'blue';
+      },
+      minRecall: 0.6
+    },
+    patternTshape: {
+      name: 'Буква Т',
+      target: function (x, y) {
+        return (y < 150 || Math.abs(x - 300) < 80) ? 'red' : 'blue';
+      },
+      minRecall: 0.6
     }
   };
 
+  // Узоров много, поэтому предсказания модели по сетке считаем ОДИН раз, а потом
+  // сравниваем эту карту с целевой функцией каждого узора.
+  // Узор засчитывается КАЖДЫЙ раз, когда обученная модель его показала (счётчик,
+  // а не флаг): гид проверяет узор через прирост от начала шага, иначе случайно
+  // подошедший чужой датасет «сдавал» бы будущие шаги за ребёнка. Чтобы один
+  // «🧠 Обучить» не накручивал счётчик на каждой перерисовке, помним, какие узоры
+  // уже показаны текущей моделью (patternHot), и сбрасываем эту память, как только
+  // данные изменились (тогда trained = false и мы уходим по раннему возврату).
   function evaluatePatterns() {
-    if (!state.trained || !state.points.length) return;
+    if (!state.trained || !state.points.length) { state.patternHot = {}; return; }
     var grid = CONFIG.HEATMAP_GRID;
     var cell = CONFIG.CANVAS_SIZE / grid;
+    var got = [];      // предсказания модели по ячейкам
+    var cxs = [], cys = [];
+    var blueCells = 0;
+    for (var gx = 0; gx < grid; gx++) {
+      for (var gy = 0; gy < grid; gy++) {
+        var cx = gx * cell + cell / 2;
+        var cy = gy * cell + cell / 2;
+        var label = knnPredict(cx, cy, state.points, state.k).label;
+        got.push(label); cxs.push(cx); cys.push(cy);
+        if (label === 'blue') blueCells++;
+      }
+    }
+    var cells = got.length;
+
+    var hot = state.patternHot || (state.patternHot = {});
     Object.keys(PATTERNS).forEach(function (key) {
-      if (state.stats[key] >= 1) return; // уже выучен - не пересчитываем
       var p = PATTERNS[key];
       var okB = 0, totB = 0, okR = 0, totR = 0;
-      for (var gx = 0; gx < grid; gx++) {
-        for (var gy = 0; gy < grid; gy++) {
-          var cx = gx * cell + cell / 2;
-          var cy = gy * cell + cell / 2;
-          var want = p.target(cx, cy);
-          var got = knnPredict(cx, cy, state.points, state.k).label;
-          if (want === 'blue') { totB++; if (got === 'blue') okB++; }
-          else { totR++; if (got === 'red') okR++; }
-        }
+      for (var i = 0; i < cells; i++) {
+        var want = p.target(cxs[i], cys[i]);
+        if (want === 'blue') { totB++; if (got[i] === 'blue') okB++; }
+        else { totR++; if (got[i] === 'red') okR++; }
       }
       var recall = Math.min(okB / totB, okR / totR);
-      if (recall >= p.minRecall) {
-        state.stats[key] = 1;
+      var matched = recall >= p.minRecall;
+      if (matched && !hot[key]) {
+        state.stats[key] = (state.stats[key] || 0) + 1;
         setStatus('🏆 Ура! Твой ИИ выучил узор «' + p.name + '»!');
       }
+      hot[key] = matched;
     });
+
+    // Шаг «свой узор»: карта честно поделена между классами (у каждого не меньше
+    // 30% поля) на достаточном датасете - значит, ребёнок собрал осмысленные данные,
+    // а не залил всё одним цветом.
+    var share = Math.min(blueCells, cells - blueCells) / cells;
+    var balanced = state.points.length >= 30 && share >= 0.3;
+    if (balanced && !hot.balancedMap) {
+      state.stats.balancedMap++;
+      setStatus('🎨 Отличный датасет: твой ИИ честно поделил поле между цветами!');
+    }
+    hot.balancedMap = balanced;
   }
 
   // Снимок для guide.js: счётчики + текущее состояние поля. Кладём в глобальную
@@ -150,6 +231,11 @@
     snap.trained = state.trained;
     snap.k = state.k;
     snap.revealKCount = state.stats.revealKList.length;
+    // Сами точки в координатах поля 0..100 - по ним гид честно проверяет
+    // геометрические задания («поставь точку около (50, 10)»).
+    snap.pts = state.points.map(function (p) {
+      return { x: pxToUnit(p.x), y: pxToUnit(p.y), label: p.label };
+    });
     snap.lastAcc = state.lastAccuracy === null ? -1 : state.lastAccuracy;
     window.LESSON3_STATS = snap;
     document.dispatchEvent(new CustomEvent('lesson3:stats', { detail: snap }));
@@ -333,6 +419,13 @@
     if (filled === CONFIG.TEST_COUNT && !state.testRevealed) {
       state.stats.fullReveals++;
       if (correct === CONFIG.TEST_COUNT) state.stats.perfects++;
+      // На каком объёме данных сдан тест (шаг «сколько данных нужно?»)
+      if (state.points.length <= 6) state.stats.revealSmall++;
+      if (state.points.length >= 20) state.stats.revealBig++;
+      // И при каком k (шаги про повторяемость эксперимента)
+      if (state.k === 5) state.stats.revealK5++;
+      if (state.k === 7) state.stats.revealK7++;
+      if (state.k === 15) state.stats.revealK15++;
       // запомним, при каком k сдан тест (шаг «найди лучшее k»)
       if (state.stats.revealKList.indexOf(state.k) === -1) state.stats.revealKList.push(state.k);
     }
@@ -431,6 +524,12 @@
   document.getElementById('btn-train').onclick = function () {
     if (!state.points.length) { setStatus('Сначала нанеси точки!'); return; }
     state.trained = true; state.stats.trains++;
+    // Опыт с «крайним» k считаем и здесь: ребёнок часто сначала ставит точки и k,
+    // и только потом жмёт «Обучить» - тогда обработчик ползунка ничего не засчитал
+    // (модель ещё не была обучена), а опыт по факту проведён.
+    if (state.k === CONFIG.MIN_K) state.stats.kTo1++;
+    if (state.k === CONFIG.MAX_K) state.stats.kTo15++;
+    if (state.k >= 12) state.stats.kHigh++;
     setStatus('Модель обучена - смотри тепловую карту! 🧠'); render();
   };
   document.getElementById('btn-starter').onclick = function () {

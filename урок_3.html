@@ -26,15 +26,23 @@
         <button id="btn-undo" class="btn btn-undo" title="Отменить последнее действие (Ctrl+Z, на macOS ⌘+Z или Ctrl+U)" disabled>↩ Отменить</button>
         <span id="coord-readout" class="coord-readout" title="Координаты курсора на поле">x: -   y: -</span>
       </div>
-      <!-- Поле + прозрачный слой поверх него: на нём рисуются прицел с
-           координатами под курсором и подписи точек (инспектор). Отдельный
-           canvas нужен, чтобы движение мыши не пересчитывало тепловую карту. -->
-      <div class="field-stack">
-        <canvas id="field" width="600" height="600"></canvas>
-        <canvas id="overlay" width="600" height="600" aria-hidden="true"></canvas>
+      <!-- Вокруг поля - линейки с числами и буквы осей (ВНЕ поля, чтобы подписи
+           не налезали на точки); деления расставляет buildRulers() в js/app.js.
+           Внутри - само поле и прозрачный слой #overlay: на нём рисуются прицел
+           с координатами под курсором и подписи точек (инспектор), чтобы
+           движение мыши не пересчитывало тепловую карту. -->
+      <div class="field-grid">
+        <div class="axis-name axis-name-x">x →</div>
+        <div class="ruler ruler-x" id="ruler-x" aria-hidden="true"></div>
+        <div class="axis-name axis-name-y"><span>y</span><span>↓</span></div>
+        <div class="ruler ruler-y" id="ruler-y" aria-hidden="true"></div>
+        <div class="field-stack">
+          <canvas id="field" width="600" height="600"></canvas>
+          <canvas id="overlay" width="600" height="600" aria-hidden="true"></canvas>
+        </div>
       </div>
       <p class="hint">Левая кнопка мыши - точка активного цвета, правая - другого цвета. Включи 🧽 Ластик, чтобы удалять точки.</p>
-      <p class="hint">📐 По краям поля - <b>координаты</b> от 0 до 100: <b>x</b> считается слева направо, <b>y</b> - сверху вниз. Наведи мышку на поле - прицел покажет координаты будущей точки прямо у курсора.</p>
+      <p class="hint">📐 Вокруг поля - <b>линейки с координатами</b> от 0 до 100: сверху ось <b>x</b> (слева направо), слева ось <b>y</b> (сверху вниз). Наведи мышку на поле - прицел покажет координаты будущей точки прямо у курсора.</p>
 
       <!-- Инспектор: список выделенных точек с их координатами -->
       <div id="inspector-panel" class="inspector-panel" hidden>

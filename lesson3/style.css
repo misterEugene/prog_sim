@@ -65,10 +65,35 @@ body {
 .btn-undo { padding: 8px 14px; font-size: 14px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
 .btn:disabled:hover { background: #222840; transform: none; }
+/* Координатная обвязка поля: [буква y][числа y][поле] по горизонтали и
+   [буква x][числа x][поле] по вертикали. Подписи снаружи поля, чтобы не
+   налезать на точки и тепловую карту. */
+.field-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 20px 30px 1fr;
+  grid-template-rows: 20px 16px 1fr;
+}
+.axis-name { color: #9fe8ff; font-weight: bold; font-size: 14px; line-height: 1; }
+.axis-name-x { grid-column: 3; grid-row: 1; text-align: center; }
+.axis-name-y {
+  grid-column: 1; grid-row: 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; line-height: 1.1;
+}
+/* Линейки: деления расставлены в процентах, поэтому совпадают с сеткой поля
+   при любой его ширине. Отступ 2px компенсирует рамку canvas. */
+.ruler { position: relative; color: #8b92a8; font-size: 11px; font-weight: bold; }
+.ruler-x { grid-column: 3; grid-row: 2; padding: 0 2px; }
+.ruler-y { grid-column: 2; grid-row: 3; padding: 2px 0; }
+.ruler span { position: absolute; white-space: nowrap; }
+.ruler-x span { bottom: 0; transform: translateX(-50%); }
+.ruler-y span { right: 4px; transform: translateY(-50%); }
+
 /* Поле и слой-подсказка лежат друг на друге.
    Поле тянется по ширине колонки (canvas рисует в своих 600x600 и просто
    масштабируется - canvasPos пересчитывает клик по фактическому размеру). */
-.field-stack { position: relative; line-height: 0; width: 100%; }
+.field-stack { grid-column: 3; grid-row: 3; position: relative; line-height: 0; width: 100%; }
 #field, #overlay {
   width: 100%; height: auto; aspect-ratio: 1 / 1;
 }

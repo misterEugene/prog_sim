@@ -347,6 +347,35 @@
     renderOverlay();
   }
 
+  // ---- Линейки с числами вокруг поля ----
+  // Деления ставим в процентах от ширины/высоты линейки: они совпадают с сеткой
+  // поля при любом его размере (поле резиновое, см. style.css).
+  function buildRulers() {
+    const step = CONFIG.AXIS_LABEL_STEP;
+    const rx = document.getElementById('ruler-x');
+    const ry = document.getElementById('ruler-y');
+    rx.innerHTML = '';
+    ry.innerHTML = '';
+    const max = CONFIG.AXIS_UNITS;
+    for (let u = 0; u <= max; u += step) {
+      const pct = (u / max * 100) + '%';
+      // Крайние подписи (0 и 100) прижимаем внутрь, иначе половина числа
+      // вылезает за поле и обрезается.
+      const sx = document.createElement('span');
+      sx.textContent = u;
+      sx.style.left = pct;
+      if (u === 0) sx.style.transform = 'translateX(0)';
+      if (u === max) sx.style.transform = 'translateX(-100%)';
+      rx.appendChild(sx);
+      const sy = document.createElement('span');
+      sy.textContent = u;
+      sy.style.top = pct;
+      if (u === 0) sy.style.transform = 'translateY(0)';
+      if (u === max) sy.style.transform = 'translateY(-100%)';
+      ry.appendChild(sy);
+    }
+  }
+
   // ---- Инспектор точек ----
   // Отдельный режим: клик не рисует, а выделяет точку; у всех точек видны их
   // координаты. Нужен, чтобы проверить «а куда я на самом деле поставил точку».
@@ -697,6 +726,7 @@
   loadHistory(); // восстановить стек отмены - Ctrl+Z работает и после F5
   slider.value = state.k;
   kValue.textContent = state.k;
+  buildRulers();  // числа осей вокруг поля
   updateToggle();
   updateEraser();
   updateInspector();

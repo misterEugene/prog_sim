@@ -38,14 +38,12 @@ function unitToPx(u) {
   return u / CONFIG.AXIS_UNITS * CONFIG.CANVAS_SIZE;
 }
 
-// Координатные оси: более заметные линии на «десятках» и подписи чисел по
-// верхнему и левому краю. Нужны, чтобы в инструкции можно было честно сказать
-// «поставь точку около (20, 15)», а ребёнок нашёл это место глазами.
+// Координатные оси: более заметные линии на «десятках». Сами числа и буквы осей
+// живут НЕ на canvas, а в HTML-линейках вокруг поля (см. buildRulers в app.js и
+// .ruler-x/.ruler-y в style.css) - чтобы подписи не залезали на данные.
 function drawAxes(ctx) {
   const size = CONFIG.CANVAS_SIZE;
   const step = CONFIG.AXIS_LABEL_STEP;
-
-  // Линии-«десятки» поверх обычной сетки
   ctx.strokeStyle = CONFIG.COLORS.gridMajor;
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -55,33 +53,6 @@ function drawAxes(ctx) {
     ctx.moveTo(0, p); ctx.lineTo(size, p);
   }
   ctx.stroke();
-
-  // Подписи чисел: X - по верхнему краю, Y - по левому
-  ctx.fillStyle = CONFIG.COLORS.axisText;
-  ctx.font = 'bold 11px Arial, sans-serif';
-  for (let u = 0; u <= CONFIG.AXIS_UNITS; u += step) {
-    const p = unitToPx(u);
-    // X сверху
-    ctx.textBaseline = 'top';
-    ctx.textAlign = u === 0 ? 'left' : (u === CONFIG.AXIS_UNITS ? 'right' : 'center');
-    ctx.fillText(String(u), Math.min(Math.max(p, 2), size - 2), 4);
-    // Y слева (нуль не дублируем - он уже подписан в углу)
-    if (u === 0) continue;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = u === CONFIG.AXIS_UNITS ? 'bottom' : 'middle';
-    ctx.fillText(String(u), 4, Math.min(p, size - 2));
-  }
-
-  // Названия осей: у конца каждой оси - буква со стрелкой направления счёта.
-  ctx.fillStyle = CONFIG.COLORS.axisName;
-  ctx.font = 'bold 15px Arial, sans-serif';
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'top';
-  ctx.fillText('x →', size - 6, 22);   // вправо по верхнему краю
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'bottom';
-  // чуть правее столбика чисел, иначе наложится на подпись «100»
-  ctx.fillText('y ↓', 28, size - 6);   // вниз по левому краю
 }
 
 // ---- Слой-подсказка (отдельный canvas поверх поля) ----

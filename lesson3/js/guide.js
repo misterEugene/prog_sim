@@ -2374,6 +2374,11 @@
       if (i === firstUndone() && !isDone(i) && stepChecksState(i).all) {
         done.push(i);
         saveDone(done);
+        // Переходим к следующему заданию - сыгранная панель секретного теста
+        // больше не нужна (иначе она висит поверх новых шагов, см. PITFALLS).
+        if (typeof CustomEvent === "function") {
+          document.dispatchEvent(new CustomEvent("lesson3:step-done"));
+        }
         render();
         // проскроллить к следующему активному шагу (или к финалу)
         var nextId = firstUndone() < steps.length ? "g-step-" + firstUndone() : null;

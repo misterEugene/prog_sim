@@ -47,6 +47,7 @@
 
   function undo() {
     if (!state.history.length) { setStatus('Отменять нечего ↩'); return; }
+    autoCloseFinishedTest();
     state.points = state.history.pop();
     state.trained = false; // данные изменились - нужно переобучить
     state.stats.undo++;
@@ -318,6 +319,7 @@
   }
 
   function addPoint(e, label, viaRightClick) {
+    autoCloseFinishedTest();
     pushHistory();
     const pos = canvasPos(e);
     state.points.push({ x: pos.x, y: pos.y, label: label });
@@ -474,6 +476,7 @@
       if (d <= bestD) { bestD = d; bestI = i; }
     }
     if (bestI === -1) { setStatus('Тут нет точки - наведись точнее на кружок 🧽'); return; }
+    autoCloseFinishedTest();
     pushHistory();
     state.points.splice(bestI, 1);
     state.trained = false; // данные изменились - нужно переобучить
@@ -565,13 +568,21 @@
 
   // Закрыть панель теста: серые точки убираем с поля, панель прячем. Результат
   // последнего теста («Точность теста») сохраняем - он нужен для отчётов.
-  function closeTest() {
+  function closeTest(silent) {
     state.testPoints = [];
     state.testRevealed = false;
     document.getElementById('answers').innerHTML = '';
     document.getElementById('test-panel').classList.remove('active');
-    setStatus('Тест закрыт. Можно снова рисовать точки и обучать модель 🔵🔴');
+    if (!silent) setStatus('Тест закрыт. Можно снова рисовать точки и обучать модель 🔵🔴');
     render();
+  }
+
+  // Панель теста не должна «залипать» на следующих шагах: как только ребёнок
+  // ПОСЛЕ показа ответов возвращается к работе с данными (ставит/стирает точку,
+  // отменяет действие, грузит датасет), закрываем её сами - тест уже сыгран.
+  // Раньше её нельзя было убрать вообще, и она висела поверх новых заданий.
+  function autoCloseFinishedTest() {
+    if (state.testRevealed) closeTest(true);
   }
 
   // ---- Очистка / экспорт / импорт ----
@@ -607,6 +618,7 @@
         const data = JSON.parse(reader.result);
         const raw = Array.isArray(data) ? data : data.points;
         if (!Array.isArray(raw)) throw new Error('bad');
+        autoCloseFinishedTest();
         pushHistory();
         state.points = raw.filter(function (p) {
           return typeof p.x === 'number' && typeof p.y === 'number' &&
@@ -689,6 +701,7 @@
     setStatus('Модель обучена - смотри тепловую карту! 🧠'); render();
   };
   document.getElementById('btn-starter').onclick = function () {
+    autoCloseFinishedTest();
     pushHistory();
     state.points = makeStarter(); state.trained = false;
     state.stats.starters++;
@@ -699,6 +712,12 @@
   document.getElementById('btn-close-test').onclick = closeTest;
   document.getElementById('btn-clear').onclick = clearAll;
   document.getElementById('btn-undo').onclick = undo;
+
+  // Шаг гида пройден - убрать сыгранную панель теста, чтобы она не мешала
+  // следующему заданию (жалоба «никак нельзя закрыть секретный тест»).
+  document.addEventListener('lesson3:step-done', function () {
+    autoCloseFinishedTest();
+  });
 
   // «Начать заново» из колонки-гида (guide.js): полный сброс поля и истории.
   document.addEventListener('lesson3:restart', function () {

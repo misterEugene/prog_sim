@@ -17,7 +17,14 @@ function tokenize(code, patterns) {
       p.re.lastIndex = i; // sticky: ищем строго с позиции i
       const m = p.re.exec(code);
       if (m && m[0].length > 0) {
-        out += `<span class="tok-${p.cls}">${escapeHtml(m[0])}</span>`;
+        // Метки [ВПИШИ …] могут оказаться ВНУТРИ токена (строка или
+        // комментарий в JS/CSS съедает их целиком) - подсвечиваем их
+        // вложенным span, чтобы жёлтая метка была видна и там.
+        const inner =
+          p.cls === "todo"
+            ? escapeHtml(m[0])
+            : markTodos(escapeHtml(m[0]));
+        out += `<span class="tok-${p.cls}">${inner}</span>`;
         i += m[0].length;
         matched = true;
         break;
@@ -34,6 +41,16 @@ function tokenize(code, patterns) {
 // Метка-пропуск [ВПИШИ …] - место, куда ученик вписывает свой текст.
 // Ставим её первой во всех наборах, чтобы она подсвечивалась ярко и заметно.
 const TODO_PATTERN = { cls: "todo", re: /\[ВПИШИ[^\]]*\]/y };
+
+// Обернуть метки [ВПИШИ …] внутри УЖЕ экранированного текста токена.
+// escapeHtml не трогает квадратные скобки и кириллицу, поэтому регэксп
+// безопасно работает по экранированной строке.
+function markTodos(escaped) {
+  return escaped.replace(
+    /\[ВПИШИ[^\]]*\]/g,
+    '<span class="tok-todo">$&</span>'
+  );
+}
 
 const HTML_PATTERNS = [
   TODO_PATTERN,

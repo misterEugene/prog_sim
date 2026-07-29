@@ -40,7 +40,16 @@ body {
   justify-content: center; align-items: flex-start;
 }
 
-.field-wrap { display: flex; flex-direction: column; align-items: center; }
+/* Колонка поля шириной ровно в поле: иначе длинные подсказки под полем задают
+   ей max-content-ширину (несколько сотен лишних пикселей), и панель с кнопками
+   перестаёт влезать в одну строку с полем даже на широком экране. */
+.field-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  /* база меньше поля: flexbox переносит элементы ДО того, как начнёт их сжимать,
+     поэтому с базой 600px панель уезжала под поле уже при ~1280px. С базой 420px
+     строка всегда влезает, а дальше колонка растёт до своих 600px. */
+  flex: 1 1 420px; min-width: 300px; max-width: 600px;
+}
 /* Панель над полем прижата к левому краю (чуть выше и левее самого поля) */
 .field-toolbar {
   align-self: stretch; margin-bottom: 10px;
@@ -56,10 +65,12 @@ body {
 .btn-undo { padding: 8px 14px; font-size: 14px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
 .btn:disabled:hover { background: #222840; transform: none; }
-/* Поле и слой-подсказка лежат друг на друге */
-.field-stack { position: relative; line-height: 0; }
+/* Поле и слой-подсказка лежат друг на друге.
+   Поле тянется по ширине колонки (canvas рисует в своих 600x600 и просто
+   масштабируется - canvasPos пересчитывает клик по фактическому размеру). */
+.field-stack { position: relative; line-height: 0; width: 100%; }
 #field, #overlay {
-  width: 600px; height: 600px; max-width: 90vw; max-height: 90vw;
+  width: 100%; height: auto; aspect-ratio: 1 / 1;
 }
 #field {
   background: #12151e; border: 2px solid #2a3148; border-radius: 12px;

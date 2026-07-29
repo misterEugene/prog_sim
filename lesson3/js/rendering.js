@@ -71,6 +71,17 @@ function drawAxes(ctx) {
     ctx.textBaseline = u === CONFIG.AXIS_UNITS ? 'bottom' : 'middle';
     ctx.fillText(String(u), 4, Math.min(p, size - 2));
   }
+
+  // Названия осей: у конца каждой оси - буква со стрелкой направления счёта.
+  ctx.fillStyle = CONFIG.COLORS.axisName;
+  ctx.font = 'bold 15px Arial, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'top';
+  ctx.fillText('x →', size - 6, 22);   // вправо по верхнему краю
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'bottom';
+  // чуть правее столбика чисел, иначе наложится на подпись «100»
+  ctx.fillText('y ↓', 28, size - 6);   // вниз по левому краю
 }
 
 // ---- Слой-подсказка (отдельный canvas поверх поля) ----

@@ -257,6 +257,9 @@ input[type="range"] { width: 100%; accent-color: #00d4ff; }
   font-family: "Consolas", "Courier New", monospace;
   background: #0a0d16; color: #ffd86b;
   padding: 1px 5px; border-radius: 5px; font-size: 13px;
+  /* не разрывать «k = 1» переносом строки: иначе цифра уезжает в начало
+     следующей строки и читается как номер пункта (жалоба учеников) */
+  white-space: nowrap;
 }
 
 /* Вступление */

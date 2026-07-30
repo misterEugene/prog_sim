@@ -179,6 +179,14 @@ input[type="range"] { width: 100%; accent-color: #00d4ff; }
 .btn.inspector-on:hover { background: #93eeff; }
 #field.inspecting { cursor: help; }
 
+/* «🔮 Спросить ИИ» включён - кнопка сиреневая, у поля курсор-«вопрос» */
+.btn.ask-on {
+  background: #c792ff; color: #1d0b2b; font-weight: bold;
+  border-color: #c792ff; box-shadow: 0 0 14px rgba(199, 146, 255, 0.5);
+}
+.btn.ask-on:hover { background: #d8b0ff; }
+#field.asking { cursor: crosshair; }
+
 .import-label { margin: 0; }
 
 /* ---- Статистика и статус ---- */

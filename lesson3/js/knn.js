@@ -10,6 +10,16 @@ function euclidean(a, b) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+// k ближайших соседей точки (x, y) - сами точки, от самой близкой к дальней.
+// Нужны режиму «🔮 Спросить ИИ»: он рисует линии к тем точкам, которые голосуют.
+function knnNeighbors(x, y, points, k) {
+  if (!points || points.length === 0) return [];
+  const sorted = points
+    .map(function (p) { return { p: p, d: euclidean({ x: x, y: y }, p) }; })
+    .sort(function (a, b) { return a.d - b.d; });
+  return sorted.slice(0, Math.min(k, sorted.length)).map(function (o) { return o.p; });
+}
+
 // Предсказать класс точки (x, y) по массиву обучающих точек.
 // Каждая точка: { x, y, label: 'blue' | 'red' }.
 // Возвращает { label, confidence } - класс и уверенность (0.5..1).

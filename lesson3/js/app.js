@@ -21,6 +21,8 @@
     history: [],  // снимки points для отмены (Ctrl+Z / кнопка «Отменить»)
     eraser: false, // режим ластика: клик по точке удаляет её
     inspector: false, // режим инспектора: клик по точке выделяет её (не рисует)
+    ask: false,    // режим «🔮 Спросить ИИ»: клик задаёт вопрос модели
+    askResult: null, // последний вопрос: {x, y, label, neighbors, text}
     selected: [],  // выделенные инспектором точки (ссылки на объекты из points)
     hover: null,   // позиция курсора над полем в px ({x, y}) или null
     stats: null    // счётчики действий для авто-проверки шагов гида (см. sanitizeStats)
@@ -79,10 +81,22 @@
     // сколько тестов сдано на «маленьких» и «больших» данных и при конкретных k
     // (шаги «сколько данных нужно?» и «повторяемость эксперимента»)
     'revealSmall', 'revealBig', 'revealK5', 'revealK7', 'revealK15',
+    // режим «🔮 Спросить ИИ»: сколько вопросов задано и какими они были
+    // (единогласный ответ / спорный / почти 50-на-50 / при крайних k)
+    'asks', 'asksSure', 'asksMixed', 'asksLowConf', 'asksK1', 'asksK9',
+    // «🎁 Загадочный датасет»: какой из трёх скрытых узоров уже загружали
+    // (mysteryNext - номер следующего, чтобы кнопка выдавала их по кругу)
+    'mystery1', 'mystery2', 'mystery3', 'mysteryNext',
+    // матрица ошибок последнего теста и его точность в процентах
+    'lastMissBlue', 'lastMissRed', 'lastHitBlue', 'lastHitRed', 'lastAccPct',
+    // точность (сколько из 5) последнего теста при конкретном k - для таблицы
+    'accK1', 'accK3', 'accK5', 'accK9', 'accK15',
     // выученные узоры главы «Создатель ИИ»
     'patternVertical', 'patternIsland', 'patternStripes', 'patternQuads',
     'patternDiag', 'patternRing', 'patternBands4', 'patternCross',
     'patternSpots3', 'patternTshape',
+    'patternX', 'patternHBands', 'patternFrame', 'patternChecker3',
+    'patternStairs',
     // карта поделена между классами по-честному (для шага «свой узор»)
     'balancedMap'];
 
@@ -166,6 +180,40 @@
         return (y < 150 || Math.abs(x - 300) < 80) ? 'red' : 'blue';
       },
       minRecall: 0.6
+    },
+    patternX: {
+      name: 'Диагональный крест',
+      target: function (x, y) {
+        return (Math.abs(x - y) < 95 || Math.abs(x + y - 600) < 95) ? 'red' : 'blue';
+      },
+      minRecall: 0.65
+    },
+    patternHBands: {
+      name: 'Горизонтальные полосы',
+      target: function (x, y) { return (y < 200 || y > 400) ? 'blue' : 'red'; },
+      minRecall: 0.75
+    },
+    patternFrame: {
+      name: 'Рамка',
+      target: function (x, y) {
+        return (x < 140 || x > 460 || y < 140 || y > 460) ? 'red' : 'blue';
+      },
+      minRecall: 0.7
+    },
+    patternChecker3: {
+      name: 'Шахматка 3 на 3',
+      target: function (x, y) {
+        var c = Math.floor(x / 200) + Math.floor(y / 200);
+        return c % 2 === 0 ? 'blue' : 'red';
+      },
+      minRecall: 0.7
+    },
+    patternStairs: {
+      name: 'Лестница',
+      target: function (x, y) {
+        return Math.floor(y / 150) > Math.floor(x / 150) ? 'blue' : 'red';
+      },
+      minRecall: 0.75
     }
   };
 
@@ -237,6 +285,8 @@
     snap.trained = state.trained;
     snap.k = state.k;
     snap.revealKCount = state.stats.revealKList.length;
+    // при каких k уже сдан тест - для шага-таблицы «точность по k»
+    snap.revealKList = state.stats.revealKList.slice();
     // Сами точки в координатах поля 0..100 - по ним гид честно проверяет
     // геометрические задания («поставь точку около (50, 10)»).
     snap.pts = state.points.map(function (p) {
@@ -292,6 +342,7 @@
     drawAxes(ctx); // координатные «десятки» и подписи 0..100 по краям
     drawPoints(ctx, state.points);
     drawTestPoints(ctx, state.testPoints, state.testRevealed);
+    if (!state.trained) state.askResult = null; // данные изменились - вопрос устарел
     updateStats();
     evaluatePatterns(); // глава «Создатель ИИ»: не выучила ли модель целевой узор
     if (pruneSelection()) renderSelection(); // выделенные точки могли исчезнуть
@@ -401,6 +452,115 @@
       drawPointLabels(octx, state.points, state.selected, hoverIdx);
     }
     if (state.hover) drawCrosshair(octx, state.hover, hoverIdx === -1);
+    drawAsk(octx, state.askResult); // вопрос к ИИ рисуем поверх всего
+  }
+
+  // ---- Режим «🔮 Спросить ИИ» ----
+  // Клик по полю = вопрос модели: «какого цвета точка была бы здесь?». Показываем
+  // ответ, линии к k голосующим соседям и результат голосования («🔵 4 из 5»).
+  function askAt(e) {
+    if (!state.points.length || !state.trained) {
+      setStatus('Сначала поставь точки и нажми 🧠 Обучить - без обученной модели спрашивать некого!');
+      return;
+    }
+    var pos = canvasPos(e);
+    var res = knnPredict(pos.x, pos.y, state.points, state.k);
+    var neighbors = knnNeighbors(pos.x, pos.y, state.points, state.k);
+    var votes = Math.round(res.confidence * neighbors.length);
+    var text = (res.label === 'blue' ? '🔵' : '🔴') + ' ' + votes + ' из ' + neighbors.length;
+    state.askResult = {
+      x: pos.x, y: pos.y, label: res.label, neighbors: neighbors, text: text
+    };
+    state.stats.asks++;
+    if (res.confidence >= 0.999) state.stats.asksSure++;
+    else state.stats.asksMixed++;
+    if (res.confidence <= 0.6) state.stats.asksLowConf++;
+    if (state.k === 1) state.stats.asksK1++;
+    if (state.k >= 9) state.stats.asksK9++;
+    setStatus('🔮 Вопрос в (' + pxToUnit(pos.x) + ', ' + pxToUnit(pos.y) + '): ИИ отвечает ' +
+      (res.label === 'blue' ? '🔵 синий' : '🔴 красный') + ' - за него ' + votes +
+      ' из ' + neighbors.length + ' соседей (уверенность ' +
+      Math.round(res.confidence * 100) + '%)');
+    saveField();
+    emitStats();
+    renderOverlay();
+  }
+
+  function updateAsk() {
+    var btn = document.getElementById('ask-toggle');
+    btn.textContent = state.ask ? '🔮 Спросить ИИ: ВКЛ' : '🔮 Спросить ИИ: выкл';
+    btn.classList.toggle('ask-on', state.ask);
+    canvas.classList.toggle('asking', state.ask);
+  }
+
+  // Три режима клика (ластик / инспектор / вопрос) взаимоисключающие: включая
+  // один, гасим остальные, иначе клик значил бы сразу два действия.
+  function exclusiveMode(keep) {
+    if (keep !== 'eraser' && state.eraser) { state.eraser = false; updateEraser(); }
+    if (keep !== 'inspector' && state.inspector) { state.inspector = false; updateInspector(); }
+    if (keep !== 'ask' && state.ask) { state.ask = false; updateAsk(); }
+  }
+
+  // ---- «🎁 Загадочный датасет» ----
+  // Кнопка по кругу выдаёт один из трёх скрытых узоров. Ребёнок обучает модель,
+  // смотрит на карту и в викторине говорит, что это за узор. Точки ставим
+  // с небольшим случайным разбросом, чтобы датасет каждый раз был «живым».
+  function jitter(v, amp) {
+    return Math.max(20, Math.min(CONFIG.CANVAS_SIZE - 20, v + (Math.random() - 0.5) * amp));
+  }
+
+  var MYSTERY = [
+    // №1 - «шахматные углы»: два синих и два красных угла по диагоналям
+    function () {
+      var pts = [];
+      [[150, 150], [450, 450]].forEach(function (c) {
+        for (var i = 0; i < 7; i++) pts.push({ x: jitter(c[0], 170), y: jitter(c[1], 170), label: 'blue' });
+      });
+      [[450, 150], [150, 450]].forEach(function (c) {
+        for (var i = 0; i < 7; i++) pts.push({ x: jitter(c[0], 170), y: jitter(c[1], 170), label: 'red' });
+      });
+      return pts;
+    },
+    // №2 - «бублик»: красное кольцо вокруг синего центра, синее по краям
+    function () {
+      var pts = [];
+      for (var i = 0; i < 6; i++) pts.push({ x: jitter(300, 50), y: jitter(300, 50), label: 'blue' });
+      // кольцо и внешний обод: по 16 точек - при меньшем числе кольцо «рвётся»
+      // на карте уже при k = 5 (проверено симуляцией, см. docs/PITFALLS.md)
+      for (var a = 0; a < 16; a++) {
+        var ang = a / 16 * Math.PI * 2;
+        pts.push({ x: 300 + Math.cos(ang) * 165, y: 300 + Math.sin(ang) * 165, label: 'red' });
+      }
+      for (var b = 0; b < 16; b++) {
+        var ang2 = b / 16 * Math.PI * 2 + 0.2;
+        pts.push({ x: 300 + Math.cos(ang2) * 270, y: 300 + Math.sin(ang2) * 270, label: 'blue' });
+      }
+      return pts;
+    },
+    // №3 - «горизонтальные полосы»: синий верх, красная середина, синий низ
+    function () {
+      var pts = [];
+      for (var i = 0; i < 8; i++) {
+        pts.push({ x: jitter(75 * i + 40, 40), y: jitter(70, 70), label: 'blue' });
+        pts.push({ x: jitter(75 * i + 40, 40), y: jitter(300, 70), label: 'red' });
+        pts.push({ x: jitter(75 * i + 40, 40), y: jitter(530, 70), label: 'blue' });
+      }
+      return pts;
+    }
+  ];
+
+  function loadMystery() {
+    var n = state.stats.mysteryNext % MYSTERY.length; // 0, 1, 2, 0, 1, 2…
+    autoCloseFinishedTest();
+    pushHistory();
+    state.points = MYSTERY[n]();
+    state.trained = false;
+    state.askResult = null;
+    state.stats['mystery' + (n + 1)]++;
+    state.stats.mysteryNext = (n + 1) % MYSTERY.length;
+    setStatus('🎁 Загружен загадочный датасет №' + (n + 1) +
+      '. Нажми 🧠 Обучить и посмотри на карту: что за узор выучил ИИ?');
+    render();
   }
 
   // Список выделенных точек с координатами (под полем).
@@ -559,6 +719,20 @@
       if (state.k === 15) state.stats.revealK15++;
       // запомним, при каком k сдан тест (шаг «найди лучшее k»)
       if (state.stats.revealKList.indexOf(state.k) === -1) state.stats.revealKList.push(state.k);
+      // Матрица ошибок: где твой ответ совпал с ответом ИИ, а где нет. Нужна
+      // шагу-отчёту «сколько синих ИИ назвал красными и наоборот».
+      var hitB = 0, hitR = 0, missB = 0, missR = 0;
+      state.testPoints.forEach(function (p, i) {
+        if (p.label === 'blue') { if (answers[i] === 'blue') hitB++; else missB++; }
+        else { if (answers[i] === 'red') hitR++; else missR++; }
+      });
+      state.stats.lastHitBlue = hitB;
+      state.stats.lastHitRed = hitR;
+      state.stats.lastMissBlue = missB; // ИИ сказал 🔵, а ты - 🔴
+      state.stats.lastMissRed = missR;  // ИИ сказал 🔴, а ты - 🔵
+      state.stats.lastAccPct = Math.round(correct / CONFIG.TEST_COUNT * 100);
+      // Точность при этом k - для шага-таблицы «точность по k»
+      if ([1, 3, 5, 9, 15].indexOf(state.k) !== -1) state.stats['accK' + state.k] = correct;
     }
     state.lastAccuracy = correct;
     state.testRevealed = true;
@@ -637,6 +811,7 @@
   // ---- Привязка событий ----
   canvas.addEventListener('click', function (e) {
     if (state.inspector) { toggleSelect(e); return; }
+    if (state.ask) { askAt(e); return; }
     if (state.eraser) { eraseAt(e); return; }
     addPoint(e, state.activeColor);
   });
@@ -645,6 +820,7 @@
   canvas.addEventListener('contextmenu', function (e) {
     e.preventDefault();
     if (state.inspector) { toggleSelect(e); return; }
+    if (state.ask) { askAt(e); return; }
     if (state.eraser) { eraseAt(e); return; }
     addPoint(e, other(state.activeColor), true);
   });
@@ -670,8 +846,8 @@
   };
   document.getElementById('inspector-toggle').onclick = function () {
     state.inspector = !state.inspector;
-    // Инспектор и ластик - разные режимы клика, вместе включать нельзя
-    if (state.inspector && state.eraser) { state.eraser = false; updateEraser(); }
+    // Инспектор, ластик и «Спросить ИИ» - разные режимы клика, вместе нельзя
+    if (state.inspector) exclusiveMode('inspector');
     updateInspector();
     setStatus(state.inspector
       ? 'Режим инспектора 🔎 - у точек видны координаты; щёлкай по точкам, чтобы выделять их. Рисование пока выключено.'
@@ -683,12 +859,23 @@
   };
   document.getElementById('eraser-toggle').onclick = function () {
     state.eraser = !state.eraser;
-    if (state.eraser && state.inspector) { state.inspector = false; updateInspector(); }
+    if (state.eraser) exclusiveMode('eraser');
     updateEraser();
     setStatus(state.eraser
       ? 'Режим ластика 🧽 - кликай по точкам, чтобы удалять их. Выключи кнопку, чтобы снова рисовать.'
       : 'Ластик выключен - снова рисуем точки 🔵🔴');
   };
+  document.getElementById('ask-toggle').onclick = function () {
+    state.ask = !state.ask;
+    if (state.ask) exclusiveMode('ask');
+    else state.askResult = null; // выключили режим - убираем линии с поля
+    updateAsk();
+    renderOverlay();
+    setStatus(state.ask
+      ? 'Режим вопроса 🔮 - щёлкай по полю, и ИИ скажет, какого цвета была бы точка здесь, и покажет линии к соседям, которые голосовали.'
+      : 'Режим вопроса выключен - снова рисуем точки 🔵🔴');
+  };
+  document.getElementById('btn-mystery').onclick = loadMystery;
   document.getElementById('btn-train').onclick = function () {
     if (!state.points.length) { setStatus('Сначала нанеси точки!'); return; }
     state.trained = true; state.stats.trains++;
@@ -725,6 +912,7 @@
     state.trained = false; state.testRevealed = false; state.lastAccuracy = null;
     state.history = [];
     state.selected = [];
+    state.askResult = null;
     state.stats = sanitizeStats(null); // счётчики авто-проверки тоже с нуля
     saveHistory();
     document.getElementById('answers').innerHTML = '';
@@ -761,6 +949,7 @@
   updateToggle();
   updateEraser();
   updateInspector();
+  updateAsk();
   updateUndoBtn();
   hideCoords();
   setStatus(state.points.length

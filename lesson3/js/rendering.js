@@ -134,6 +134,43 @@ function drawPointLabels(ctx, points, selected, hoverIdx) {
   }
 }
 
+// Режим «🔮 Спросить ИИ»: рисуем сам вопрос (кольцо), линии к k ближайшим
+// соседям (цветом их класса - видно, кто как голосует) и подпись с итогом
+// голосования. Так алгоритм KNN становится видимым: ребёнок буквально видит,
+// какие точки решают ответ.
+function drawAsk(ctx, ask) {
+  if (!ask) return;
+  var color = ask.label === 'blue' ? CONFIG.COLORS.blue : CONFIG.COLORS.red;
+  ctx.save();
+  // линии к соседям
+  for (var i = 0; i < ask.neighbors.length; i++) {
+    var n = ask.neighbors[i];
+    ctx.strokeStyle = n.label === 'blue' ? CONFIG.COLORS.blue : CONFIG.COLORS.red;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(ask.x, ask.y);
+    ctx.lineTo(n.x, n.y);
+    ctx.stroke();
+    // кольцо у соседа-голосующего
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, CONFIG.POINT_RADIUS + 5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // сам вопрос: двойное кольцо цвета ответа
+  ctx.strokeStyle = CONFIG.COLORS.ask;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(ask.x, ask.y, CONFIG.POINT_RADIUS + 2, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(ask.x, ask.y, CONFIG.POINT_RADIUS + 9, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+  drawTag(ctx, ask.text, ask.x + 16, ask.y - 30, color);
+}
+
 // Тепловая карта: поле бьётся на сетку, каждая ячейка красится цветом
 // предсказанного класса с прозрачностью по уверенности KNN.
 function drawHeatmap(ctx, points, k) {

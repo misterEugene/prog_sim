@@ -1475,7 +1475,7 @@ async function tryLogin(who, guess) {
 			tries++;
 			const now = performance.now();
 			if (now - lastLog >= 1000) {
-				console.log("Перебор идёт... попыток:", tries, "| сейчас проверяю:", guess);
+				console.log("Перебор идёт... прошло:", ((now - t0) / 1000).toFixed(0), "сек | попыток:", tries, "| сейчас проверяю:", guess);
 				lastLog = now;
 			}
 			if (await tryLogin(login, guess)) { found = guess; break; }

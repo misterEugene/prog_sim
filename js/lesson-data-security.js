@@ -1416,7 +1416,7 @@ DevTools. Открой её: нажми **F12**, вверху щёлкни **Con
 каждую догадку «сервер» считает её хэш и сравнивает с сохранённым. Переберём **все**
 пароли из 3 и 4 цифр. Вставь в консоль этот код и нажми **Enter**:
 
-💡 В начале кода есть три настройки, которые можно менять под себя:
+💡 В **самых первых трёх строках** кода есть настройки, которые можно менять под себя:
 - \`const login = "victim";\` - **чей** пароль подбираем. Поменяй на нужный логин
   (например \`const login = "petya";\`). Если впишешь несуществующий логин, код честно
   скажет об этом и покажет список тех, кто есть, - а не будет молча печатать \`null\`.
@@ -1428,8 +1428,8 @@ DevTools. Открой её: нажми **F12**, вверху щёлкни **Con
 
 **Как поменять значение прямо в консоли (пошагово):**
 1. Вставь весь код в консоль, но **пока не нажимай Enter**.
-2. Найди в самом верху вставленного кода нужную строку - например \`const login = "victim";\`.
-   Её видно среди первых строк, сразу после \`(async function () {\`.
+2. Настройки - это **первые три строки** вставленного кода (\`const login = ...\`,
+   \`const minLen = ...\`, \`const maxLen = ...\`). Найти их проще всего.
 3. Кликни мышкой прямо внутрь кавычек рядом со словом, которое хочешь заменить
    (например по слову \`victim\`), и стрелками/Backspace сотри старое значение.
 4. Впиши своё - например \`petya\`. **Кавычки \`"\` вокруг логина не удаляй!** А у чисел
@@ -1437,29 +1437,29 @@ DevTools. Открой её: нажми **F12**, вверху щёлкни **Con
 5. Проверь, что строка теперь выглядит как \`const login = "petya";\`, и только теперь
    нажми **Enter**.
 
-Если запутался - ничего страшного: сотри всё (выдели и Delete) и вставь код заново.
+⚠️ **Если консоль пишет «invalid regular expression: missing /» или другую ошибку** -
+значит при редактировании нечаянно склеились или порвались строки кода. Не переживай:
+выдели в консоли всё (Ctrl+A), удали (Delete) и вставь код заново, а меняй **только
+значение** внутри кавычек, не трогая сами кавычки, точку с запятой \`;\` и остальные строки.
 
 \`\`\`
-// тот же хэш, что считает сайт (SHA-256)
+const login = "victim";
+const minLen = 3;
+const maxLen = 4;
+
 async function hashPassword(str) {
 	const data = new TextEncoder().encode(str);
 	const buf = await crypto.subtle.digest("SHA-256", data);
 	return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
 }
 
-// «сервер» отвечает да/нет: хэширует догадку и сравнивает с сохранённым хэшем
-async function tryLogin(login, guess) {
+async function tryLogin(who, guess) {
 	const users = JSON.parse(localStorage.getItem("users") || "[]");
 	const hash = await hashPassword(guess);
-	return users.some(function (u) { return u.login === login && u.passwordHash === hash; });
+	return users.some(function (u) { return u.login === who && u.passwordHash === hash; });
 }
 
-// перебираем ВСЕ пароли из 3 и 4 цифр: 000…999 и 0000…9999
 (async function () {
-	const login = "victim"; // ← впиши сюда логин, чей пароль подбираешь
-	const minLen = 3;       // ← с какой длины пароля начинать перебор
-	const maxLen = 4;       // ← какой длиной закончить (например 5 или 6)
-	// проверим, что такой аккаунт вообще есть
 	const users = JSON.parse(localStorage.getItem("users") || "[]");
 	if (!users.some(function (u) { return u.login === login; })) {
 		console.log("Нет пользователя с логином:", login, "— проверь имя (есть:", users.map(function (u) { return u.login; }).join(", ") || "никого", ")");
@@ -1473,10 +1473,9 @@ async function tryLogin(login, guess) {
 		for (let i = 0; i < Math.pow(10, len); i++) {
 			const guess = String(i).padStart(len, "0");
 			tries++;
-			// раз в секунду показываем прогресс: сколько уже попыток и последняя догадка
 			const now = performance.now();
 			if (now - lastLog >= 1000) {
-				console.log("Перебор идёт… попыток:", tries, "| сейчас проверяю:", guess);
+				console.log("Перебор идёт... попыток:", tries, "| сейчас проверяю:", guess);
 				lastLog = now;
 			}
 			if (await tryLogin(login, guess)) { found = guess; break; }

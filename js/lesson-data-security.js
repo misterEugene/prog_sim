@@ -1416,6 +1416,11 @@ DevTools. Открой её: нажми **F12**, вверху щёлкни **Con
 каждую догадку «сервер» считает её хэш и сравнивает с сохранённым. Переберём **все**
 пароли из 3 и 4 цифр. Вставь в консоль этот код и нажми **Enter**:
 
+💡 Хочешь подобрать пароль не к `victim`, а к **другому** аккаунту? Просто поменяй логин
+в первой строке кода - `const login = "victim";` - на нужный (например `const login = "petya";`).
+Если впишешь несуществующий логин, код честно скажет об этом и покажет список тех, кто
+есть, - а не будет молча печатать `null`.
+
 \`\`\`
 // тот же хэш, что считает сайт (SHA-256)
 async function hashPassword(str) {
@@ -1433,16 +1438,36 @@ async function tryLogin(login, guess) {
 
 // перебираем ВСЕ пароли из 3 и 4 цифр: 000…999 и 0000…9999
 (async function () {
+	const login = "victim"; // ← впиши сюда логин, чей пароль подбираешь
+	// проверим, что такой аккаунт вообще есть
+	const users = JSON.parse(localStorage.getItem("users") || "[]");
+	if (!users.some(function (u) { return u.login === login; })) {
+		console.log("Нет пользователя с логином:", login, "— проверь имя (есть:", users.map(function (u) { return u.login; }).join(", ") || "никого", ")");
+		return;
+	}
 	const t0 = performance.now();
 	let found = null;
+	let tries = 0;
+	let lastLog = t0;
 	for (const len of [3, 4]) {
 		for (let i = 0; i < Math.pow(10, len); i++) {
 			const guess = String(i).padStart(len, "0");
-			if (await tryLogin("victim", guess)) { found = guess; break; }
+			tries++;
+			// раз в секунду показываем прогресс: сколько уже попыток и последняя догадка
+			const now = performance.now();
+			if (now - lastLog >= 1000) {
+				console.log("Перебор идёт… попыток:", tries, "| сейчас проверяю:", guess);
+				lastLog = now;
+			}
+			if (await tryLogin(login, guess)) { found = guess; break; }
 		}
 		if (found) break;
 	}
-	console.log("Пароль подобран:", found, "за", (performance.now() - t0).toFixed(0), "мс");
+	if (found) {
+		console.log("Пароль подобран:", found, "за", (performance.now() - t0).toFixed(0), "мс");
+	} else {
+		console.log("Пароль НЕ подобран за", (performance.now() - t0).toFixed(0), "мс — он длиннее 4 цифр или содержит не только цифры. Значит длинный/сложный пароль защищает!");
+	}
 })();
 \`\`\`
 

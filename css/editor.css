@@ -112,7 +112,8 @@
   bottom: 0;
   width: var(--gutter-w);
   margin: 0;
-  padding: 12px 8px 12px 0;
+  /* нижний запас 12px+40px - как у .highlight (кламп scrollTop у нижнего края) */
+  padding: 12px 8px 52px 0;
   font-family: var(--mono);
   font-size: 14px;
   line-height: 1.5;
@@ -135,6 +136,17 @@
   color: var(--text);
   pointer-events: none;        /* клики проходят к textarea сверху */
   z-index: 1;
+  /* Запас прокрутки снизу: у textarea скроллбары уменьшают client-область, у
+     слоя подсветки их нет - без запаса его максимум прокрутки меньше, и у
+     нижнего края pre.scrollTop клампится (код уезжает вниз от каретки).
+     Нижний padding на положение текста не влияет - только на scrollHeight;
+     дальше textarea прокрутка всё равно не уходит. */
+  padding-bottom: calc(12px + 40px);
+}
+/* Тот же запас по горизонтали (вертикальный скроллбар textarea). Только без
+   переноса: при Alt+Z правый padding менял бы точки переноса строк. */
+body:not(.word-wrap) .highlight {
+  padding-right: calc(12px + 40px);
 }
 .highlight code {
   font: inherit;

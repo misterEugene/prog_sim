@@ -103,7 +103,12 @@ function highlight(code, lang) {
 function updateHighlight(editor) {
   const codeEl = editor._codeEl;
   if (!codeEl) return;
-  codeEl.innerHTML = highlight(editor.value, editor.dataset.lang);
+  // Хвостовой "\n": <pre> НЕ отрисовывает финальный перевод строки, а textarea
+  // рисует после него пустую строку - scrollHeight слоёв расходится на строку,
+  // и у нижнего края pre.scrollTop клампится (код уезжает вниз от каретки).
+  // Всегда дописываем один "\n": лишний финальный перевод строки браузер
+  // отбрасывает, так что высоты совпадают и с "\n" на конце файла, и без него.
+  codeEl.innerHTML = highlight(editor.value, editor.dataset.lang) + "\n";
   updateGutter(editor);
   syncScroll(editor);
   refreshSwatches(editor);

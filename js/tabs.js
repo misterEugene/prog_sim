@@ -16,6 +16,7 @@ function switchTab(tabId) {
   if (shown) {
     updateGutter(shown);
     refreshSwatches(shown);
+    syncScroll(shown); // пока вкладка была скрыта, слои могли разъехаться
   }
   updateHistButtons(); // стрелки ↩/↪ относятся к активному редактору
 }

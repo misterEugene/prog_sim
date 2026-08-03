@@ -47,6 +47,28 @@ const LINK_GUARD = `(function(){
   },true);
 })();`;
 
+// Подпорка для localStorage. В Chrome у страницы с origin "null" (запуск урока
+// из file://, а также srcdoc-iframe) любое обращение к localStorage кидает
+// SecurityError. Весь код ученика - один <script>, поэтому такое исключение
+// обрывало выполнение целиком (роутер, аккаунты, комментарии не запускались).
+// Подменяем localStorage на хранилище в памяти: данные живут до перезапуска,
+// но урок работает везде.
+const STORAGE_SHIM = `(function(){
+  try{ window.localStorage.getItem('__probe'); return; }catch(e){}
+  var mem={};
+  var shim={
+    getItem:function(k){ k=String(k); return Object.prototype.hasOwnProperty.call(mem,k)?mem[k]:null; },
+    setItem:function(k,v){ mem[String(k)]=String(v); },
+    removeItem:function(k){ delete mem[String(k)]; },
+    clear:function(){ mem={}; },
+    key:function(i){ var ks=Object.keys(mem); return i<ks.length?ks[i]:null; }
+  };
+  Object.defineProperty(shim,'length',{get:function(){ return Object.keys(mem).length; }});
+  try{
+    Object.defineProperty(window,'localStorage',{value:shim,configurable:true});
+  }catch(e){}
+})();`;
+
 // Собрать полный HTML-документ из текущих редакторов (для превью и для открытия
 // в новой вкладке). Внедряет стили и служебные скрипты (консоль + страж ссылок).
 function buildDocument() {
@@ -56,7 +78,7 @@ function buildDocument() {
   const js = els.jsEditor.value.replace(/<\/script>/gi, "<\\/script>");
 
   const styleTag = `<style>${css}</style>`;
-  const scripts = `<script>${CONSOLE_HOOK}\n${LINK_GUARD}<\/script>\n    <script>${js}<\/script>`;
+  const scripts = `<script>${STORAGE_SHIM}\n${CONSOLE_HOOK}\n${LINK_GUARD}<\/script>\n    <script>${js}<\/script>`;
 
   let doc;
   if (/<\/body>/i.test(html)) {

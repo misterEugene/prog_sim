@@ -1,6 +1,7 @@
 // ============================================================
 // Markdown → HTML (минимальный парсер без библиотек)
-// Поддержка: # ## ###, списки -/*, **жирный**, *курсив*, `код`, абзацы.
+// Поддержка: # ## ###, списки -/* и нумерованные 1./1), горизонтальная черта ---,
+// **жирный**, *курсив*, `код`, абзацы.
 // ============================================================
 function escapeHtml(str) {
   return str
@@ -28,12 +29,16 @@ function markdownToHtml(md) {
   const lines = escapeHtml(md).split("\n");
   const html = [];
   let listItems = null; // накапливаем пункты текущего списка
+  let listTag = "ul";   // ul для -/*, ol для 1./1)
+  let listStart = 1;    // с какого номера начинается нумерованный список
   let paragraph = null; // накапливаем строки текущего абзаца
   let codeLines = null; // строки внутри блока ```…``` (или null вне блока)
 
   const flushList = () => {
     if (listItems) {
-      html.push("<ul>" + listItems.join("") + "</ul>");
+      const open =
+        listTag === "ol" && listStart !== 1 ? `<ol start="${listStart}">` : `<${listTag}>`;
+      html.push(open + listItems.join("") + `</${listTag}>`);
       listItems = null;
     }
   };
@@ -80,11 +85,34 @@ function markdownToHtml(md) {
       continue;
     }
 
-    const listItem = line.match(/^[-*]\s+(.*)$/);
-    if (listItem) {
+    // Горизонтальная черта: строка из трёх и более - _ * (разделитель внутри шага)
+    if (/^(-{3,}|_{3,}|\*{3,})$/.test(line)) {
       flushParagraph();
-      if (!listItems) listItems = [];
-      listItems.push("<li>" + inlineMarkdown(listItem[1]) + "</li>");
+      flushList();
+      html.push("<hr>");
+      continue;
+    }
+
+    const listItem = line.match(/^[-*]\s+(.*)$/);
+    const numItem = line.match(/^(\d{1,2})[.)]\s+(.*)$/);
+    if (listItem || numItem) {
+      flushParagraph();
+      const tag = listItem ? "ul" : "ol";
+      if (listItems && tag !== listTag) flushList(); // сменился вид списка
+      if (!listItems) {
+        listItems = [];
+        listTag = tag;
+        listStart = numItem ? parseInt(numItem[1], 10) : 1;
+      }
+      listItems.push("<li>" + inlineMarkdown(listItem ? listItem[1] : numItem[2]) + "</li>");
+      continue;
+    }
+
+    // Продолжение длинного пункта списка: строка с отступом сразу под пунктом
+    // (списки в уроках переносят длинные пункты на следующую строку).
+    if (listItems && /^\s/.test(rawLine)) {
+      const last = listItems.pop();
+      listItems.push(last.replace(/<\/li>$/, " " + inlineMarkdown(line) + "</li>"));
       continue;
     }
 

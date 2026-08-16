@@ -1,0 +1,367 @@
+/* ===== 🐞 Баг-трекер (урок 4 «Тестировщик») =====
+   Подключается только в урок_4.html, ПОСЛЕ css/theme-green.css - берёт её
+   переменные (--accent зелёный и т.д.), своих «зашитых» цветов почти не имеет.
+
+   Суть: это НЕ отдельное хранилище. Трекер - красивая витрина того самого
+   🐞 ЖУРНАЛА БАГОВ, который живёт комментариями в конце main.js. Читает оттуда,
+   пишет туда же. Источник истины - код, как у настоящего тестировщика. */
+
+/* ---- Кнопка в верхней панели ---- */
+.btn-tracker {
+  position: relative;
+}
+
+/* Счётчик «описано / всего» на кнопке */
+.tracker-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #0b140e;
+  font-size: 0.72rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+/* ---- Оверлей и окно ---- */
+.tracker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2100; /* выше модалки сброса не лезем, но выше всего остального */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.6);
+}
+.tracker-overlay[hidden] { display: none; }
+
+.tracker {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1080px;
+  height: 100%;
+  max-height: 760px;
+  background: var(--bg-panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+/* ---- Шапка окна ---- */
+.tracker-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-panel));
+}
+
+.tracker-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.tracker-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.tracker-close {
+  margin-left: auto;
+}
+
+/* ---- Полоса статистики ---- */
+.tracker-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tracker-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-page);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.tracker-stat b {
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.tracker-bar {
+  flex: 1;
+  min-width: 140px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.tracker-bar-fill {
+  display: block; /* span по умолчанию inline - тогда height не применяется */
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #4caf50, #8bc34a);
+  transition: width 0.25s ease;
+}
+
+/* ---- Тело: список слева, карточка справа ---- */
+.tracker-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.tracker-list-col {
+  display: flex;
+  flex-direction: column;
+  width: 310px;
+  flex: none;
+  border-right: 1px solid var(--border);
+  min-height: 0;
+}
+
+.tracker-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tracker-filter {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.tracker-filter:hover { color: var(--text); border-color: var(--accent); }
+.tracker-filter.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b140e;
+  font-weight: 600;
+}
+
+.tracker-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  margin: 0;
+  list-style: none;
+}
+
+.tracker-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 11px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-page);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.tracker-item:hover { border-color: var(--accent); }
+.tracker-item.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+/* Цвет левой полоски = состояние записи */
+.tracker-item.is-empty { border-left-color: var(--text-muted); }
+.tracker-item.is-open { border-left-color: #e0a23c; }
+.tracker-item.is-fixed { border-left-color: var(--success); }
+
+.tracker-item-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+
+.tracker-id {
+  font-family: "Fira Code", "Consolas", monospace;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.tracker-item-title {
+  font-size: 0.85rem;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tracker-item-title.is-blank {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Значки статуса и серьёзности */
+.tracker-chip {
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+.tracker-chip.st-open { color: #f0b45a; border-color: #7a5a22; }
+.tracker-chip.st-fixed { color: var(--success); border-color: #3d6b45; }
+.tracker-chip.sv-low { color: #8fb7d6; border-color: #3a5468; }
+.tracker-chip.sv-mid { color: #e6c76a; border-color: #6d5c26; }
+.tracker-chip.sv-high { color: #ef8a84; border-color: #7a3a36; }
+
+/* ---- Правая часть: форма баг-репорта ---- */
+.tracker-detail {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 16px 20px 22px;
+}
+
+.tracker-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tracker-detail-id {
+  font-family: "Fira Code", "Consolas", monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.tracker-detail-note {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+.tracker-field { margin-bottom: 12px; }
+
+.tracker-field label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.tracker-field .tracker-help {
+  display: block;
+  font-weight: 400;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.tracker-field input[type="text"],
+.tracker-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-editor);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
+.tracker-field input[type="text"]:focus,
+.tracker-field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+/* Ряды кнопок-переключателей (серьёзность, статус) */
+.tracker-radio {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tracker-radio button {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-page);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.tracker-radio button:hover { border-color: var(--accent); color: var(--text); }
+.tracker-radio button.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b140e;
+  font-weight: 600;
+}
+
+/* Подвал окна: связь с кодом */
+.tracker-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.tracker-saved {
+  margin-left: auto;
+  color: var(--success);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.tracker-saved.show { opacity: 1; }
+
+/* Когда журнала в коде нет (его стёрли) - показываем объяснение вместо формы */
+.tracker-broken {
+  padding: 20px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* ---- Узкие экраны: список сверху, карточка снизу ---- */
+@media (max-width: 780px) {
+  .tracker-overlay { padding: 8px; }
+  .tracker-body { flex-direction: column; }
+  .tracker-list-col {
+    width: auto;
+    max-height: 40%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}

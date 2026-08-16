@@ -18,6 +18,8 @@
   <link rel="stylesheet" href="css/responsive.css">
   <!-- Зелёная тема урока 4 - подключается ПОСЛЕДНЕЙ, переопределяет переменные base.css -->
   <link rel="stylesheet" href="css/theme-green.css">
+  <!-- Встроенный баг-трекер урока 4 (витрина журнала багов из main.js) -->
+  <link rel="stylesheet" href="css/bugtracker.css">
 </head>
 <body>
   <!-- Верхняя панель: заголовок урока и общие кнопки управления -->
@@ -26,6 +28,8 @@
     <div class="control-buttons">
       <button id="run-btn" type="button" class="btn btn-primary">▶ Запустить</button>
       <button id="open-tab-btn" type="button" class="btn">🔗 Открыть в новой вкладке</button>
+      <!-- Баг-трекер: форма поверх 🐞 ЖУРНАЛА БАГОВ из конца main.js -->
+      <button id="tracker-btn" type="button" class="btn btn-tracker">🐞 Баг-трекер<span class="tracker-badge">0/13</span></button>
       <button id="reset-btn" type="button" class="btn">↺ Начать заново</button>
       <button id="hint-btn" type="button" class="btn">💡 Подсказка</button>
       <button id="download-btn" type="button" class="btn">⬇ Скачать проект</button>
@@ -184,5 +188,8 @@
   <script src="js/layout.js" defer></script>
   <script src="js/dev-cheat.js" defer></script>
   <script src="js/main.js" defer></script>
+  <!-- Баг-трекер - ПОСЛЕ main.js: его DOMContentLoaded-обработчик должен
+       сработать уже после init() платформы (els.* заполнены). -->
+  <script src="js/bugtracker.js" defer></script>
 </body>
 </html>

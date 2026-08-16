@@ -390,10 +390,19 @@ function replaceTagBlock(src, anchor, code) {
 //   • секретный адрес  урок_1.html#mega-admin-off  (или  ?mega-admin-off)
 //   • из консоли:  disableMegaAdmin()
 // → флаг `megaDevAdmin` удаляется; после перезагрузки кнопок на шагах больше нет.
+//
+// ⚠️ ФЛАГ - ПЕР-УРОЧНЫЙ (2026-08-16). Раньше ключ был один на все уроки, поэтому
+// разблокировка в уроке 1 незаметно включала админ-кнопки и в уроках 2/4 - ребёнок
+// видел «🗝 Заполнить по этот шаг» и мог пройти урок одним кликом (см.
+// docs/BUGS_LESSON4.md → D1). Теперь к ключу добавляется суффикс урока
+// (LESSON_KEY_SUFFIX из lesson-data*.js): урок 1 - `megaDevAdmin` (как было,
+// обратная совместимость), урок 2 - `megaDevAdminSecurity`, урок 4 -
+// `megaDevAdminTesting`. Каждый урок разблокируется своим заходом по секрету.
 // ============================================================
 const DEV_SECRET = "mega-admin";
 const DEV_SECRET_OFF = "mega-admin-off";   // должен проверяться РАНЬШЕ включения
-const DEV_FLAG_KEY = "megaDevAdmin";
+const DEV_FLAG_KEY =
+  "megaDevAdmin" + (typeof LESSON_KEY_SUFFIX !== "undefined" ? LESSON_KEY_SUFFIX : "");
 
 function isDevUnlocked() {
   try {
@@ -435,4 +444,30 @@ checkSecretUnlock();
 // Выключить режим можно из консоли:  disableMegaAdmin()   (или адрес #mega-admin-off)
 if (typeof window !== "undefined") {
   window.disableMegaAdmin = disableDevMode;
+}
+
+// Заметный признак того, что урок открыт в режиме разработчика: бейдж в верхней
+// панели с кнопкой выключения. Раньше режим можно было не заметить - и ребёнок
+// проходил урок админ-кнопками (docs/BUGS_LESSON4.md → D1).
+function injectDevBadge() {
+  if (!isDevUnlocked()) return;
+  const bar = document.querySelector(".control-buttons");
+  if (!bar || document.getElementById("dev-mode-badge")) return;
+  const badge = document.createElement("button");
+  badge.id = "dev-mode-badge";
+  badge.type = "button";
+  badge.className = "btn btn-small";
+  badge.textContent = "🛠 Режим разработчика · выключить";
+  badge.title = "Урок открыт с админ-кнопками «🗝 Заполнить по этот шаг». Нажми, чтобы выключить их для ЭТОГО урока.";
+  badge.style.cssText = "background:#3a2a5a;color:#fff;border:1px dashed #8a7ad0;";
+  badge.addEventListener("click", function () {
+    disableDevMode();
+    document.querySelectorAll(".dev-step-fill").forEach(function (b) { b.remove(); });
+    badge.remove();
+  });
+  bar.appendChild(badge);
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", injectDevBadge);
 }

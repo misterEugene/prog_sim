@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Профессии в IT: четыре урока</title>
+  <!-- Страница-меню: раньше в корне не было index.html и по адресу каталога
+       отдавался файловый листинг с кириллическими именами (docs/BUGS_LESSON4.md → D15).
+       Никаких внешних ресурсов - как и во всём проекте. -->
+  <style>
+    :root {
+      --bg: #171a21;
+      --panel: #202531;
+      --text: #e8ecf2;
+      --muted: #98a2b3;
+      --border: #2e3545;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 60px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.9rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      margin: 0 0 32px;
+      color: var(--muted);
+      text-align: center;
+      max-width: 620px;
+      line-height: 1.5;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+      width: 100%;
+      max-width: 1080px;
+    }
+
+    .card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-top: 4px solid var(--accent);
+      border-radius: 12px;
+      padding: 18px 20px 20px;
+      transition: transform 0.12s, border-color 0.12s, background 0.12s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      background: #262c3a;
+      border-color: var(--accent);
+      border-top-color: var(--accent);
+    }
+
+    .card-num {
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .card h2 {
+      margin: 6px 0 4px;
+      font-size: 1.25rem;
+    }
+
+    .card .prof {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .card p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .card .meta {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .l1 { --accent: #5b8cff; }
+    .l2 { --accent: #e0524c; }
+    .l3 { --accent: #b07af0; }
+    .l4 { --accent: #4caf50; }
+
+    footer {
+      margin-top: 36px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-align: center;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>👨‍💻 Профессии в IT: четыре урока</h1>
+  <p class="subtitle">
+    Четыре профессии - четыре взгляда на одну и ту же работу с кодом.
+    Уроки проходят прямо в браузере: ничего устанавливать не нужно.
+    Проходить лучше по порядку, но каждый урок самостоятельный.
+  </p>
+
+  <div class="cards">
+
+    <a class="card l1" href="урок_1.html">
+      <div class="card-num">Урок 1</div>
+      <h2>Собери «МегаМагазин»</h2>
+      <p class="prof">Профессия: веб-разработчик</p>
+      <p>
+        С нуля собираешь настоящий интернет-магазин: страницы, товары, корзина,
+        регистрация и вход, комментарии. HTML, CSS, JavaScript и Emmet.
+      </p>
+      <div class="meta">17 шагов · вставка блоков + свой код</div>
+    </a>
+
+    <a class="card l2" href="урок_2.html">
+      <div class="card-num">Урок 2</div>
+      <h2>Найди дыры в своём сайте</h2>
+      <p class="prof">Профессия: этичный («белый») хакер</p>
+      <p>
+        Тот же магазин глазами взломщика: XSS, пароли в коде, чужой доступ.
+        Каждую дыру находишь, эксплуатируешь и чинишь.
+      </p>
+      <div class="meta">14 шагов · ломаем только своё</div>
+    </a>
+
+    <a class="card l3" href="урок_3.html">
+      <div class="card-num">Урок 3</div>
+      <h2>Обучи свой искусственный интеллект</h2>
+      <p class="prof">Профессия: аналитик данных и создатель ИИ</p>
+      <p>
+        Рисуешь данные, обучаешь модель kNN, читаешь карту решений, проверяешь
+        точность на тесте и разбираешь ошибки.
+      </p>
+      <div class="meta">57 шагов · три главы, авто-проверка</div>
+    </a>
+
+    <a class="card l4" href="урок_4.html">
+      <div class="card-num">Урок 4</div>
+      <h2>Найди 13 багов до релиза</h2>
+      <p class="prof">Профессия: тестировщик (QA)</p>
+      <p>
+        Магазин сдали на проверку - в нём спрятаны 13 ошибок. Чек-лист,
+        баг-репорты, ретест, регрессия и свои первые автотесты.
+      </p>
+      <div class="meta">37 шагов · авто-проверка каждого шага</div>
+    </a>
+
+  </div>
+
+  <footer>
+    Всё работает офлайн, без установки и без интернета.<br>
+    Лучше открывать по локальному адресу (<code>python3 -m http.server</code>), чем файлом с диска.
+  </footer>
+
+</body>
+</html>

@@ -90,6 +90,9 @@ function buildStepCard(step, index) {
     task.innerHTML = markdownToHtml(step.taskMd);
     card.appendChild(task);
 
+    // Живой чек-лист (если урок задал проверки для этого шага)
+    if (stepChecksOf(index).length) card.appendChild(makeStepChecksBox(index));
+
     const buttons = document.createElement("div");
     buttons.className = "step-buttons";
     buttons.appendChild(makeManualDoneButton(index));
@@ -141,6 +144,83 @@ function makeInsertButton(index, lang) {
   btn.dataset.lang = lang;
   btn.addEventListener("click", () => insertPart(index, lang));
   return btn;
+}
+
+// ============================================================
+// Авто-проверка шагов (lesson.stepChecks) - урок 4 «Тестировщик».
+//
+// Урок 4 ничего не вставляет кнопками, все шаги ручные - значит, их можно было
+// «прощёлкать», не выполнив ни одного задания (docs/BUGS_LESSON4.md → D2).
+// Поэтому урок может задать для шага список проверок:
+//     lesson.stepChecks[i] = [ { label: "текст", test(code) → true/false }, … ]
+// где code = { html, css, js } - ТЕКУЩЕЕ содержимое редакторов. Пока проверки не
+// выполнены, кнопка «✓ Я выполнил этот шаг» заблокирована, а под инструкцией
+// висит живой чек-лист. У шагов без проверок (теория) поведение прежнее.
+// ============================================================
+function stepChecksOf(index) {
+  const all = (typeof lesson !== "undefined" && lesson && lesson.stepChecks) || null;
+  const list = all && all[index];
+  return Array.isArray(list) ? list : [];
+}
+
+// Снимок кода из редакторов (пустые строки, если платформа ещё не готова).
+function currentCodeSnapshot() {
+  if (typeof els === "undefined" || !els.htmlEditor) return { html: "", css: "", js: "" };
+  return {
+    html: els.htmlEditor.value || "",
+    css: els.cssEditor.value || "",
+    js: els.jsEditor.value || "",
+  };
+}
+
+// Результаты проверок шага: массив true/false (ошибку в test() считаем «не пройдено»).
+function stepCheckResults(index, code) {
+  return stepChecksOf(index).map(function (c) {
+    try {
+      return !!c.test(code);
+    } catch (e) {
+      return false;
+    }
+  });
+}
+
+function stepChecksPassed(index, code) {
+  return stepCheckResults(index, code).every(Boolean);
+}
+
+// Блок живого чек-листа под инструкцией шага.
+function makeStepChecksBox(index) {
+  const box = document.createElement("div");
+  box.className = "step-checks";
+  box.dataset.checksFor = String(index);
+  const title = document.createElement("div");
+  title.className = "step-checks-title";
+  title.textContent = "🔎 Платформа проверит:";
+  box.appendChild(title);
+  const ul = document.createElement("ul");
+  stepChecksOf(index).forEach(function (c) {
+    const li = document.createElement("li");
+    li.textContent = c.label;
+    ul.appendChild(li);
+  });
+  box.appendChild(ul);
+  return box;
+}
+
+// Пересчитать галочки во всех отрисованных чек-листах + состояние кнопок.
+function refreshStepChecks() {
+  if (typeof els === "undefined" || !els.markdown) return;
+  const boxes = els.markdown.querySelectorAll(".step-checks");
+  if (!boxes.length) return;
+  const code = currentCodeSnapshot();
+  boxes.forEach(function (box) {
+    const i = Number(box.dataset.checksFor);
+    const res = stepCheckResults(i, code);
+    box.querySelectorAll("li").forEach(function (li, k) {
+      li.classList.toggle("ok", !!res[k]);
+    });
+  });
+  updateProgress();
 }
 
 // Кнопка «✓ Я выполнил этот шаг» для ручного шага.
@@ -219,6 +299,7 @@ function renderLesson() {
   root.appendChild(outro);
   els.outro = outro;
 
+  refreshStepChecks(); // расставит галочки чек-листов и вызовет updateProgress()
   updateProgress();
 }
 
@@ -228,6 +309,7 @@ function updateProgress() {
   const total = lesson.steps.length;
   const doneCount = doneStepCount();
   const next = firstUndoneStep();
+  const codeSnap = currentCodeSnapshot(); // для авто-проверок шагов (lesson.stepChecks)
 
   els.markdown.querySelectorAll(".btn-insert").forEach((btn) => {
     const i = Number(btn.dataset.insert);
@@ -242,8 +324,17 @@ function updateProgress() {
         btn.classList.add("done");
         btn.textContent = "✓ Шаг выполнен";
       } else if (i === next) {
-        btn.disabled = false;
-        btn.textContent = "✓ Я выполнил этот шаг";
+        // Если урок задал проверки (lesson.stepChecks), кнопка ждёт их выполнения:
+        // так шаг нельзя «прощёлкать», не сделав задание.
+        if (stepChecksOf(i).length && !stepChecksPassed(i, codeSnap)) {
+          btn.disabled = true;
+          btn.classList.add("locked");
+          btn.textContent = "🔒 Сначала выполни задание";
+          btn.title = "Смотри список «🔎 Платформа проверит» выше: нужны все галочки";
+        } else {
+          btn.disabled = false;
+          btn.textContent = "✓ Я выполнил этот шаг";
+        }
       } else {
         btn.disabled = true;
         btn.classList.add("locked");
@@ -280,7 +371,10 @@ function updateProgress() {
   });
 
   if (els.progressText) {
-    els.progressText.textContent = `Готово блоков: ${doneCount} из ${total}`;
+    // Подпись прогресса настраивается уроком: в уроках 1–2 собираются «блоки» кода,
+    // а в уроке 4 (тестировщик) блоков нет - там проходят шаги.
+    const label = lesson.progressLabel || "Готово блоков";
+    els.progressText.textContent = `${label}: ${doneCount} из ${total}`;
   }
   if (els.progressFill) {
     els.progressFill.style.width = Math.round((doneCount / total) * 100) + "%";

@@ -122,6 +122,7 @@ function init() {
       autosave();
       updateEmmetPreview(ta);
       histRecord(ta); // запомнить шаг для своей отмены (переживает перезагрузку)
+      refreshStepChecks(); // урок 4: чек-лист шага считается по коду в редакторах
     });
     // Прокрутка textarea → двигаем слой подсветки, чипы цветов и превью
     ta.addEventListener("scroll", () => {

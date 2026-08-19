@@ -3,18 +3,37 @@
 // ============================================================
 // Что это. Витрина того самого 🐞 ЖУРНАЛА БАГОВ, который лежит комментариями в
 // конце main.js. Трекер НЕ заводит своё хранилище: он читает записи прямо из
-// кода в редакторе и туда же их записывает в том же формате. Поэтому суть урока
-// не меняется - источник истины остаётся кодом, а все проверки шагов
-// (t4bugFilled / t4bugFixed в lesson-data-testing.js) продолжают работать как
-// раньше, независимо от того, заполнил ребёнок запись руками в main.js или через
-// эту форму.
+// кода в редакторе и туда же их записывает в том же формате. Источник истины -
+// код, как у настоящего тестировщика.
 //
-// Формат записи (менять нельзя - на него завязаны проверки):
+// ВАЖНО (переделка на 20 шагов). Раньше трекер был «формой для копирования»:
+// в шаге урока лежал готовый текст баг-репорта, ребёнок переносил его в поля.
+// Теперь готового текста в уроке НЕТ, а трекер работает как настоящая система
+// учёта дефектов и сам проверяет качество репорта:
+//
+//   1. Запись живёт в трёх состояниях: ⬜ черновик → 🔴 открыт (отправлен
+//      разработчику) → 🟢 исправлен (закрыт после ретеста).
+//   2. Кнопка «📨 Отправить разработчику» разблокируется, только когда репорт
+//      прошёл ВСЕ проверки качества (см. BT_RULES): заголовок-предложение,
+//      минимум два пронумерованных шага, разные «Ожидаемо» и «Фактически»,
+//      правильно указанный файл-источник, осмысленные серьёзность и приоритет.
+//      Заголовки не должны повторяться - один текст на 13 багов не пройдёт.
+//   3. Кнопка «✅ Закрыть после ретеста» разблокируется, только когда починка
+//      РЕАЛЬНО есть в коде редактора (проверка lesson.bugMeta[i].fixed).
+//      Поставить «исправлен» «на честном слове» невозможно.
+//
+// Ключ ответов (какой файл виноват, какая серьёзность/приоритет уместны и как
+// выглядит починка) лежит НЕ здесь, а в js/lesson-data-testing.js →
+// lesson.bugMeta - трекер остаётся общим механизмом.
+//
+// Формат записи в коде (на него завязаны проверки шагов):
 //   // BUG-01 | Заголовок: ...
 //   //   Шаги:        ...
 //   //   Ожидаемо:    ...
 //   //   Фактически:  ...
+//   //   Где:         ...
 //   //   Серьёзность: ...
+//   //   Приоритет:   ...
 //   //   Статус:      ...
 //
 // Пустое поле формы записывается обратно как метка [ВПИШИ …] - ровно как в
@@ -26,62 +45,78 @@
 
 const BT_COUNT = 13; // столько записей в журнале (BUG-01 … BUG-13)
 
-// Поля записи: ключ, подпись в форме, метка в коде, ширина отступа после метки
-// (чтобы значения в журнале стояли ровным столбиком, как в шаблоне) и
-// плейсхолдер-метка из шаблона.
+// Поля записи: ключ, подпись в форме, метка в коде и плейсхолдер из шаблона.
 const BT_FIELDS = [
   {
     key: "title",
     label: "Заголовок",
     code: "Заголовок:",
     ph: "[ВПИШИ ЗАГОЛОВОК]",
-    help: "Коротко и по делу: что именно сломано.",
+    help: "Одно предложение: ЧТО и ГДЕ сломано. Так, чтобы понял человек, который бага не видел.",
     kind: "text",
-    hint: "Например: «Счётчик корзины растёт на 2 вместо 1»",
+    hint: "Что именно ведёт себя неправильно?",
   },
   {
     key: "steps",
     label: "Шаги воспроизведения",
     code: "Шаги:",
     ph: "[ВПИШИ ШАГИ]",
-    help: "По пунктам, чтобы разработчик повторил баг у себя.",
+    help: "Пронумерованные действия: 1) … 2) … Минимум два пункта, иначе разработчик не повторит баг.",
     kind: "area",
-    hint: "1) Открыть сайт 2) Нажать «В корзину» 3) Посмотреть на счётчик",
+    hint: "1) … 2) … 3) …",
   },
   {
     key: "expected",
     label: "Ожидаемо",
     code: "Ожидаемо:",
     ph: "[ВПИШИ ОЖИДАЕМО]",
-    help: "Как ДОЛЖНО работать.",
+    help: "Как ДОЛЖНО быть. Если речь о числах - пиши число, которое посчитал сам.",
     kind: "area",
-    hint: "Счётчик показывает 1",
+    hint: "Как должно работать правильно",
   },
   {
     key: "actual",
     label: "Фактически",
     code: "Фактически:",
     ph: "[ВПИШИ ФАКТИЧЕСКИ]",
-    help: "Как есть на самом деле.",
+    help: "Как есть на самом деле. Это должен быть ДРУГОЙ текст, а не повтор «Ожидаемо».",
     kind: "area",
-    hint: "Счётчик показывает 2",
+    hint: "Что происходит на самом деле",
+  },
+  {
+    key: "place",
+    label: "Где причина (файл)",
+    code: "Где:",
+    ph: "[ВПИШИ ФАЙЛ]",
+    help: "Твоя гипотеза: в каком файле лежит причина. Разметка - index.html, внешний вид - style.css, поведение - main.js.",
+    kind: "choice",
+    options: ["index.html", "style.css", "main.js"],
   },
   {
     key: "severity",
     label: "Серьёзность",
     code: "Серьёзность:",
     ph: "[ВПИШИ СЕРЬЁЗНОСТЬ]",
-    help: "Насколько сильно баг мешает покупателю.",
+    help: "Насколько баг вредит покупателю: низкая - некрасиво, средняя - неудобно, высокая - купить нельзя или магазин теряет деньги.",
     kind: "choice",
     options: ["низкая", "средняя", "высокая"],
+  },
+  {
+    key: "priority",
+    label: "Приоритет",
+    code: "Приоритет:",
+    ph: "[ВПИШИ ПРИОРИТЕТ]",
+    help: "Насколько СРОЧНО чинить. Не всегда совпадает с серьёзностью: мелочь на главной странице видят все - значит срочно.",
+    kind: "choice",
+    options: ["низкий", "средний", "высокий"],
   },
   {
     key: "status",
     label: "Статус",
     code: "Статус:",
     ph: "[ВПИШИ СТАТУС]",
-    help: "«исправлен» ставь только после ретеста - когда сам проверил, что баг ушёл.",
-    kind: "choice",
+    help: "Меняется кнопками внизу карточки, руками писать не нужно.",
+    kind: "readonly",
     options: ["открыт", "исправлен"],
   },
 ];
@@ -89,15 +124,128 @@ const BT_FIELDS = [
 // Ширина колонки под метку в журнале: "Серьёзность:" - самая длинная.
 const BT_PAD = 13;
 
+// ---------- Правила качества баг-репорта ----------
+// Каждое правило: {label, test(bug, ctx) -> true/false, fail(bug, ctx) -> текст}.
+// ctx = { meta: запись из lesson.bugMeta, others: остальные баги }.
+// Пока хоть одно правило не выполнено, репорт нельзя отправить разработчику.
+
+function btWords(s) {
+  return String(s || "").trim().split(/\s+/).filter(function (w) { return w.length > 1; });
+}
+
+function btNorm(s) {
+  return String(s || "").toLowerCase().replace(/[^a-zа-яё0-9]+/gi, " ").trim();
+}
+
+const BT_RULES = [
+  {
+    label: "Заголовок - понятное предложение (от 20 символов, минимум 3 слова)",
+    test: function (bug) {
+      return bug.title.trim().length >= 20 && btWords(bug.title).length >= 3;
+    },
+    fail: function () {
+      return "«Не работает» - плохой заголовок. Напиши, что именно и где ведёт себя не так.";
+    },
+  },
+  {
+    label: "Заголовок не повторяет заголовок другого бага",
+    test: function (bug, ctx) {
+      const mine = btNorm(bug.title);
+      if (!mine) return false;
+      return !ctx.others.some(function (o) {
+        return o.num !== bug.num && btNorm(o.title) === mine;
+      });
+    },
+    fail: function () {
+      return "Такой же заголовок уже есть у другой записи. Каждый баг описывается своими словами.";
+    },
+  },
+  {
+    label: "Шаги: минимум два пронумерованных пункта (1) … 2) …)",
+    test: function (bug) {
+      const s = bug.steps;
+      return /(^|\s)1\s*[).]/.test(s) && /(^|\s)2\s*[).]/.test(s) && s.trim().length >= 30;
+    },
+    fail: function () {
+      return "Разработчик повторяет баг по твоим шагам. Нужно хотя бы два пункта: «1) … 2) …».";
+    },
+  },
+  {
+    label: "«Ожидаемо» и «Фактически» заполнены и отличаются друг от друга",
+    test: function (bug) {
+      const e = bug.expected.trim();
+      const a = bug.actual.trim();
+      return e.length >= 12 && a.length >= 12 && btNorm(e) !== btNorm(a);
+    },
+    fail: function () {
+      return "Смысл баг-репорта - в разнице между «как должно» и «как есть». Опиши обе стороны по-разному.";
+    },
+  },
+  {
+    label: "Указан файл, в котором лежит причина бага",
+    test: function (bug, ctx) {
+      if (!bug.place) return false;
+      if (!ctx.meta) return true;
+      return bug.place === ctx.meta.file;
+    },
+    fail: function (bug) {
+      return bug.place
+        ? "Файл выбран, но причина, похоже, не там. Подумай: это текст в разметке, внешний вид или поведение?"
+        : "Выбери файл: разметка - index.html, внешний вид - style.css, поведение - main.js.";
+    },
+  },
+  {
+    label: "Серьёзность соответствует последствиям для покупателя",
+    test: function (bug, ctx) {
+      if (!bug.severity) return false;
+      if (!ctx.meta) return true;
+      return ctx.meta.severity.indexOf(bug.severity) !== -1;
+    },
+    fail: function (bug, ctx) {
+      if (!bug.severity) return "Выбери серьёзность.";
+      return (ctx.meta && ctx.meta.why) || "Подумай ещё раз: мешает ли этот баг купить товар и теряет ли магазин деньги?";
+    },
+  },
+  {
+    label: "Приоритет выставлен обдуманно",
+    test: function (bug, ctx) {
+      if (!bug.priority) return false;
+      if (!ctx.meta) return true;
+      return ctx.meta.priority.indexOf(bug.priority) !== -1;
+    },
+    fail: function (bug, ctx) {
+      if (!bug.priority) return "Выбери приоритет.";
+      return (ctx.meta && ctx.meta.whyPriority) || "Приоритет - это про срочность: как быстро баг увидят покупатели.";
+    },
+  },
+];
+
 const btEls = {};        // ссылки на элементы трекера
 let btSelected = "01";   // какая запись открыта в правой части
-let btFilter = "all";    // all | empty | open | fixed
+let btFilter = "all";    // all | draft | open | fixed
 let btWriting = false;   // идёт запись в редактор (чтобы не перерисовать себя же)
 
 // ---------- Чтение журнала из кода ----------
 
 function btJs() {
   return els && els.jsEditor ? els.jsEditor.value : "";
+}
+
+// Текущий код всех трёх редакторов - нужен проверкам «починка реально сделана».
+function btCode() {
+  return {
+    html: els && els.htmlEditor ? els.htmlEditor.value : "",
+    css: els && els.cssEditor ? els.cssEditor.value : "",
+    js: btJs(),
+  };
+}
+
+// Ключ ответов урока (какой файл виноват, какая серьёзность уместна, как
+// выглядит починка). Урок может его не задать - трекер тогда работает мягче.
+function btMeta(num) {
+  if (typeof lesson === "undefined" || !lesson.bugMeta) return null;
+  const found = lesson.bugMeta.filter(function (m) { return m.num === num; });
+  return found.length ? found[0] : null;
 }
 
 function btNum(n) {
@@ -118,7 +266,7 @@ function btEntryRange(js, num) {
   if (!m) return null;
   const start = m.index;
   let end = start + m[0].length;
-  const lineRe = /^\/\/[ \t]+(Шаги|Ожидаемо|Фактически|Серьёзность|Статус):.*$/;
+  const lineRe = /^\/\/[ \t]+(Шаги|Ожидаемо|Фактически|Где|Серьёзность|Приоритет|Статус):.*$/;
   // Забираем идущие следом строки-поля записи
   let pos = end;
   while (js[pos] === "\n") {
@@ -138,7 +286,7 @@ function btCleanValue(raw) {
   return v;
 }
 
-// Разобрать запись BUG-NN в объект { title, steps, expected, actual, severity, status }.
+// Разобрать запись BUG-NN в объект со всеми полями.
 function btParse(num) {
   const js = btJs();
   const range = btEntryRange(js, num);
@@ -165,16 +313,38 @@ function btParseAll() {
   return out;
 }
 
-// Запись «описана» = заполнены все поля, кроме статуса (статус появляется после
-// починки). Ровно этого же требует чек-лист шага.
-function btIsDescribed(bug) {
-  return BT_FIELDS.every(function (f) {
-    return f.key === "status" ? true : !!bug[f.key];
+// Результаты всех правил качества для одной записи.
+function btCheckRules(bug, all) {
+  const ctx = { meta: btMeta(bug.num), others: all || [] };
+  return BT_RULES.map(function (r) {
+    const ok = r.test(bug, ctx);
+    return { label: r.label, ok: ok, fail: ok ? "" : r.fail(bug, ctx) };
   });
+}
+
+function btRulesOk(bug, all) {
+  return btCheckRules(bug, all).every(function (r) { return r.ok; });
+}
+
+// Отправлен разработчику (или уже закрыт) - в коде стоит статус.
+function btIsReported(bug) {
+  const s = (bug.status || "").toLowerCase();
+  return s.indexOf("открыт") !== -1 || s.indexOf("исправлен") !== -1;
 }
 
 function btIsFixed(bug) {
   return (bug.status || "").toLowerCase().indexOf("исправлен") !== -1;
+}
+
+// Починка действительно есть в коде редакторов (ключ ответов урока).
+function btFixDone(bug) {
+  const meta = btMeta(bug.num);
+  if (!meta || typeof meta.fixed !== "function") return true;
+  try {
+    return !!meta.fixed(btCode());
+  } catch (e) {
+    return false;
+  }
 }
 
 // ---------- Запись журнала обратно в код ----------
@@ -238,8 +408,8 @@ function btBuild() {
   head.innerHTML =
     '<div>' +
     '<h2 class="tracker-title">🐞 Баг-трекер · МегаМагазин 2.0</h2>' +
-    '<div class="tracker-sub">Твой журнал багов из конца <code>main.js</code> - ' +
-    'что напишешь здесь, то появится в коде</div>' +
+    '<div class="tracker-sub">Черновик → отправлен разработчику → закрыт после ретеста. ' +
+    'Всё, что здесь написано, лежит в журнале багов в конце <code>main.js</code></div>' +
     '</div>' +
     '<button type="button" class="btn tracker-close">✕ Закрыть</button>';
   win.appendChild(head);
@@ -249,9 +419,9 @@ function btBuild() {
   stats.className = "tracker-stats";
   stats.innerHTML =
     '<span class="tracker-stat">Всего багов: <b>' + BT_COUNT + '</b></span>' +
-    '<span class="tracker-stat">Описано: <b class="bt-described">0</b></span>' +
-    '<span class="tracker-stat">Исправлено: <b class="bt-fixed">0</b></span>' +
-    '<span class="tracker-stat">Осталось: <b class="bt-left">' + BT_COUNT + '</b></span>' +
+    '<span class="tracker-stat">Черновиков: <b class="bt-draft">' + BT_COUNT + '</b></span>' +
+    '<span class="tracker-stat">Отправлено: <b class="bt-described">0</b></span>' +
+    '<span class="tracker-stat">Закрыто: <b class="bt-fixed">0</b></span>' +
     '<span class="tracker-bar"><span class="tracker-bar-fill"></span></span>';
   win.appendChild(stats);
 
@@ -265,9 +435,9 @@ function btBuild() {
   filters.className = "tracker-filters";
   [
     ["all", "Все"],
-    ["empty", "Не описаны"],
-    ["open", "Открытые"],
-    ["fixed", "Исправлены"],
+    ["draft", "Черновики"],
+    ["open", "Отправлены"],
+    ["fixed", "Закрыты"],
   ].forEach(function (f) {
     const b = document.createElement("button");
     b.type = "button";
@@ -300,7 +470,8 @@ function btBuild() {
   foot.className = "tracker-foot";
   foot.innerHTML =
     '<span>📝 Всё, что ты пишешь здесь, тут же попадает в 🐞 ЖУРНАЛ БАГОВ ' +
-    'в конце <code>main.js</code>. Можно писать и там - трекер подхватит.</span>' +
+    'в конце <code>main.js</code>. Статус меняется только кнопками - и только ' +
+    'когда репорт готов, а починка есть в коде.</span>' +
     '<span class="tracker-saved">✓ записано в main.js</span>';
   win.appendChild(foot);
 
@@ -315,9 +486,9 @@ function btBuild() {
   btEls.overlay = overlay;
   btEls.list = list;
   btEls.detail = detail;
+  btEls.draft = stats.querySelector(".bt-draft");
   btEls.described = stats.querySelector(".bt-described");
   btEls.fixedCount = stats.querySelector(".bt-fixed");
-  btEls.left = stats.querySelector(".bt-left");
   btEls.barFill = stats.querySelector(".tracker-bar-fill");
   btEls.saved = foot.querySelector(".tracker-saved");
 }
@@ -333,20 +504,26 @@ function btRender() {
 }
 
 function btRenderStats(bugs) {
-  const described = bugs.filter(btIsDescribed).length;
+  const reported = bugs.filter(btIsReported).length;
   const fixed = bugs.filter(btIsFixed).length;
-  btEls.described.textContent = String(described);
+  btEls.draft.textContent = String(BT_COUNT - reported);
+  btEls.described.textContent = String(reported - fixed);
   btEls.fixedCount.textContent = String(fixed);
-  btEls.left.textContent = String(BT_COUNT - fixed);
   btEls.barFill.style.width = Math.round((fixed / BT_COUNT) * 100) + "%";
 }
 
 // Состояние записи одним словом - им же красится левая полоска карточки.
 function btState(bug) {
   if (btIsFixed(bug)) return "fixed";
-  if (btIsDescribed(bug)) return "open";
-  return "empty";
+  if (btIsReported(bug)) return "open";
+  return "draft";
 }
+
+const BT_STATE_TEXT = {
+  draft: "⬜ черновик",
+  open: "🔴 отправлен",
+  fixed: "🟢 закрыт",
+};
 
 function btRenderList(bugs) {
   btEls.list.innerHTML = "";
@@ -365,7 +542,8 @@ function btRenderList(bugs) {
     const item = document.createElement("button");
     item.type = "button";
     item.className =
-      "tracker-item is-" + state + (bug.num === btSelected ? " active" : "");
+      "tracker-item is-" + (state === "draft" ? "empty" : state) +
+      (bug.num === btSelected ? " active" : "");
     const top = document.createElement("div");
     top.className = "tracker-item-top";
     top.innerHTML =
@@ -373,8 +551,7 @@ function btRenderList(bugs) {
       (bug.severity ? '<span class="tracker-chip ' + btSevClass(bug.severity) +
         '">' + btEsc(bug.severity) + "</span>" : "") +
       '<span class="tracker-chip ' + (state === "fixed" ? "st-fixed" : "st-open") + '">' +
-      (state === "fixed" ? "🟢 исправлен" : state === "open" ? "🔴 открыт" : "⬜ не описан") +
-      "</span>";
+      BT_STATE_TEXT[state] + "</span>";
     const title = document.createElement("div");
     title.className = "tracker-item-title" + (bug.title ? "" : " is-blank");
     title.textContent = bug.title || "запись пока пустая";
@@ -415,31 +592,124 @@ function btRenderDetail(bugs) {
   const bug = bugs.filter(function (b) { return b.num === btSelected; })[0] || bugs[0];
   if (!bug) return;
 
+  const state = btState(bug);
   const head = document.createElement("div");
   head.className = "tracker-detail-head";
-  const state = btState(bug);
   head.innerHTML =
     '<span class="tracker-detail-id">BUG-' + bug.num + "</span>" +
     '<span class="tracker-chip ' + (state === "fixed" ? "st-fixed" : "st-open") + '">' +
-    (state === "fixed" ? "🟢 исправлен" : state === "open" ? "🔴 открыт" : "⬜ не описан") +
-    "</span>";
+    BT_STATE_TEXT[state] + "</span>";
   box.appendChild(head);
 
   const note = document.createElement("p");
   note.className = "tracker-detail-note";
   note.textContent = bug.found
-    ? "Цикл тестировщика: 🔴 воспроизведи баг → 📝 опиши его здесь → 🟢 почини код и нажми ▶ Запустить → ✅ повтори проверку (ретест) и поставь статус «исправлен»."
+    ? "Путь записи: ⬜ черновик → 📨 отправлен разработчику → 🟢 закрыт после ретеста. Формулировки придумываешь сам: готового текста в уроке нет."
     : "Запись BUG-" + bug.num + " не найдена в main.js - видимо, её строки изменили. Верни их через Ctrl+Z, чтобы редактировать баг отсюда.";
   box.appendChild(note);
   if (!bug.found) return;
 
+  const locked = state !== "draft"; // отправленную запись правят через «вернуть в работу»
   BT_FIELDS.forEach(function (f) {
-    box.appendChild(btField(bug, f));
+    if (f.kind === "readonly") return; // статус меняется только кнопками
+    box.appendChild(btField(bug, f, locked));
   });
+
+  box.appendChild(btRulesBox(bug, bugs, state));
+  box.appendChild(btActions(bug, bugs, state));
+}
+
+// Список проверок качества репорта.
+function btRulesBox(bug, bugs, state) {
+  const wrap = document.createElement("div");
+  wrap.className = "tracker-rules";
+  const h = document.createElement("div");
+  h.className = "tracker-rules-title";
+  h.textContent = "🔎 Проверка баг-репорта";
+  wrap.appendChild(h);
+
+  btCheckRules(bug, bugs).forEach(function (r) {
+    const row = document.createElement("div");
+    row.className = "tracker-rule" + (r.ok ? " is-ok" : "");
+    row.innerHTML =
+      '<span class="tracker-rule-mark">' + (r.ok ? "✅" : "⬜") + "</span>" +
+      '<span class="tracker-rule-text">' + btEsc(r.label) +
+      (r.ok ? "" : '<span class="tracker-rule-fail">' + btEsc(r.fail) + "</span>") +
+      "</span>";
+    wrap.appendChild(row);
+  });
+
+  if (state !== "draft") {
+    const fix = document.createElement("div");
+    fix.className = "tracker-rule" + (btFixDone(bug) ? " is-ok" : "");
+    fix.innerHTML =
+      '<span class="tracker-rule-mark">' + (btFixDone(bug) ? "✅" : "⬜") + "</span>" +
+      '<span class="tracker-rule-text">Починка есть в коде редактора' +
+      (btFixDone(bug) ? "" : '<span class="tracker-rule-fail">Закрыть баг можно только после того, как правка сделана и проверена ретестом.</span>') +
+      "</span>";
+    wrap.appendChild(fix);
+  }
+  return wrap;
+}
+
+// Кнопки перевода статуса.
+function btActions(bug, bugs, state) {
+  const row = document.createElement("div");
+  row.className = "tracker-actions";
+
+  function mkBtn(text, enabled, title, onClick) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn tracker-action";
+    b.textContent = enabled ? text : "🔒 " + text;
+    b.disabled = !enabled;
+    b.title = title;
+    if (enabled) b.addEventListener("click", onClick);
+    row.appendChild(b);
+    return b;
+  }
+
+  if (state === "draft") {
+    const ready = btRulesOk(bug, bugs);
+    mkBtn(
+      "📨 Отправить разработчику",
+      ready,
+      ready ? "Записать статус «открыт» в журнал" : "Сначала выполни все пункты проверки выше",
+      function () {
+        bug.status = "открыт";
+        btSave(bug);
+        btRender();
+      }
+    );
+  } else if (state === "open") {
+    const canClose = btFixDone(bug);
+    mkBtn(
+      "✅ Закрыть после ретеста",
+      canClose,
+      canClose ? "Записать статус «исправлен»" : "Починки в коде пока нет",
+      function () {
+        bug.status = "исправлен";
+        btSave(bug);
+        btRender();
+      }
+    );
+    mkBtn("↩ Вернуть в черновик", true, "Хочу переписать репорт", function () {
+      bug.status = "";
+      btSave(bug);
+      btRender();
+    });
+  } else {
+    mkBtn("↩ Открыть заново", true, "Баг вернулся - открываем снова", function () {
+      bug.status = "открыт";
+      btSave(bug);
+      btRender();
+    });
+  }
+  return row;
 }
 
 // Одно поле формы. Любое изменение сразу пишется в журнал в коде.
-function btField(bug, f) {
+function btField(bug, f, locked) {
   const wrap = document.createElement("div");
   wrap.className = "tracker-field";
   const label = document.createElement("label");
@@ -458,6 +728,7 @@ function btField(bug, f) {
       b.type = "button";
       b.textContent = opt;
       if ((bug[f.key] || "").toLowerCase() === opt) b.classList.add("on");
+      b.disabled = !!locked;
       b.addEventListener("click", function () {
         // Повторный клик по выбранному - снять выбор (вернуть метку [ВПИШИ …])
         bug[f.key] = (bug[f.key] || "").toLowerCase() === opt ? "" : opt;
@@ -477,11 +748,12 @@ function btField(bug, f) {
   input.value = bug[f.key] || "";
   input.placeholder = f.hint || "";
   input.spellcheck = false;
+  input.readOnly = !!locked;
   input.addEventListener("input", function () {
     bug[f.key] = input.value;
     btSaveSoon(bug);
   });
-  // Ушли из поля - обновим список и статистику (заголовок мог поменяться)
+  // Ушли из поля - обновим список, проверки и статистику
   input.addEventListener("blur", function () {
     btSave(bug);
     btRender();
@@ -535,15 +807,15 @@ function btToggle() {
 
 // ---------- Кнопка в верхней панели ----------
 
-// Счётчик «описано / всего» прямо на кнопке - видно, сколько работы осталось.
+// Счётчик «отправлено разработчику / всего» прямо на кнопке.
 function btUpdateBadge() {
   const badge = document.querySelector(".tracker-badge");
   if (!badge) return;
-  let described = 0;
+  let reported = 0;
   for (let n = 1; n <= BT_COUNT; n++) {
-    if (btIsDescribed(btParse(btNum(n)))) described++;
+    if (btIsReported(btParse(btNum(n)))) reported++;
   }
-  badge.textContent = described + "/" + BT_COUNT;
+  badge.textContent = reported + "/" + BT_COUNT;
 }
 
 function btInit() {
@@ -553,10 +825,14 @@ function btInit() {
   btUpdateBadge();
 
   // Правки журнала руками в main.js - трекер должен показывать то же самое.
-  els.jsEditor.addEventListener("input", function () {
-    btUpdateBadge();
-    if (btWriting) return; // это наша же запись - перерисовывать не нужно
-    if (btEls.overlay && !btEls.overlay.hidden) btRender();
+  // Правки кода вообще - могут разблокировать кнопку «закрыть после ретеста».
+  ["htmlEditor", "cssEditor", "jsEditor"].forEach(function (key) {
+    if (!els[key]) return;
+    els[key].addEventListener("input", function () {
+      if (key === "jsEditor") btUpdateBadge();
+      if (btWriting) return; // это наша же запись - перерисовывать не нужно
+      if (btEls.overlay && !btEls.overlay.hidden) btRender();
+    });
   });
 
   document.addEventListener("keydown", function (e) {

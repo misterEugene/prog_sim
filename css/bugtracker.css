@@ -365,3 +365,53 @@
     border-bottom: 1px solid var(--border);
   }
 }
+
+/* ---- Проверка качества баг-репорта (список правил в карточке) ---- */
+.tracker-rules {
+  margin: 16px 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-page);
+}
+
+.tracker-rules-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.tracker-rule {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.tracker-rule.is-ok { color: var(--success); }
+
+.tracker-rule-mark { flex: none; }
+.tracker-rule-text { display: block; }
+
+/* Подсказка «почему пункт не выполнен» - под самим пунктом */
+.tracker-rule-fail {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.74rem;
+  color: #e0a23c;
+}
+
+/* ---- Кнопки перевода статуса ---- */
+.tracker-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.tracker-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

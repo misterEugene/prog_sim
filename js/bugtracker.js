@@ -137,6 +137,23 @@ function btNorm(s) {
   return String(s || "").toLowerCase().replace(/[^a-zа-яё0-9]+/gi, " ").trim();
 }
 
+// Порядок уровней - нужен, чтобы подсказка говорила, в какую СТОРОНУ ошибся
+// ребёнок. Без направления подсказка «подумай ещё» сбивает: выбрав «низкую»
+// серьёзность там, где нужна «средняя», ребёнок читал «серьёзность не самая
+// высокая» и снижал оценку ещё раз (найдено при прохождении урока 2026-08-19).
+const BT_SEVERITY_ORDER = ["низкая", "средняя", "высокая"];
+const BT_PRIORITY_ORDER = ["низкий", "средний", "высокий"];
+
+function btDirectionHint(chosen, allowed, order, what) {
+  if (!allowed || !allowed.length) return "Подумай ещё раз про " + what + ".";
+  const mine = order.indexOf(chosen);
+  const target = order.indexOf(allowed[0]);
+  if (mine === -1 || target === -1) return "Подумай ещё раз про " + what + ".";
+  return mine < target
+    ? "Ты недооценил " + what + " - последствия серьёзнее, чем кажется."
+    : "Пожалуй, ты преувеличил " + what + " - посмотри на последствия трезво.";
+}
+
 const BT_RULES = [
   {
     label: "Заголовок - понятное предложение (от 20 символов, минимум 3 слова)",
@@ -203,7 +220,8 @@ const BT_RULES = [
     },
     fail: function (bug, ctx) {
       if (!bug.severity) return "Выбери серьёзность.";
-      return (ctx.meta && ctx.meta.why) || "Подумай ещё раз: мешает ли этот баг купить товар и теряет ли магазин деньги?";
+      const dir = btDirectionHint(bug.severity, ctx.meta && ctx.meta.severity, BT_SEVERITY_ORDER, "серьёзность");
+      return dir + ((ctx.meta && ctx.meta.why) ? " " + ctx.meta.why : "");
     },
   },
   {
@@ -215,7 +233,8 @@ const BT_RULES = [
     },
     fail: function (bug, ctx) {
       if (!bug.priority) return "Выбери приоритет.";
-      return (ctx.meta && ctx.meta.whyPriority) || "Приоритет - это про срочность: как быстро баг увидят покупатели.";
+      const dir = btDirectionHint(bug.priority, ctx.meta && ctx.meta.priority, BT_PRIORITY_ORDER, "приоритет");
+      return dir + ((ctx.meta && ctx.meta.whyPriority) ? " " + ctx.meta.whyPriority : "");
     },
   },
 ];

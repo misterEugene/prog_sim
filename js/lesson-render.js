@@ -36,10 +36,22 @@ function stepLangs(step) {
 }
 
 // Шаг выполнен, когда отмечены ВСЕ его части.
+// Шаг выполнен, когда отмечены все его части И пройдены проверки шага.
+// Проверки - это и явные lesson.stepChecks, и автоматические «метки [ВПИШИ …]
+// этого блока заполнены»: без второго условия урок 1 проходился одними кнопками
+// вставки, с сотней сырых меток в коде.
 function isStepDone(index) {
-  return stepLangs(lesson.steps[index]).every((lang) =>
+  const partsDone = stepLangs(lesson.steps[index]).every((lang) =>
     doneParts.has(partKey(index, lang))
   );
+  if (!partsDone) return false;
+  // Для РУЧНЫХ шагов проверки уже сработали как замок на кнопке «✓ Я выполнил
+  // этот шаг» - второй раз их учитывать нельзя: урок 4 на шаге про автотесты
+  // сам просит временно сломать починку, и прогресс не должен от этого падать.
+  if (isManualStep(lesson.steps[index])) return true;
+  const checks = stepChecksOf(index);
+  if (!checks.length) return true;
+  return stepChecksPassed(index, currentCodeSnapshot());
 }
 
 // Первый ещё не вставленный реальный язык шага (для поочерёдной разблокировки
@@ -101,6 +113,10 @@ function buildStepCard(step, index) {
     // Шаг с кнопками: кнопки вставки идут ВНУТРИ инструкции, по местам меток
     // [[btn:html|css|js]] - сначала кнопка нужной части, потом её кусок задания.
     appendTaskWithInlineButtons(card, step, index);
+    // Живой чек-лист и здесь: у блоков со сниппетами он показывает, что метки
+    // [ВПИШИ …] этого шага ещё не заполнены (иначе кнопка следующего шага
+    // блокируется молча и ребёнок не понимает, чего от него хотят).
+    if (stepChecksOf(index).length) card.appendChild(makeStepChecksBox(index));
   }
 
   const hint = document.createElement("details");
@@ -157,10 +173,54 @@ function makeInsertButton(index, lang) {
 // выполнены, кнопка «✓ Я выполнил этот шаг» заблокирована, а под инструкцией
 // висит живой чек-лист. У шагов без проверок (теория) поведение прежнее.
 // ============================================================
+// Кэш авто-проверок по меткам: считаем метки шага один раз.
+const autoMarkChecksCache = new Map();
+
+// АВТО-ПРОВЕРКА ПО МЕТКАМ «[ВПИШИ …]» (уроки 1 и 2 - блоки со сниппетами).
+//
+// Проблема, найденная при прохождении урока 1 «глазами шестиклассника»: блоки
+// вставляются кнопками, а вписать свои значения вместо меток [ВПИШИ …] ребёнок
+// может забыть - и всё равно дойти до финального поздравления. В коде при этом
+// остаётся под сотню сырых меток, а сайт выглядит сломанным.
+//
+// Поэтому для каждого шага мы сами вычисляем, какие метки принёс ЕГО сниппет, и
+// требуем, чтобы ни одной из них в коде не осталось. Никаких списков вручную:
+// метки берутся прямо из кода блока, поэтому механизм работает в любом уроке и
+// не ломается при правке текстов.
+const INSERT_MARK_RE = /\[ВПИШИ[^\]]*\]/g;
+
+function autoMarkChecks(index) {
+  if (autoMarkChecksCache.has(index)) return autoMarkChecksCache.get(index);
+  const step = lesson.steps[index];
+  const checks = [];
+  PART_ORDER.forEach(function (lang) {
+    const snippet = step && step.snippets && step.snippets[lang];
+    if (!snippet) return;
+    const marks = Array.from(new Set(snippet.match(INSERT_MARK_RE) || []));
+    if (!marks.length) return;
+    const file = PART_INFO[lang].file;
+    checks.push({
+      label:
+        "в " + file + " не осталось меток [ВПИШИ …] из этого блока (" +
+        marks.length + " шт.) - впиши вместо них свои значения",
+      test: function (code) {
+        const text = code[lang] || "";
+        return marks.every(function (m) { return text.indexOf(m) === -1; });
+      },
+    });
+  });
+  autoMarkChecksCache.set(index, checks);
+  return checks;
+}
+
 function stepChecksOf(index) {
   const all = (typeof lesson !== "undefined" && lesson && lesson.stepChecks) || null;
   const list = all && all[index];
-  return Array.isArray(list) ? list : [];
+  const explicit = Array.isArray(list) ? list : [];
+  // Явные проверки урока + автоматические «метки заполнены» (если у шага есть
+  // сниппеты с метками). Урок может отключить авто-проверку: lesson.autoMarkChecks = false.
+  if (lesson && lesson.autoMarkChecks === false) return explicit;
+  return explicit.concat(autoMarkChecks(index));
 }
 
 // Снимок кода из редакторов (пустые строки, если платформа ещё не готова).

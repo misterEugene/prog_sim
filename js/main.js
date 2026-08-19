@@ -48,6 +48,12 @@ function init() {
   }
 
   renderLesson();
+  // Вернулись в урок с сохранённым прогрессом - сразу показываем то место, где
+  // остановились (а не начало урока). Задержка нужна, чтобы колонки успели
+  // получить свои размеры в initLayout.
+  if (doneStepCount() > 0) {
+    setTimeout(function () { scrollToCurrentStep(false); }, 60);
+  }
   initLayout();                  // ширины колонок, разделители, сворачивание задания
   switchTab("index.html");       // активная вкладка редактора (задание - отдельная колонка)
   els.editors.forEach(updateHighlight); // первичная отрисовка подсветки

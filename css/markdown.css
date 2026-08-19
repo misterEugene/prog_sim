@@ -267,3 +267,13 @@
 .step-checks li.ok::before {
   content: "✅";
 }
+
+/* Короткая подсветка карточки шага после прыжка «К текущему шагу» */
+.step-flash {
+  animation: step-flash 1.6s ease-out;
+}
+
+@keyframes step-flash {
+  0%   { box-shadow: 0 0 0 3px var(--accent); }
+  100% { box-shadow: 0 0 0 3px transparent; }
+}

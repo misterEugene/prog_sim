@@ -3177,7 +3177,19 @@
 
     container.innerHTML = parts.join("");
     renderFooter();
+
+    // Первый рендер после загрузки страницы: если прогресс уже был сохранён,
+    // сразу показываем шаг, на котором ребёнок остановился, - иначе он открывает
+    // урок в самом начале и ищет своё место прокруткой (кнопка «↓ К текущему
+    // шагу» в футере остаётся для всех остальных случаев).
+    if (!restoredJumpDone) {
+      restoredJumpDone = true;
+      if (doneCount > 0) setTimeout(scrollToActive, 80);
+    }
   }
+
+  // Прыжок к сохранённому шагу делаем ровно один раз за загрузку страницы.
+  var restoredJumpDone = false;
 
   // ------------------------------------------------- «Начать заново» с защитой
   // Кнопка доступна ВСЕГДА (в футере и в конце списка шагов), поэтому одного
@@ -3288,7 +3300,9 @@
       ? document.getElementById("g-step-" + active)
       : container.querySelector(".g-outro");
     if (target && target.scrollIntoView) {
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      // block:"start", а не "center": карточки шагов высокие (иногда выше экрана),
+      // и при центрировании начало задания уезжает за верхний край.
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
 

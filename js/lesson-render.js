@@ -299,6 +299,7 @@ function renderLesson() {
   root.appendChild(outro);
   els.outro = outro;
 
+  initJumpButton();
   refreshStepChecks(); // расставит галочки чек-листов и вызовет updateProgress()
   updateProgress();
 }
@@ -380,6 +381,74 @@ function updateProgress() {
     els.progressFill.style.width = Math.round((doneCount / total) * 100) + "%";
   }
   if (els.outro) els.outro.hidden = doneCount < total;
+  updateJumpButton();
+}
+
+// ============================================================
+// «⤓ К текущему шагу» - возврат к месту, где ребёнок остановился.
+//
+// Зачем. Колонка задания длинная (в уроке 4 - 20 карточек), прогресс хранится в
+// localStorage. Вернувшись назад через день, ребёнок открывал урок в самом начале
+// и искал «а где я остановился?» прокруткой. Теперь:
+//   • при загрузке страницы задание само прокручивается к текущему шагу;
+//   • пока текущий шаг не виден на экране, в углу колонки висит кнопка,
+//     которая к нему возвращает (и подсвечивает карточку).
+// ============================================================
+
+// Карточка шага, на котором ребёнок сейчас находится (первый невыполненный),
+// либо финальное поздравление, если урок пройден.
+function currentStepCard() {
+  const next = firstUndoneStep();
+  if (next === -1) return els.outro && !els.outro.hidden ? els.outro : null;
+  return els.markdown.querySelector('.step[data-step-index="' + next + '"]');
+}
+
+// Прокрутить задание к текущему шагу и коротко подсветить карточку.
+function scrollToCurrentStep(smooth) {
+  const card = currentStepCard();
+  if (!card) return;
+  card.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+  card.classList.remove("step-flash");
+  void card.offsetWidth; // рестарт CSS-анимации
+  card.classList.add("step-flash");
+  setTimeout(function () { card.classList.remove("step-flash"); }, 1600);
+  updateJumpButton();
+}
+
+// Кнопка видна, только когда текущий шаг ушёл из зоны видимости, и знает,
+// в какую сторону крутить (вверх ↑ или вниз ↓).
+function updateJumpButton() {
+  const btn = els.jumpBtn;
+  if (!btn) return;
+  const card = currentStepCard();
+  const box = els.markdown;
+  if (!card || !box) { btn.hidden = true; return; }
+  const cardBox = card.getBoundingClientRect();
+  const viewBox = box.getBoundingClientRect();
+  const above = cardBox.bottom < viewBox.top + 40;
+  const below = cardBox.top > viewBox.bottom - 40;
+  btn.hidden = !(above || below);
+  const done = firstUndoneStep() === -1;
+  btn.textContent = done
+    ? (above ? "↑ К финалу урока" : "↓ К финалу урока")
+    : (above ? "↑ К текущему шагу" : "↓ К текущему шагу");
+  btn.title = done
+    ? "Урок пройден - вернуться к поздравлению"
+    : "Вернуться к шагу " + (firstUndoneStep() + 1) + " - на нём ты остановился";
+}
+
+// Создать кнопку один раз и повесить слежение за прокруткой задания.
+function initJumpButton() {
+  if (els.jumpBtn || !els.colTask) return;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "btn jump-to-step";
+  btn.hidden = true;
+  btn.addEventListener("click", function () { scrollToCurrentStep(true); });
+  els.colTask.appendChild(btn);
+  els.jumpBtn = btn;
+  els.markdown.addEventListener("scroll", updateJumpButton, { passive: true });
+  window.addEventListener("resize", updateJumpButton);
 }
 
 // Индекс первого шага с невставленными частями (или -1, если всё готово).
